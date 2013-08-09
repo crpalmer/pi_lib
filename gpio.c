@@ -33,8 +33,8 @@ gpio_new(gpio_table_t *table, int n_table)
 
 	fatal_echo(EXPORT_FNAME, "%d\n", g->table[i].gpio);
 
-	fatal_echo(g->value_fname[i], "%d\n", g->table[i].initially_high);
 	fatal_echo(direction, "out\n");
+	fatal_echo(g->value_fname[i], "%d\n", g->table[i].initially_high ? 0 : 1);
 	free(direction);
      }
 
