@@ -4,11 +4,12 @@ CFLAGS=-Wall -Werror --std=c99
 SERVO_OBJS = pi-usb.o maestro.o
 UTIL_OBJS = util.o file.o string-utils.o mem.o global-trace.o
 GPIO_OBJS = gpio.o
+NET_OBJS = net.o net-line-reader.o
 
-OBJS = $(UTIL_OBJS) $(SERVO_OBJS) $(GPIO_OBJS)
+OBJS = $(UTIL_OBJS) $(SERVO_OBJS) $(GPIO_OBJS) $(NET_OBJS)
 
 test: test.o $(LIB)
-	$(CC) test.o -o $@ servo.a -lusb
+	$(CC) test.o -o $@ $(LIB) -lusb
 
 $(LIB): $(OBJS)
 	ar r $@ $(OBJS)
