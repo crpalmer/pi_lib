@@ -14,12 +14,16 @@ net_listen(uint16_t port)
 {
     int sock;
     struct sockaddr_in name;
+int optval;
 
     sock = socket(PF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
 	perror("socket");
 	exit(1);
     }
+
+    optval = 1;
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 
     name.sin_family = AF_INET;
     name.sin_port = htons(port);
