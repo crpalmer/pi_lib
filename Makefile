@@ -1,5 +1,5 @@
 LIB=lib.a
-CFLAGS=-Wall -Werror --std=c99
+CFLAGS=-Wall -Werror
 
 SERVO_OBJS = pi-usb.o maestro.o
 UTIL_OBJS = util.o file.o string-utils.o mem.o global-trace.o

@@ -114,6 +114,7 @@ maestro_new(void)
 {
     struct usb_device *dev = pi_usb_device(POLOLU_VENDOR_ID, MAESTRO_PRODUCT_ID);
     maestro_t *m;
+    unsigned i;
 
     if (! dev) return NULL;
 
@@ -130,7 +131,7 @@ maestro_new(void)
     m->handle = usb_open(dev);
 
     m->c = calloc(sizeof(*m->c), m->n_servos);
-    for (int i = 0; i < m->n_servos; i++) {
+    for (i = 0; i < m->n_servos; i++) {
 	get_servo_config(m, i, &m->c[i]);
     }
 
