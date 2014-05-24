@@ -45,7 +45,7 @@ typedef struct {
     unsigned short	max_pos;
     unsigned short	neutral;
     unsigned char	range;
-    float		speed;
+    double		speed;
     unsigned char	acceleration;
     int			is_inverted;
 } servo_config_t;
@@ -106,6 +106,8 @@ get_servo_config(maestro_t *m, servo_id_t id, servo_config_t *c)
     if (! get_raw_parameter_byte(m, PARAMETER_SERVO_RANGE(id), &speed_tmp)) return 0;
     c->speed = (speed_tmp >> 3) * (2 << (speed_tmp & 0x7));
 
+    fprintf(stderr, "servo %d: %d..%d @ %f\n", id, c->min_pos, c->max_pos, c->speed);
+
     return 1;
 }
 
@@ -162,7 +164,7 @@ maestro_set_servo_is_inverted(maestro_t *m, servo_id_t id, int is_inverted)
 }
 
 int
-maestro_set_servo_pos(maestro_t *m, servo_id_t id, unsigned char pos)
+maestro_set_servo_pos(maestro_t *m, servo_id_t id, double pos)
 {
     unsigned short real_pos;
 

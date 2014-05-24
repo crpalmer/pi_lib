@@ -4,21 +4,25 @@
 #include "util.h"
 #include "pi-usb.h"
 
+#define STEP_SIZE 0.2
+
 static void
 back_and_forth(maestro_t *m, servo_id_t id)
 {
+    double pos;
+
     maestro_set_servo_is_inverted(m, id+1, 1);
 
     while (1) {
-    	for (unsigned char pos = 0; pos < 100; pos += 10) {
+    	for (pos = 0; pos < 100; pos += STEP_SIZE) {
 	    if (! maestro_set_servo_pos(m, id, pos)) printf("set_target failed.\n");
 	    if (! maestro_set_servo_pos(m, id+1, 100-pos)) printf("set_target failed.\n");
-	    ms_sleep(100);
+	    ms_sleep(100 * STEP_SIZE);
 	}
-    	for (unsigned char pos = 100; pos >= 10; pos -= 10) {
+    	for (pos = 100; pos >= STEP_SIZE; pos -= STEP_SIZE) {
 	    if (! maestro_set_servo_pos(m, id, pos)) printf("set_target failed.\n");
 	    if (! maestro_set_servo_pos(m, id+1, 100-pos)) printf("set_target failed.\n");
-	    ms_sleep(100);
+	    ms_sleep(100 * STEP_SIZE);
 	}
     }
 }

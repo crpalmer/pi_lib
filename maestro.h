@@ -18,6 +18,6 @@ int
 maestro_set_servo_is_inverted(maestro_t *m, servo_id_t id, int is_inverted);
 
 int
-maestro_set_servo_pos(maestro_t *m, servo_id_t id, unsigned char pos_0_100);
+maestro_set_servo_pos(maestro_t *m, servo_id_t id, double pos_0_100);
 
 #endif
