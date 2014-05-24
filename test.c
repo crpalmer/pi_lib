@@ -3,34 +3,41 @@
 #include "maestro.h"
 #include "util.h"
 #include "pi-usb.h"
+#include "call-every.h"
 
 #define STEP_SIZE 0.2
+#define STEP_MS   20
+
+typedef struct {
+    maestro_t *m;
+    double pos;
+    double step;
+} servo_state_t;
 
 static void
-back_and_forth(maestro_t *m, servo_id_t id)
+update_servos(void *s_as_vp)
 {
-    double pos;
+    servo_state_t *s = (servo_state_t *) s_as_vp;
 
-    maestro_set_servo_is_inverted(m, id+1, 1);
-
-    while (1) {
-    	for (pos = 0; pos < 100; pos += STEP_SIZE) {
-	    if (! maestro_set_servo_pos(m, id, pos)) printf("set_target failed.\n");
-	    if (! maestro_set_servo_pos(m, id+1, 100-pos)) printf("set_target failed.\n");
-	    ms_sleep(100 * STEP_SIZE);
-	}
-    	for (pos = 100; pos >= STEP_SIZE; pos -= STEP_SIZE) {
-	    if (! maestro_set_servo_pos(m, id, pos)) printf("set_target failed.\n");
-	    if (! maestro_set_servo_pos(m, id+1, 100-pos)) printf("set_target failed.\n");
-	    ms_sleep(100 * STEP_SIZE);
-	}
+    s->pos += s->step;
+    if (s->pos < 0) {
+	s->pos = 0;
+	s->step = -s->step;
+    } else if (s->pos >= 100) {
+	s->pos = 100-STEP_SIZE;
+	s->step= -s->step;
     }
+
+    if (! maestro_set_servo_pos(s->m, 0, s->pos)) printf("set_target failed.\n");
+    if (! maestro_set_servo_pos(s->m, 1, s->pos)) printf("set_target failed.\n");
 }
 
 int
 main(int argc, char **argv)
 {
     maestro_t *m;
+    call_every_t *e;
+    servo_state_t s;
 
     pi_usb_init();
     if ((m = maestro_new()) == NULL) {
@@ -40,7 +47,16 @@ main(int argc, char **argv)
    
     printf("n-servos = %d\n", maestro_n_servos(m));
 
-    back_and_forth(m, 0);
+    e = call_every_new(STEP_MS, update_servos, (void *) &s);
+
+    maestro_set_servo_is_inverted(m, 1, 1);
+
+    s.m = m;
+    s.pos = 50;
+    s.step = STEP_SIZE;
+
+    call_every_start(e);
+    while (1) sleep(1000);
 
     return 0;
 }

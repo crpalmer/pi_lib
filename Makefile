@@ -1,15 +1,16 @@
 LIB=lib.a
-CFLAGS=-Wall -Werror
+CFLAGS=-Wall -Werror -g
 
 SERVO_OBJS = pi-usb.o maestro.o
+THREAD_OBJS = call-every.o
 UTIL_OBJS = util.o file.o string-utils.o mem.o global-trace.o
 GPIO_OBJS = gpio.o
 NET_OBJS = net.o net-line-reader.o
 
-OBJS = $(UTIL_OBJS) $(SERVO_OBJS) $(GPIO_OBJS) $(NET_OBJS)
+OBJS = $(THREAD_OBJS) $(UTIL_OBJS) $(SERVO_OBJS) $(GPIO_OBJS) $(NET_OBJS)
 
 test: test.o $(LIB)
-	$(CC) test.o -o $@ $(LIB) -lusb
+	$(CC) test.o -o $@ $(LIB) -lusb -lrt
 
 $(LIB): $(OBJS)
 	ar r $@ $(OBJS)
