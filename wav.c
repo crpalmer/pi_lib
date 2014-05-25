@@ -116,11 +116,27 @@ wav_new_with_servo_track(const char *fname, wav_servo_update_t fn, void *fn_data
     return w;
 }
 
+static bool
+mixer_set(struct mixer *mixer, const char *name, int value)
+{
+    struct mixer_ctl *ctl;
+
+    ctl = mixer_get_ctl_by_name(mixer, name);
+    if (! ctl) {
+	fprintf(stderr, "Failed to find control: %s\n", name);
+	mixer_close(mixer);
+	return false;
+    }
+
+    mixer_ctl_set_value(ctl, 0, value);
+
+    return true;
+}
+
 bool
 wav_set_volume(unsigned volume)
 {
     struct mixer *mixer;
-    struct mixer_ctl *ctl;
 
     mixer = mixer_open(0);
     if (! mixer) {
@@ -128,14 +144,12 @@ wav_set_volume(unsigned volume)
 	return false;
     }
 
-    ctl = mixer_get_ctl_by_name(mixer, "PCM Playback Volume");
-    if (! ctl) {
-	fprintf(stderr, "Failed to find volume control\n");
+    if (! mixer_set(mixer, "PCM Playback Volume", volume) ||
+	! mixer_set(mixer, "PCM Playback Route", 1))
+    {
 	mixer_close(mixer);
 	return false;
     }
-
-    mixer_ctl_set_value(ctl, 0, volume);
 
     mixer_close(mixer);
 
