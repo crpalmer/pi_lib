@@ -1,6 +1,9 @@
 LIB=lib.a
 CFLAGS=-Wall -Werror -g -I/home/crpalmer/tinyalsa/include -I/home/crpalmer/lib
 
+TESTS = test/maestro \
+	test/wav
+
 AUDIO_OBJS = wav.o
 GPIO_OBJS = gpio.o
 NET_OBJS = net.o net-line-reader.o
@@ -15,6 +18,8 @@ OBJS = $(AUDIO_OBJS) \
 	$(THREAD_OBJS) \
 	$(UTIL_OBJS)
 
+all: $(LIB) $(TESTS)
+
 $(LIB): $(OBJS)
 	ar r $@ $(OBJS)
 
@@ -25,7 +30,7 @@ test/maestro: test/maestro.o $(LIB)
 	$(CC) test/maestro.o -o $@ $(LIB) -lusb -lrt
 
 test/wav: test/wav.o $(LIB)
-	$(CC) test/wav.o -o $@ $(LIB) -lusb -lrt /home/crpalmer/tinyalsa/pcm.o
+	$(CC) test/wav.o -o $@ $(LIB) -lusb -lrt /home/crpalmer/tinyalsa/pcm.o /home/crpalmer/tinyalsa/mixer.o
 
 # compile and generate dependency info
 %.o: %.c
