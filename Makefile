@@ -1,5 +1,5 @@
 LIB=lib.a
-CFLAGS=-Wall -Werror -g
+CFLAGS=-Wall -Werror -g -I/home/crpalmer/lib
 
 SERVO_OBJS = pi-usb.o maestro.o
 THREAD_OBJS = call-every.o
@@ -9,8 +9,8 @@ NET_OBJS = net.o net-line-reader.o
 
 OBJS = $(THREAD_OBJS) $(UTIL_OBJS) $(SERVO_OBJS) $(GPIO_OBJS) $(NET_OBJS)
 
-test: test.o $(LIB)
-	$(CC) test.o -o $@ $(LIB) -lusb -lrt
+test/maestro: test/maestro.o $(LIB)
+	$(CC) test/maestro.o -o $@ $(LIB) -lusb -lrt
 
 $(LIB): $(OBJS)
 	ar r $@ $(OBJS)

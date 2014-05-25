@@ -1,4 +1,5 @@
 *.o
 *.d
 lib.a
-test
+test/maestro
+test/wav
