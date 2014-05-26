@@ -26,7 +26,8 @@ EXTERNALS = $E/tinyalsa/pcm.o $E/tinyalsa/mixer.o \
 all: $(LIB) $(TESTS)
 
 $(LIB): $(OBJS)
-	ar r $@ $(OBJS) $(EXTERNALS)
+	@echo "Linking: $(LIB)"
+	@ar r $@ $(OBJS) $(EXTERNALS)
 
 # pull in dependency info for *existing* .o files
 -include $(OBJS:.o=.d)
@@ -39,8 +40,9 @@ test/wav: test/wav.o $(LIB)
 
 # compile and generate dependency info
 %.o: %.c
-	gcc -c $(CFLAGS) $*.c -o $*.o
-	gcc -MM $(CFLAGS) $*.c > $*.d
+	@echo "Building: $*.c"
+	@gcc -c $(CFLAGS) $*.c -o $*.o
+	@gcc -MM $(CFLAGS) $*.c > $*.d
 
 clean:
 	-rm $(LIB) $(OBJS) $(OBJS:.o=.d)
