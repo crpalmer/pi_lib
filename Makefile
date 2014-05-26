@@ -5,7 +5,7 @@ CFLAGS=-Wall -Werror -g -I$E/include -I$D
 
 TESTS = test/maestro \
 	test/piface \
-	test/wav
+	test/talking-skull
 
 AUDIO_OBJS = wav.o
 GPIO_OBJS = gpio.o piface.o
@@ -38,11 +38,11 @@ LIBS = $(LIB) -lusb -lrt
 test/maestro: test/maestro.o $(LIB)
 	$(CC) test/maestro.o -o $@ $(LIBS)
 
-test/wav: test/wav.o $(LIB)
-	$(CC) test/wav.o -o $@ $(LIBS)
-
 test/piface: test/piface.o $(LIB)
 	$(CC) test/piface.o -o $@ $(LIBS)
+
+test/talking-skull: test/talking-skull.o $(LIB)
+	$(CC) test/talking-skull.o -o $@ $(LIBS)
 
 # compile and generate dependency info
 %.o: %.c
