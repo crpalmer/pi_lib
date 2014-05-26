@@ -109,81 +109,91 @@ wav_new(const char *fname)
     return w;
 }
 
+static void
+generate_servo_data(wav_t *w, unsigned char *data, unsigned n_bytes, wav_servo_update_t fn, void *fn_data)
+{
+    unsigned n_per_servo;
+    unsigned mx = 0;
+    unsigned long long sum = 0;
+    unsigned n_samples = 0;
+    unsigned max_possible;
+    size_t n;
+    size_t i;
+
+    w->fn = fn;
+    w->fn_data = fn_data;
+    w->n_servo = 0;
+
+    n_per_servo = w->fmt.sample_rate / N_SERVO_PER_S;
+    n = (n_bytes / w->bytes_per_sample / n_per_servo / N_TO_AVG) + 1;
+    w->servo = malloc(sizeof(*w->servo) * n);
+
+    max_possible = (((unsigned) 1)<<(w->fmt.bits_per_sample-1))-1;
+
+    for (i = 0; i < n_bytes; ) {
+	short val = 0;
+	unsigned shift = 0;
+
+	do {
+	    val |= (data[i++] << shift);
+	    shift += 8;
+	} while (i % w->bytes_per_sample);
+
+	if (val < 0) val = -val;
+	if (val < 0) val = max_possible;
+	if (val > mx) mx = val;
+
+	if (++n_samples % n_per_servo == 0) {
+	    sum += mx;
+	    mx = 0;
+	}
+	if (n_samples % (n_per_servo * N_TO_AVG) == 0) {
+	    w->servo[w->n_servo].pos = ((double) sum) / N_TO_AVG / max_possible * 100;
+	    w->servo[w->n_servo].usec = ((long long) i) / w->bytes_per_sample * 1000 * 1000 / w->fmt.sample_rate;
+	    //printf("%9.6f: %*c\n", w->servo[w->n_servo].usec / (1000.0*1000.0), (int) (w->servo[w->n_servo].pos / 2), '*');
+	    w->n_servo++;
+	    n_samples = 0;
+	    sum = 0;
+	}
+    }
+
+    assert(w->n_servo <= n);
+}
+
 wav_t *
 wav_new_with_servo_track(const char *fname, wav_servo_update_t fn, void *fn_data)
 {
-    int i, j, k;
-    unsigned n_per_servo;
-    unsigned mx = 0;
-    unsigned n_samples = 0;
+    size_t i, j, k;
+    unsigned char *servo_track;
+    unsigned servo_channel;
 
     wav_t *w = wav_new(fname);
 
     if (! w) return NULL;
 
-    w->fn = fn;
-    w->fn_data = fn_data;
+    servo_track = malloc(w->n_audio);
 
-    /* Overestimate a little bit so we don't have to worry about edge cases
-     * in this computation.
-     */
+    servo_channel = w->fmt.num_channels-1;
 
-    w->n_servo = (w->n_audio / w->bytes_per_sample / w->fmt.num_channels + 1) * N_SERVO_PER_S;
-
-    /* Let this round down as we will compute the real time as we output samples */
-    n_per_servo = w->fmt.sample_rate / N_SERVO_PER_S;
-
-    w->servo = malloc(sizeof(*w->servo) * w->n_audio);
-
-    for (i = j = 0; i < w->n_audio; ) {
+    for (i = j = k = 0; i < w->n_audio; i++) {
 	unsigned channel = (i / w->bytes_per_sample) % w->fmt.num_channels;
 
-	if (channel % w->fmt.num_channels < w->fmt.num_channels-1) {
-	    w->audio[j++] = w->audio[i++];
+	if (channel % w->fmt.num_channels == servo_channel) {
+	    servo_track[k++] = w->audio[i];
 	} else {
-	    short val = 0;
-	    unsigned shift = 0;
-	    double max_possible;
-
-	    do {
-		val |= (w->audio[i++] << shift);
-		shift += 8;
-	    } while (i % w->bytes_per_sample);
-
-	    max_possible = (1 << (shift - 1)) - 1;
-	    if (val < 0) val = -val;
-	    if (val < 0) val = max_possible;
-	    if (val > mx) mx = val;
-	    if (++n_samples % n_per_servo == 0) {
-		w->servo[k].pos = mx / max_possible * 100;
-		mx = 0;
-		w->servo[k].usec = ((long long) i) / w->bytes_per_sample / w->fmt.num_channels * 1000 * 1000 / w->fmt.sample_rate;
-		k++;
-		n_samples = 0;
-	    }
+	    w->audio[j++] = w->audio[i];
 	}
     }
-
-    assert(k <= w->n_servo);
 
     w->n_audio = j;
-    w->n_servo = 0;
 
-    for (i = 0; i < k; i += N_TO_AVG) {
-	double sum = 0;
-
-	for (j = 0; j < N_TO_AVG && i+j < k; j++) {
-	    sum += w->servo[i+j].pos;
-	}
-	
-	w->servo[w->n_servo].usec = w->servo[i+j/2].usec;
-	w->servo[w->n_servo].pos  = sum / j;
-	w->n_servo++;
-    }
-	
     w->fmt.num_channels -= 1;
     w->fmt.byte_rate -= w->fmt.sample_rate * w->bytes_per_sample;
     w->fmt.block_align -= w->bytes_per_sample;
+
+    generate_servo_data(w, servo_track, k, fn, fn_data);
+
+    free(servo_track);
 
     return w;
 }
