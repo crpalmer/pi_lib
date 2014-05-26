@@ -245,9 +245,6 @@ update_main(void *w_as_vp)
 	cur++;
     }
 
-printf("start %ld.%09ld\n", start.tv_sec, start.tv_nsec);
-printf("end   %ld.%09ld\n", next.tv_sec, next.tv_nsec);
-
     return NULL;
 }
 
