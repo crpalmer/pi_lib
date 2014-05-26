@@ -1,5 +1,7 @@
 LIB=lib.a
-CFLAGS=-Wall -Werror -g -I/home/crpalmer/tinyalsa/include -I/home/crpalmer/lib
+D=$(HOME)/lib
+E=$D/externals
+CFLAGS=-Wall -Werror -g -I$E/include -I$D
 
 TESTS = test/maestro \
 	test/wav
@@ -18,10 +20,13 @@ OBJS = $(AUDIO_OBJS) \
 	$(THREAD_OBJS) \
 	$(UTIL_OBJS)
 
+EXTERNALS = $E/tinyalsa/pcm.o $E/tinyalsa/mixer.o \
+	$E/libpifacedigital.a
+
 all: $(LIB) $(TESTS)
 
 $(LIB): $(OBJS)
-	ar r $@ $(OBJS)
+	ar r $@ $(OBJS) $(EXTERNALS)
 
 # pull in dependency info for *existing* .o files
 -include $(OBJS:.o=.d)
@@ -30,7 +35,7 @@ test/maestro: test/maestro.o $(LIB)
 	$(CC) test/maestro.o -o $@ $(LIB) -lusb -lrt
 
 test/wav: test/wav.o $(LIB)
-	$(CC) test/wav.o -o $@ $(LIB) -lusb -lrt /home/crpalmer/tinyalsa/pcm.o /home/crpalmer/tinyalsa/mixer.o
+	$(CC) test/wav.o -o $@ $(LIB) -lusb -lrt
 
 # compile and generate dependency info
 %.o: %.c
