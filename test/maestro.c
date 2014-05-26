@@ -5,8 +5,8 @@
 #include "pi-usb.h"
 #include "call-every.h"
 
-#define STEP_SIZE 0.2
-#define STEP_MS   20
+#define STEP_MS   5
+#define STEP_SIZE (100.0 / 5 / 1000 * STEP_MS)
 
 typedef struct {
     maestro_t *m;
