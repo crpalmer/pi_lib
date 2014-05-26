@@ -4,10 +4,11 @@ E=$D/externals
 CFLAGS=-Wall -Werror -g -I$E/include -I$D
 
 TESTS = test/maestro \
+	test/piface \
 	test/wav
 
 AUDIO_OBJS = wav.o
-GPIO_OBJS = gpio.o
+GPIO_OBJS = gpio.o piface.o
 NET_OBJS = net.o net-line-reader.o
 SERVO_OBJS = pi-usb.o maestro.o
 THREAD_OBJS = call-every.o
@@ -21,7 +22,7 @@ OBJS = $(AUDIO_OBJS) \
 	$(UTIL_OBJS)
 
 EXTERNALS = $E/tinyalsa/pcm.o $E/tinyalsa/mixer.o \
-	$E/libpifacedigital.a
+	$E/mcp23s17.o $E/pifacedigital.o \
 
 all: $(LIB) $(TESTS)
 
@@ -32,11 +33,16 @@ $(LIB): $(OBJS)
 # pull in dependency info for *existing* .o files
 -include $(OBJS:.o=.d)
 
+LIBS = $(LIB) -lusb -lrt
+
 test/maestro: test/maestro.o $(LIB)
-	$(CC) test/maestro.o -o $@ $(LIB) -lusb -lrt
+	$(CC) test/maestro.o -o $@ $(LIBS)
 
 test/wav: test/wav.o $(LIB)
-	$(CC) test/wav.o -o $@ $(LIB) -lusb -lrt
+	$(CC) test/wav.o -o $@ $(LIBS)
+
+test/piface: test/piface.o $(LIB)
+	$(CC) test/piface.o -o $@ $(LIBS)
 
 # compile and generate dependency info
 %.o: %.c

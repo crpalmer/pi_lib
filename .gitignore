@@ -2,4 +2,5 @@
 *.d
 lib.a
 test/maestro
+test/piface
 test/wav
