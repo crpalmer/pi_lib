@@ -32,6 +32,9 @@ main(int argc, char **argv)
 	exit(1);
     }
 
+    audio_set_volume(in, 50);
+    audio_set_volume(out, 100);
+
     size = audio_get_buffer_size(in);
     assert(audio_get_buffer_size(out) == size);
 

@@ -56,6 +56,7 @@ static bool
 mixer_set(struct mixer *mixer, const char *name, int value)
 {
     struct mixer_ctl *ctl;
+    unsigned i;
 
     ctl = mixer_get_ctl_by_name(mixer, name);
     if (! ctl) {
@@ -64,7 +65,9 @@ mixer_set(struct mixer *mixer, const char *name, int value)
 	return false;
     }
 
-    mixer_ctl_set_value(ctl, 0, value);
+    for (i = 0; i < mixer_ctl_get_num_values(ctl); i++) {
+        mixer_ctl_set_value(ctl, i, value);
+    }
 
     return true;
 }
@@ -72,7 +75,21 @@ mixer_set(struct mixer *mixer, const char *name, int value)
 static bool
 do_set_volume(struct mixer *mixer, const char *name, unsigned volume)
 {
-    return mixer_set(mixer, name, volume);
+    struct mixer_ctl *ctl;
+    unsigned i;
+
+    ctl = mixer_get_ctl_by_name(mixer, name);
+    if (! ctl) {
+	fprintf(stderr, "Failed to find control: %s\n", name);
+	mixer_close(mixer);
+	return false;
+    }
+
+    for (i = 0; i < mixer_ctl_get_num_values(ctl); i++) {
+        mixer_ctl_set_percent(ctl, i, volume);
+    }
+
+    return true;
 }
 
 bool
