@@ -34,6 +34,9 @@ main(int argc, char **argv)
 {
     wav_t *w;
     state_t s;
+    audio_config_t audio_cfg;
+    audio_device_t audio_dev;
+    audio_t *audio;
 
     pi_usb_init();
 
@@ -58,13 +61,26 @@ main(int argc, char **argv)
 	wav_generate_servo_data(w, update_servo, &s);
     }
 
-    wav_set_volume(75);
-    wav_play(w);
+    audio_device_init_playback(&audio_dev);
+    audio_config_init_default(&audio_cfg);
+    wav_configure_audio(w, &audio_cfg);
+
+    audio = audio_new(&audio_cfg, &audio_dev);
+
+    if (! audio) {
+	perror("audio_new_playback");
+	exit(1);
+    }
+
+    audio_set_volume(audio, 75);
+    wav_play(w, audio);
 
     if (s.m) {
 	maestro_set_servo_pos(s.m, SERVO_ID, 50);
 	maestro_destroy(s.m);
     }
 
+    wav_destroy(w);
+    audio_destroy(audio);
     return 0;
 }

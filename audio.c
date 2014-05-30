@@ -9,10 +9,11 @@ struct audioS {
     struct pcm *pcm;
     size_t      buffer_size;
     audio_config_t cfg;
+    audio_device_t dev;
 };
 
-static audio_t *
-do_audio_new(audio_config_t *cfg, unsigned which, audio_device_t *device)
+audio_t *
+audio_new(audio_config_t *cfg, audio_device_t *device)
 {
     struct pcm_config config;
     struct pcm *pcm;
@@ -30,7 +31,7 @@ do_audio_new(audio_config_t *cfg, unsigned which, audio_device_t *device)
     config.format = cfg->bits == 16 ? PCM_FORMAT_S16_LE : cfg->bits == 32 ? PCM_FORMAT_S32_LE : PCM_FORMAT_S24_LE;
     config.start_threshold = config.stop_threshold = config.silence_threshold = 0;
 
-    if ((pcm = pcm_open(device->card, device->device, which, &config)) == NULL ||
+    if ((pcm = pcm_open(device->card, device->device, device->playback ? PCM_OUT : PCM_IN, &config)) == NULL ||
 	! pcm_is_ready(pcm))
     {
 	return NULL;
@@ -39,27 +40,66 @@ do_audio_new(audio_config_t *cfg, unsigned which, audio_device_t *device)
     c = fatal_malloc(sizeof(*c));
     c->pcm = pcm;
     c->cfg = *cfg;
+    c->dev = *device;
     c->buffer_size = pcm_frames_to_bytes(pcm, pcm_get_buffer_size(pcm));
 
     return c;
-}
-
-audio_t *
-audio_new_capture(audio_config_t *cfg, audio_device_t *device)
-{
-    return do_audio_new(cfg, PCM_IN, device);
-}
-
-audio_t *
-audio_new_playback(audio_config_t *cfg, audio_device_t *device)
-{
-    return do_audio_new(cfg, PCM_OUT, device);
 }
 
 size_t
 audio_get_buffer_size(audio_t *c)
 {
     return c->buffer_size;
+}
+
+static bool
+mixer_set(struct mixer *mixer, const char *name, int value)
+{
+    struct mixer_ctl *ctl;
+
+    ctl = mixer_get_ctl_by_name(mixer, name);
+    if (! ctl) {
+	fprintf(stderr, "Failed to find control: %s\n", name);
+	mixer_close(mixer);
+	return false;
+    }
+
+    mixer_ctl_set_value(ctl, 0, value);
+
+    return true;
+}
+
+static bool
+do_set_volume(struct mixer *mixer, const char *name, unsigned volume)
+{
+    return mixer_set(mixer, name, volume);
+}
+
+bool
+audio_set_volume(audio_t *audio, unsigned volume)
+{
+    struct mixer *mixer;
+    bool res;
+
+    mixer = mixer_open(audio->dev.card);
+    if (! mixer) {
+	fprintf(stderr, "Failed to open mixer\n");
+	return false;
+    }
+
+    if (audio->dev.playback) {
+        res = do_set_volume(mixer, "PCM Playback Volume", volume) ||
+	      mixer_set(mixer, "PCM Playback Route", 1);
+    } else {
+        res = do_set_volume(mixer, "Mic Capture Volume", volume) ||
+	      mixer_set(mixer, "Mic Capture Switch", 1) ||
+	      mixer_set(mixer, "Speaker Playback Switch", 0) ||
+	      mixer_set(mixer, "Mic Playback Switch", 0);
+    }
+
+    mixer_close(mixer);
+
+    return res;
 }
 
 bool
@@ -69,9 +109,9 @@ audio_capture_buffer(audio_t *c, unsigned char *buffer)
 }
 
 bool
-audio_play_buffer(audio_t *c, const unsigned char *buffer)
+audio_play_buffer(audio_t *c, const unsigned char *buffer, size_t size)
 {
-    return pcm_write(c->pcm, buffer, c->buffer_size) == 0;
+    return pcm_write(c->pcm, buffer, size) == 0;
 }
 
 void

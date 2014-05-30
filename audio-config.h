@@ -1,6 +1,8 @@
 #ifndef __AUDIO_CONFIG_H__
 #define __AUDIO_CONFIG_H__
 
+#include "util.h"
+
 typedef struct {
     unsigned channels;
     unsigned rate;
@@ -10,6 +12,7 @@ typedef struct {
 typedef struct {
     unsigned card;
     unsigned device;
+    bool     playback;
 } audio_device_t;
 
 static inline void
@@ -21,22 +24,23 @@ audio_config_init_default(audio_config_t *c)
 }
 
 static inline void
-audio_device_init(audio_device_t *d, unsigned card, unsigned device)
+audio_device_init(audio_device_t *d, unsigned card, unsigned device, bool playback)
 {
     d->card = card;
     d->device = device;
+    d->playback = playback;
 }
 
 static inline void
 audio_device_init_playback(audio_device_t *d)
 {
-    audio_device_init(d, 0, 0);
+    audio_device_init(d, 0, 0, true);
 }
 
 static inline void
 audio_device_init_capture(audio_device_t *d)
 {
-    audio_device_init(d, 1, 0);
+    audio_device_init(d, 1, 0, false);
 }
 
 #endif

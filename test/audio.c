@@ -14,12 +14,11 @@ main(int argc, char **argv)
     audio_device_t in_dev, out_dev;
 
     audio_config_init_default(&cfg);
-
     audio_device_init_playback(&in_dev);
-    out = audio_new_playback(&cfg, &in_dev);
-
     audio_device_init_capture(&out_dev);
-    in = audio_new_capture(&cfg, &out_dev);
+
+    out = audio_new(&cfg, &in_dev);
+    in = audio_new(&cfg, &out_dev);
 
     if (! out) {
 	perror("out");
@@ -41,7 +40,7 @@ main(int argc, char **argv)
     fprintf(stderr, "Copying from capture to play using %u byte buffers\n", size);
 
     while (audio_capture_buffer(in, buffer)) {
-	if (! audio_play_buffer(out, buffer)) {
+	if (! audio_play_buffer(out, buffer, size)) {
 	    fprintf(stderr, "Failed to play buffer!\n");
 	    exit(1);
 	}

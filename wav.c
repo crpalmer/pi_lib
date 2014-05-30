@@ -226,46 +226,6 @@ wav_generate_servo_data(wav_t *w, wav_servo_update_t fn, void *fn_data)
     generate_servo_data(w, false, w->audio, w->n_audio, w->fmt.num_channels, fn, fn_data);
 }
 
-static bool
-mixer_set(struct mixer *mixer, const char *name, int value)
-{
-    struct mixer_ctl *ctl;
-
-    ctl = mixer_get_ctl_by_name(mixer, name);
-    if (! ctl) {
-	fprintf(stderr, "Failed to find control: %s\n", name);
-	mixer_close(mixer);
-	return false;
-    }
-
-    mixer_ctl_set_value(ctl, 0, value);
-
-    return true;
-}
-
-bool
-wav_set_volume(unsigned volume)
-{
-    struct mixer *mixer;
-
-    mixer = mixer_open(0);
-    if (! mixer) {
-	fprintf(stderr, "Failed to open mixer\n");
-	return false;
-    }
-
-    if (! mixer_set(mixer, "PCM Playback Volume", volume) ||
-	! mixer_set(mixer, "PCM Playback Route", 1))
-    {
-	mixer_close(mixer);
-	return false;
-    }
-
-    mixer_close(mixer);
-
-    return true;
-}
-
 static void *
 update_main(void *w_as_vp)
 {
@@ -286,51 +246,32 @@ update_main(void *w_as_vp)
     return NULL;
 }
 
+void
+wav_configure_audio(wav_t *w, audio_config_t *a)
+{
+    a->rate = w->meta.sample_rate;
+    a->channels = w->meta.num_channels;
+    a->bits = w->meta.bytes_per_sample * 8;
+}
 
 bool
-wav_play(wav_t *w)
+wav_play(wav_t *w, audio_t *audio)
 {
-    struct pcm_config config;
-    struct pcm *pcm;
     size_t size;
     size_t i;
-    bool rc = true;
     pthread_t thread;
+    bool rc = true;
 
-    config.channels = w->fmt.num_channels;
-    config.rate = w->fmt.sample_rate;
-    config.period_size = 1024;
-    config.period_count = 4;
-    switch(w->fmt.bits_per_sample) {
-    case 32: config.format = PCM_FORMAT_S32_LE; break;
-    case 16: config.format = PCM_FORMAT_S16_LE; break;
-    case  8: config.format = PCM_FORMAT_S8; break;
-    }
-    config.start_threshold = 0;
-    config.stop_threshold = 0;
-    config.silence_threshold = 0;
+    assert(w);
 
-    printf("audio_format = %u\n", w->fmt.audio_format);
-    printf("num_channels = %u\n", w->fmt.num_channels);
-    printf("sample_rate = %u\n", w->fmt.sample_rate);
-    printf("byte_rate = %u\n", w->fmt.byte_rate);
-    printf("block_align = %u\n", w->fmt.block_align);
-    printf("bits_per_sample = %u\n", w->fmt.bits_per_sample);
-
-    pcm = pcm_open(0, 0, PCM_OUT, &config);
-    if (! pcm || ! pcm_is_ready(pcm)) {
-	fprintf(stderr, "Unable to open pcm device: %s\n", pcm_get_error(pcm));
-	return false;
-    }
-
-    size = pcm_frames_to_bytes(pcm, pcm_get_buffer_size(pcm));
+    size = audio_get_buffer_size(audio);
 
     if (w->fn) pthread_create(&thread, NULL, update_main, w);
 
     for (i = 0; i < w->n_audio; i += size) {
 	size_t this_size = i + size > w->n_audio ? w->n_audio - i : size;
-	if (pcm_write(pcm, &w->audio[i], this_size)) {
-	    fprintf(stderr, "Error playing sample: %s\n", pcm_get_error(pcm));
+	if (! audio_play_buffer(audio, &w->audio[i], this_size)) {
+	    perror("Error playing sample");
 	    rc = false;
 	    break;
 	}
