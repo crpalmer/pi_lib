@@ -338,7 +338,15 @@ wav_play(wav_t *w)
 
     if (w->fn) pthread_join(thread, NULL);
 
-    pcm_close(pcm);
-
     return rc;
 }
+
+void
+wav_destroy(wav_t *w)
+{
+    assert(w);
+    free(w->audio);
+    free(w->servo);
+    free(w);
+}
+
