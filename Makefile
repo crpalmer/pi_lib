@@ -3,18 +3,21 @@ D=$(HOME)/lib
 E=$D/externals
 CFLAGS=-Wall -Werror -g -I$E/include -I$D
 
-TESTS = test/maestro \
+TESTS = \
+	test/audio \
+	test/maestro \
 	test/piface \
 	test/talking-skull
 
-AUDIO_OBJS = wav.o
+AUDIO_OBJS = audio.o wav.o
 GPIO_OBJS = gpio.o piface.o
 NET_OBJS = net.o net-line-reader.o
 SERVO_OBJS = pi-usb.o maestro.o
 THREAD_OBJS = call-every.o
 UTIL_OBJS = util.o file.o string-utils.o mem.o global-trace.o
 
-OBJS = $(AUDIO_OBJS) \
+OBJS = \
+	$(AUDIO_OBJS) \
 	$(GPIO_OBJS) \
 	$(NET_OBJS) \
 	$(SERVO_OBJS) \
@@ -34,6 +37,9 @@ $(LIB): $(OBJS)
 -include $(OBJS:.o=.d)
 
 LIBS = $(LIB) -lusb -lrt
+
+test/audio: test/audio.o $(LIB)
+	$(CC) test/audio.o -o $@ $(LIBS)
 
 test/maestro: test/maestro.o $(LIB)
 	$(CC) test/maestro.o -o $@ $(LIBS)
