@@ -16,6 +16,9 @@ wav_new_with_servo_track(const char *fname, wav_servo_update_t fn, void *fn_data
 bool
 wav_set_volume(unsigned volume);
 
+void
+wav_generate_servo_data(wav_t *w, wav_servo_update_t fn, void *fn_data);
+
 bool
 wav_play(wav_t *w);
 

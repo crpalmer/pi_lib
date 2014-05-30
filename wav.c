@@ -10,8 +10,10 @@
 #include "util.h"
 #include "wav.h"
 
-#define N_SERVO_PER_S  5000
-#define N_TO_AVG       5
+#define PRINT_SERVO	1
+#define N_SERVO_PER_S   5000
+#define N_TO_AVG_TRACK  5
+#define N_TO_AVG_GENERATED 250
 
 #define ID_RIFF 0x46464952
 #define ID_WAVE 0x45564157
@@ -109,14 +111,33 @@ wav_new(const char *fname)
     return w;
 }
 
+static unsigned
+decode_value(wav_t *w, unsigned char *data, size_t *cur, unsigned max_possible)
+{
+    short val = 0;
+    unsigned shift = 0;
+
+    do {
+	val |= (data[(*cur)++] << shift);
+	shift += 8;
+    } while ((*cur) % w->bytes_per_sample);
+
+    if (val < 0) val = -val;
+    if (val < 0) val = max_possible;
+
+    return val;
+}
+
 static void
-generate_servo_data(wav_t *w, unsigned char *data, unsigned n_bytes, wav_servo_update_t fn, void *fn_data)
+generate_servo_data(wav_t *w, bool is_track, unsigned char *data, unsigned n_bytes, unsigned num_channels, wav_servo_update_t fn, void *fn_data)
 {
     unsigned n_per_servo;
     unsigned mx = 0;
     unsigned long long sum = 0;
     unsigned n_samples = 0;
     unsigned max_possible;
+    unsigned n_to_avg = is_track ? N_TO_AVG_TRACK : N_TO_AVG_GENERATED;
+    unsigned last_usec = 0;
     size_t n;
     size_t i;
 
@@ -124,33 +145,32 @@ generate_servo_data(wav_t *w, unsigned char *data, unsigned n_bytes, wav_servo_u
     w->fn_data = fn_data;
     w->n_servo = 0;
 
-    n_per_servo = w->fmt.sample_rate / N_SERVO_PER_S;
-    n = (n_bytes / w->bytes_per_sample / n_per_servo / N_TO_AVG) + 1;
+    n_per_servo = w->fmt.sample_rate * num_channels / N_SERVO_PER_S;
+    n = (n_bytes / w->bytes_per_sample / n_per_servo / n_to_avg) + 1;
     w->servo = malloc(sizeof(*w->servo) * n);
 
     max_possible = (((unsigned) 1)<<(w->fmt.bits_per_sample-1))-1;
 
     for (i = 0; i < n_bytes; ) {
-	short val = 0;
-	unsigned shift = 0;
+	unsigned val = decode_value(w, data, &i, max_possible);
 
-	do {
-	    val |= (data[i++] << shift);
-	    shift += 8;
-	} while (i % w->bytes_per_sample);
-
-	if (val < 0) val = -val;
-	if (val < 0) val = max_possible;
 	if (val > mx) mx = val;
 
 	if (++n_samples % n_per_servo == 0) {
 	    sum += mx;
 	    mx = 0;
 	}
-	if (n_samples % (n_per_servo * N_TO_AVG) == 0) {
-	    w->servo[w->n_servo].pos = ((double) sum) / N_TO_AVG / max_possible * 100;
-	    w->servo[w->n_servo].usec = ((long long) i) / w->bytes_per_sample * 1000 * 1000 / w->fmt.sample_rate;
-	    //printf("%9.6f: %*c\n", w->servo[w->n_servo].usec / (1000.0*1000.0), (int) (w->servo[w->n_servo].pos / 2), '*');
+	if (n_samples % (n_per_servo * n_to_avg) == 0) {
+	    unsigned this_usec = ((long long) i) / w->bytes_per_sample * 1000 * 1000 / w->fmt.sample_rate / num_channels;
+	    w->servo[w->n_servo].pos = ((double) sum) / n_to_avg / max_possible * 100;
+	    w->servo[w->n_servo].usec = (this_usec - last_usec) / 2 + last_usec;
+	    last_usec = this_usec;
+
+	    if (PRINT_SERVO) {
+		unsigned this_val = w->servo[w->n_servo].pos / 2 + 0.5;
+	        printf("%9.6f:%*c%*c\n", w->servo[w->n_servo].usec / (1000.0*1000.0), this_val+1, '*', 50 - this_val, '|');
+	    }
+
 	    w->n_servo++;
 	    n_samples = 0;
 	    sum = 0;
@@ -191,11 +211,19 @@ wav_new_with_servo_track(const char *fname, wav_servo_update_t fn, void *fn_data
     w->fmt.byte_rate -= w->fmt.sample_rate * w->bytes_per_sample;
     w->fmt.block_align -= w->bytes_per_sample;
 
-    generate_servo_data(w, servo_track, k, fn, fn_data);
+    generate_servo_data(w, true, servo_track, k, 1, fn, fn_data);
 
     free(servo_track);
 
     return w;
+}
+
+void
+wav_generate_servo_data(wav_t *w, wav_servo_update_t fn, void *fn_data)
+{
+    assert(w);
+
+    generate_servo_data(w, false, w->audio, w->n_audio, w->fmt.num_channels, fn, fn_data);
 }
 
 static bool
@@ -288,7 +316,6 @@ wav_play(wav_t *w)
     printf("byte_rate = %u\n", w->fmt.byte_rate);
     printf("block_align = %u\n", w->fmt.block_align);
     printf("bits_per_sample = %u\n", w->fmt.bits_per_sample);
-    printf("ms per servo = %f\n", 1000.0 / (N_SERVO_PER_S / N_TO_AVG));
 
     pcm = pcm_open(0, 0, PCM_OUT, &config);
     if (! pcm || ! pcm_is_ready(pcm)) {
