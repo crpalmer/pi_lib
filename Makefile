@@ -9,7 +9,7 @@ TESTS = \
 	test/piface \
 	test/talking-skull
 
-AUDIO_OBJS = audio.o wav.o
+AUDIO_OBJS = audio.o talking-skull.o wav.o
 GPIO_OBJS = gpio.o piface.o
 NET_OBJS = net.o net-line-reader.o
 SERVO_OBJS = pi-usb.o maestro.o

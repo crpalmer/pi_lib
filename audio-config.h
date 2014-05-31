@@ -15,6 +15,12 @@ typedef struct {
     bool     playback;
 } audio_device_t;
 
+typedef struct {
+     unsigned sample_rate;
+     unsigned num_channels;
+     unsigned bytes_per_sample;
+} audio_meta_t;
+
 static inline void
 audio_config_init_default(audio_config_t *c)
 {
@@ -43,5 +49,12 @@ audio_device_init_capture(audio_device_t *d)
     audio_device_init(d, 1, 0, false);
 }
 
+static inline void
+audio_meta_init(audio_meta_t *m, unsigned sample_rate, unsigned num_channels, unsigned bytes_per_sample)
+{
+     m->sample_rate = sample_rate;
+     m->num_channels = num_channels;
+     m->bytes_per_sample = bytes_per_sample;
+}
 #endif
 

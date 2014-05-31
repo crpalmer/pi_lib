@@ -6,14 +6,10 @@
 #include <signal.h>
 #include <pthread.h>
 #include "tinyalsa/asoundlib.h"
+#include "talking-skull.h"
 #include "time-utils.h"
 #include "util.h"
 #include "wav.h"
-
-#define PRINT_SERVO	1
-#define N_SERVO_PER_S   5000
-#define N_TO_AVG_TRACK  5
-#define N_TO_AVG_GENERATED 250
 
 #define ID_RIFF 0x46464952
 #define ID_WAVE 0x45564157
@@ -41,16 +37,9 @@ struct chunk_fmt {
 };
 
 struct wavS {
-    wav_servo_update_t fn;
-    void *fn_data;
-    struct chunk_fmt fmt;
-    unsigned bytes_per_sample;
-    size_t n_audio, n_servo;
+    audio_meta_t meta;
+    size_t n_audio;
     unsigned char *audio;
-    struct {
-	unsigned	usec;
-	double		pos;
-    } *servo;
 };
 
 void stream_close(int sig)
@@ -66,6 +55,7 @@ wav_new(const char *fname)
     FILE  *f;
     struct riff_wave_header riff_wave_header;
     struct chunk_header chunk_header;
+    struct chunk_fmt fmt;
     bool more_chunks = true;
 
     if ((f = fopen(fname, "rb")) == NULL) {
@@ -88,10 +78,10 @@ wav_new(const char *fname)
 
         switch (chunk_header.id) {
         case ID_FMT:
-            fread(&w->fmt, sizeof(w->fmt), 1, f);
+            fread(&fmt, sizeof(fmt), 1, f);
             /* If the format header is larger, skip the rest */
-            if (chunk_header.sz > sizeof(w->fmt))
-                fseek(f, chunk_header.sz - sizeof(w->fmt), SEEK_CUR);
+            if (chunk_header.sz > sizeof(fmt))
+                fseek(f, chunk_header.sz - sizeof(fmt), SEEK_CUR);
             break;
         case ID_DATA:
             /* Stop looking for chunks */
@@ -106,99 +96,29 @@ wav_new(const char *fname)
         }
     } while (more_chunks);
 
-    w->bytes_per_sample = (w->fmt.bits_per_sample+7) / 8;
+    w->meta.sample_rate = fmt.sample_rate;
+    w->meta.num_channels = fmt.num_channels;
+    w->meta.bytes_per_sample = (fmt.bits_per_sample+7) / 8;
 
     return w;
 }
 
-static unsigned
-decode_value(wav_t *w, unsigned char *data, size_t *cur, unsigned max_possible)
-{
-    short val = 0;
-    unsigned shift = 0;
-
-    do {
-	val |= (data[(*cur)++] << shift);
-	shift += 8;
-    } while ((*cur) % w->bytes_per_sample);
-
-    if (val < 0) val = -val;
-    if (val < 0) val = max_possible;
-
-    return val;
-}
-
-static void
-generate_servo_data(wav_t *w, bool is_track, unsigned char *data, unsigned n_bytes, unsigned num_channels, wav_servo_update_t fn, void *fn_data)
-{
-    unsigned n_per_servo;
-    unsigned mx = 0;
-    unsigned long long sum = 0;
-    unsigned n_samples = 0;
-    unsigned max_possible;
-    unsigned n_to_avg = is_track ? N_TO_AVG_TRACK : N_TO_AVG_GENERATED;
-    unsigned last_usec = 0;
-    size_t n;
-    size_t i;
-
-    w->fn = fn;
-    w->fn_data = fn_data;
-    w->n_servo = 0;
-
-    n_per_servo = w->fmt.sample_rate * num_channels / N_SERVO_PER_S;
-    n = (n_bytes / w->bytes_per_sample / n_per_servo / n_to_avg) + 1;
-    w->servo = malloc(sizeof(*w->servo) * n);
-
-    max_possible = (((unsigned) 1)<<(w->fmt.bits_per_sample-1))-1;
-
-    for (i = 0; i < n_bytes; ) {
-	unsigned val = decode_value(w, data, &i, max_possible);
-
-	if (val > mx) mx = val;
-
-	if (++n_samples % n_per_servo == 0) {
-	    sum += mx;
-	    mx = 0;
-	}
-	if (n_samples % (n_per_servo * n_to_avg) == 0) {
-	    unsigned this_usec = ((long long) i) / w->bytes_per_sample * 1000 * 1000 / w->fmt.sample_rate / num_channels;
-	    w->servo[w->n_servo].pos = ((double) sum) / n_to_avg / max_possible * 100;
-	    w->servo[w->n_servo].usec = (this_usec - last_usec) / 2 + last_usec;
-	    last_usec = this_usec;
-
-	    if (PRINT_SERVO) {
-		unsigned this_val = w->servo[w->n_servo].pos / 2 + 0.5;
-	        printf("%9.6f:%*c%*c\n", w->servo[w->n_servo].usec / (1000.0*1000.0), this_val+1, '*', 50 - this_val, '|');
-	    }
-
-	    w->n_servo++;
-	    n_samples = 0;
-	    sum = 0;
-	}
-    }
-
-    assert(w->n_servo <= n);
-}
-
-wav_t *
-wav_new_with_servo_track(const char *fname, wav_servo_update_t fn, void *fn_data)
+talking_skull_t *
+wav_extract_servo_track(wav_t *w)
 {
     size_t i, j, k;
     unsigned char *servo_track;
     unsigned servo_channel;
-
-    wav_t *w = wav_new(fname);
-
-    if (! w) return NULL;
+    audio_meta_t servo_meta;
+    talking_skull_t *t;
 
     servo_track = malloc(w->n_audio);
-
-    servo_channel = w->fmt.num_channels-1;
+    servo_channel = w->meta.num_channels-1;
 
     for (i = j = k = 0; i < w->n_audio; i++) {
-	unsigned channel = (i / w->bytes_per_sample) % w->fmt.num_channels;
+	unsigned channel = (i / w->meta.bytes_per_sample) % w->meta.num_channels;
 
-	if (channel % w->fmt.num_channels == servo_channel) {
+	if (channel % w->meta.num_channels == servo_channel) {
 	    servo_track[k++] = w->audio[i];
 	} else {
 	    w->audio[j++] = w->audio[i];
@@ -206,44 +126,24 @@ wav_new_with_servo_track(const char *fname, wav_servo_update_t fn, void *fn_data
     }
 
     w->n_audio = j;
+    w->meta.num_channels -= 1;
 
-    w->fmt.num_channels -= 1;
-    w->fmt.byte_rate -= w->fmt.sample_rate * w->bytes_per_sample;
-    w->fmt.block_align -= w->bytes_per_sample;
+    servo_meta = w->meta;
+    servo_meta.num_channels = 1;
 
-    generate_servo_data(w, true, servo_track, k, 1, fn, fn_data);
+    t = talking_skull_new(&servo_meta, true, servo_track, k);
 
     free(servo_track);
 
-    return w;
+    return t;
 }
 
-void
-wav_generate_servo_data(wav_t *w, wav_servo_update_t fn, void *fn_data)
+talking_skull_t *
+wav_generate_servo_data(wav_t *w)
 {
     assert(w);
 
-    generate_servo_data(w, false, w->audio, w->n_audio, w->fmt.num_channels, fn, fn_data);
-}
-
-static void *
-update_main(void *w_as_vp)
-{
-
-    wav_t *w = (wav_t *) w_as_vp;
-    struct timespec start, next;
-    unsigned cur = 0;
-
-    nano_gettime(&start);
-    while (cur < w->n_servo) {
-	next = start;
-	nano_add_usec(&next, w->servo[cur].usec);
-	nano_sleep_until(&next);
-	w->fn(w->fn_data, w->servo[cur].pos);
-	cur++;
-    }
-
-    return NULL;
+    return talking_skull_new(&w->meta, false, w->audio, w->n_audio);
 }
 
 void
@@ -259,14 +159,11 @@ wav_play(wav_t *w, audio_t *audio)
 {
     size_t size;
     size_t i;
-    pthread_t thread;
     bool rc = true;
 
     assert(w);
 
     size = audio_get_buffer_size(audio);
-
-    if (w->fn) pthread_create(&thread, NULL, update_main, w);
 
     for (i = 0; i < w->n_audio; i += size) {
 	size_t this_size = i + size > w->n_audio ? w->n_audio - i : size;
@@ -277,8 +174,6 @@ wav_play(wav_t *w, audio_t *audio)
 	}
     }
 
-    if (w->fn) pthread_join(thread, NULL);
-
     return rc;
 }
 
@@ -287,7 +182,6 @@ wav_destroy(wav_t *w)
 {
     assert(w);
     free(w->audio);
-    free(w->servo);
     free(w);
 }
 

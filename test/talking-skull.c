@@ -4,6 +4,7 @@
 #include "pi-usb.h"
 #include "maestro.h"
 #include "piface.h"
+#include "talking-skull.h"
 #include "wav.h"
 
 #define SERVO_ID 0
@@ -37,6 +38,8 @@ main(int argc, char **argv)
     audio_config_t audio_cfg;
     audio_device_t audio_dev;
     audio_t *audio;
+    talking_skull_t *talking_skull;
+    bool has_servo_track;
 
     pi_usb_init();
 
@@ -48,17 +51,35 @@ main(int argc, char **argv)
     }
     maestro_set_servo_is_inverted(s.m, SERVO_ID, 1);
 
-    if (argc > 2 && strcmp(argv[1], "--gain") == 0) {
-	s.gain = atof(argv[2]);
-	argc -= 2;
-	argv += 2;
+    while (argc > 1 && argv[1][0] == '-' && argv[1][1] == '-') {
+	if (strcmp(argv[1], "--") == 0) {
+	    argc -= 1;
+	    argv += 1;
+	    break;
+	}
+	if (argc > 2 && strcmp(argv[1], "--gain") == 0) {
+	    s.gain = atof(argv[2]);
+	    argc -= 2;
+	    argv += 2;
+	}
+
+	if (argc > 1 && strcmp(argv[1], "--servo") == 0) {
+	    has_servo_track = true;
+	    argc -= 1;
+	    argv += 1;
+	}
     }
 
-    if (argc > 1 && strcmp(argv[1], "--servo") == 0) {
-	w = wav_new_with_servo_track(argv[2], update_servo, &s);
+    w = wav_new(argv[1]);
+    if (! w) {
+	perror(argv[1]);
+	exit(1);
+    }
+
+    if (has_servo_track) {
+	talking_skull = wav_extract_servo_track(w);
     } else {
-	w = wav_new(argv[1]);
-	wav_generate_servo_data(w, update_servo, &s);
+	talking_skull = wav_generate_servo_data(w);
     }
 
     audio_device_init_playback(&audio_dev);
@@ -73,7 +94,10 @@ main(int argc, char **argv)
     }
 
     audio_set_volume(audio, 75);
+
+    talking_skull_play(talking_skull, update_servo, &s);
     wav_play(w, audio);
+    talking_skull_wait_completion(talking_skull);
 
     if (s.m) {
 	maestro_set_servo_pos(s.m, SERVO_ID, 50);
