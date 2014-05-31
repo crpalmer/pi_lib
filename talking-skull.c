@@ -50,6 +50,7 @@ talking_skull_new(audio_meta_t *m, bool is_track, unsigned char *data, unsigned 
     unsigned max_possible;
     unsigned n_to_avg = is_track ? N_TO_AVG_TRACK : N_TO_AVG_GENERATED;
     unsigned last_usec = 0;
+    unsigned last_printed_usec = 0;
     size_t n;
     size_t i;
 
@@ -78,8 +79,11 @@ talking_skull_new(audio_meta_t *m, bool is_track, unsigned char *data, unsigned 
 	    last_usec = this_usec;
 
 	    if (PRINT_SERVO) {
-		unsigned this_val = t->servo[t->n_servo].pos / 2 + 0.5;
-	        printf("%9.6f:%*c%*c\n", t->servo[t->n_servo].usec / (1000.0*1000.0), this_val+1, '*', 50 - this_val, '|');
+		if (t->servo[t->n_servo].usec - last_printed_usec > 20*1000) {
+		    unsigned this_val = t->servo[t->n_servo].pos / 2 + 0.5;
+	            printf("%9.6f:%*c%*c\n", t->servo[t->n_servo].usec / (1000.0*1000.0), this_val+1, '*', 50 - this_val, '|');
+		    last_printed_usec = t->servo[t->n_servo].usec;
+		}
 	    }
 
 	    t->n_servo++;
