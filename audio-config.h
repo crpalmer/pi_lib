@@ -30,6 +30,12 @@ audio_config_init_default(audio_config_t *c)
 }
 
 static inline void
+audio_config_print(audio_config_t *cfg, FILE *f)
+{
+    fprintf(f, "cfg[bits=%d, channels=%d, rate=%d]", cfg->bits, cfg->channels, cfg->rate);
+}
+
+static inline void
 audio_device_init(audio_device_t *d, unsigned card, unsigned device, bool playback)
 {
     d->card = card;

@@ -86,10 +86,14 @@ main(int argc, char **argv)
     audio_config_init_default(&audio_cfg);
     wav_configure_audio(w, &audio_cfg);
 
+    printf("Config from wav file: ");
+    audio_config_print(&audio_cfg, stdout);
+    printf("\n");
+
     audio = audio_new(&audio_cfg, &audio_dev);
 
     if (! audio) {
-	perror("audio_new_playback");
+	perror("audio_new");
 	exit(1);
     }
 
