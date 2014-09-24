@@ -57,4 +57,4 @@ test/talking-skull: test/talking-skull.o $(LIB)
 	@gcc -MM $(CFLAGS) $*.c > $*.d
 
 clean:
-	-rm $(LIB) $(OBJS) $(OBJS:.o=.d)
+	-rm $(LIB) $(OBJS) $(OBJS:.o=.d) test/*.o test/*.d $(TESTS)
