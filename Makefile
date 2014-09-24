@@ -36,7 +36,7 @@ $(LIB): $(OBJS)
 # pull in dependency info for *existing* .o files
 -include $(OBJS:.o=.d)
 
-LIBS = $(LIB) -lusb -lrt
+LIBS = $(LIB) -lusb -lrt -lpthread
 
 test/audio: test/audio.o $(LIB)
 	$(CC) test/audio.o -o $@ $(LIBS)
