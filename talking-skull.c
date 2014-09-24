@@ -11,15 +11,31 @@
 #define N_TO_AVG_TRACK  5
 #define N_TO_AVG_GENERATED 250
 
+typedef struct {
+    unsigned n_per_servo;
+    unsigned mx;
+    unsigned long long sum;
+    unsigned n_samples;
+    unsigned max_possible;
+    unsigned n_to_avg;
+    unsigned last_usec;
+    unsigned last_printed_usec;
+    unsigned long long i;
+    double i_to_usec;
+} state_t;
+
+typedef struct {
+    unsigned	usec;
+    double	pos;
+} servo_data_t;
+
 struct talking_skullS {
-    size_t n_audio, n_servo;
-    struct {
-        unsigned        usec;
-        double          pos;
-    } *servo;
-    pthread_t thread;
+    size_t n_servo, a_servo;
+    servo_data_t *servo;
+    state_t state;
     talking_skull_servo_update_t fn;
     void *fn_data;
+    pthread_t thread;
 };
 
 static unsigned
@@ -39,60 +55,78 @@ decode_value(audio_meta_t *m, unsigned char *data, size_t *cur, unsigned max_pos
     return val;
 }
 
+static void
+state_init(state_t *s, audio_meta_t *m, bool is_track)
+{
+    s->n_per_servo = m->sample_rate * m->num_channels / N_SERVO_PER_S;
+    s->mx = 0;
+    s->sum = 0;
+    s->n_samples = 0;
+    s->max_possible = (((unsigned) 1)<<(m->bytes_per_sample*8-1))-1;
+    s->n_to_avg = is_track ? N_TO_AVG_TRACK : N_TO_AVG_GENERATED;
+    s->last_usec = 0;
+    s->last_printed_usec = 0;
+    s->i = 0;
+    s->i_to_usec = 1000.0 * 1000 / m->sample_rate / m->num_channels;
+} 
+
+static void
+state_update(talking_skull_t *t, unsigned val)
+{
+    state_t *s = &t->state;
+
+    s->i++;
+
+    if (val > s->mx) s->mx = val;
+
+    if (++s->n_samples % s->n_per_servo == 0) {
+	s->sum += s->mx;
+	s->mx = 0;
+    }
+
+    if (s->n_samples % (s->n_per_servo * s->n_to_avg) == 0) {
+	unsigned this_usec = s->i * s->i_to_usec;
+
+	if (t->n_servo >= t->a_servo) {
+	    t->a_servo *= 2;
+	    t->servo = fatal_realloc(t->servo, sizeof(*t->servo)*t->a_servo);
+	}
+
+	t->servo[t->n_servo].pos = ((double) s->sum) / s->n_to_avg / s->max_possible * 100;
+	t->servo[t->n_servo].usec = (this_usec - s->last_usec) / 2 + s->last_usec;
+	s->last_usec = this_usec;
+
+	if (PRINT_SERVO) {
+	    if (t->servo[t->n_servo].usec - s->last_printed_usec > 20*1000) {
+		unsigned this_val = t->servo[t->n_servo].pos / 2 + 0.5;
+		printf("%9.6f:%*c%*c\n", t->servo[t->n_servo].usec / (1000.0*1000.0), this_val+1, '*', 50 - this_val, '|');
+		s->last_printed_usec = t->servo[t->n_servo].usec;
+	    }
+	}
+
+	t->n_servo++;
+	s->n_samples = 0;
+	s->sum = 0;
+    }
+}
+
 talking_skull_t *
 talking_skull_new(audio_meta_t *m, bool is_track, unsigned char *data, unsigned n_bytes)
 {
     talking_skull_t *t;
-    unsigned n_per_servo;
-    unsigned mx = 0;
-    unsigned long long sum = 0;
-    unsigned n_samples = 0;
-    unsigned max_possible;
-    unsigned n_to_avg = is_track ? N_TO_AVG_TRACK : N_TO_AVG_GENERATED;
-    unsigned last_usec = 0;
-    unsigned last_printed_usec = 0;
-    size_t n;
     size_t i;
-
-    n_per_servo = m->sample_rate * m->num_channels / N_SERVO_PER_S;
-    n = (n_bytes / m->bytes_per_sample / n_per_servo / n_to_avg) + 1;
 
     t = fatal_malloc(sizeof(*t));
     t->n_servo = 0;
-    t->servo = malloc(sizeof(*t->servo) * n);
+    t->a_servo = 1024;
+    t->servo = fatal_malloc(sizeof(*t->servo) * t->a_servo);
 
-    max_possible = (((unsigned) 1)<<(m->bytes_per_sample*8-1))-1;
+    state_init(&t->state, m, is_track);
 
     for (i = 0; i < n_bytes; ) {
-	unsigned val = decode_value(m, data, &i, max_possible);
-
-	if (val > mx) mx = val;
-
-	if (++n_samples % n_per_servo == 0) {
-	    sum += mx;
-	    mx = 0;
-	}
-	if (n_samples % (n_per_servo * n_to_avg) == 0) {
-	    unsigned this_usec = ((long long) i) / m->bytes_per_sample * 1000 * 1000 / m->sample_rate / m->num_channels;
-	    t->servo[t->n_servo].pos = ((double) sum) / n_to_avg / max_possible * 100;
-	    t->servo[t->n_servo].usec = (this_usec - last_usec) / 2 + last_usec;
-	    last_usec = this_usec;
-
-	    if (PRINT_SERVO) {
-		if (t->servo[t->n_servo].usec - last_printed_usec > 20*1000) {
-		    unsigned this_val = t->servo[t->n_servo].pos / 2 + 0.5;
-	            printf("%9.6f:%*c%*c\n", t->servo[t->n_servo].usec / (1000.0*1000.0), this_val+1, '*', 50 - this_val, '|');
-		    last_printed_usec = t->servo[t->n_servo].usec;
-		}
-	    }
-
-	    t->n_servo++;
-	    n_samples = 0;
-	    sum = 0;
-	}
+	unsigned val = decode_value(m, data, &i, t->state.max_possible);
+	state_update(t, val);
     }
-
-    assert(t->n_servo <= n);
 
     return t;
 }
