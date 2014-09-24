@@ -93,7 +93,7 @@ main(int argc, char **argv)
 	exit(1);
     }
 
-    audio_set_volume(audio, 75);
+    audio_set_volume(audio, 100);
 
     talking_skull_play(talking_skull, update_servo, &s);
     wav_play(w, audio);
