@@ -30,6 +30,7 @@ typedef struct {
 } servo_data_t;
 
 struct talking_skullS {
+    audio_meta_t m;
     size_t n_servo, a_servo;
     servo_data_t *servo;
     state_t state;
@@ -111,22 +112,23 @@ state_update(talking_skull_t *t, unsigned val)
 }
 
 talking_skull_t *
-talking_skull_new(audio_meta_t *m, bool is_track, unsigned char *data, unsigned n_bytes)
+talking_skull_new(audio_meta_t *m, bool is_track, talking_skull_servo_update_t fn, void *fn_data)
 {
     talking_skull_t *t;
-    size_t i;
 
     t = fatal_malloc(sizeof(*t));
+    t->m = *m;
     t->n_servo = 0;
     t->a_servo = 1024;
     t->servo = fatal_malloc(sizeof(*t->servo) * t->a_servo);
 
-    state_init(&t->state, m, is_track);
-
-    for (i = 0; i < n_bytes; ) {
-	unsigned val = decode_value(m, data, &i, t->state.max_possible);
-	state_update(t, val);
+    if (is_track) {
+	t->m.num_channels = 1;
     }
+
+    state_init(&t->state, &t->m, is_track);
+    t->fn = fn;
+    t->fn_data = fn_data;
 
     return t;
 }
@@ -153,11 +155,15 @@ update_main(void *t_as_vp)
 }
 
 void
-talking_skull_play(talking_skull_t *t, talking_skull_servo_update_t fn, void
- *fn_data)
+talking_skull_play(talking_skull_t *t, unsigned char *data, unsigned n_bytes)
 {
-    t->fn = fn;
-    t->fn_data = fn_data;
+    size_t i;
+
+    for (i = 0; i < n_bytes; ) {
+	unsigned val = decode_value(&t->m, data, &i, t->state.max_possible);
+	state_update(t, val);
+    }
+
     pthread_create(&t->thread, NULL, update_main, t);
 }
 

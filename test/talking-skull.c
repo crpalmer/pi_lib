@@ -34,6 +34,7 @@ int
 main(int argc, char **argv)
 {
     wav_t *w;
+    audio_meta_t meta;
     state_t s;
     audio_config_t audio_cfg;
     audio_device_t audio_dev;
@@ -76,10 +77,10 @@ main(int argc, char **argv)
 	exit(1);
     }
 
+    meta = wav_get_meta(w);
+    talking_skull = talking_skull_new(&meta, has_servo_track, update_servo, &s);
     if (has_servo_track) {
-	talking_skull = wav_extract_servo_track(w);
-    } else {
-	talking_skull = wav_generate_servo_data(w);
+	wav_extract_servo_track(w);
     }
 
     audio_device_init_playback(&audio_dev);
@@ -99,9 +100,7 @@ main(int argc, char **argv)
 
     audio_set_volume(audio, 100);
 
-    talking_skull_play(talking_skull, update_servo, &s);
-    wav_play(w, audio);
-    talking_skull_wait_completion(talking_skull);
+    wav_play_with_talking_skull(w, audio, talking_skull);
 
     if (s.m) {
 	maestro_set_servo_pos(s.m, SERVO_ID, 50);

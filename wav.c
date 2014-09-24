@@ -38,8 +38,9 @@ struct chunk_fmt {
 
 struct wavS {
     audio_meta_t meta;
-    size_t n_audio;
+    size_t n_audio, n_servo;
     unsigned char *audio;
+    unsigned char *servo;
 };
 
 void stream_close(int sig)
@@ -103,14 +104,12 @@ wav_new(const char *fname)
     return w;
 }
 
-talking_skull_t *
+void
 wav_extract_servo_track(wav_t *w)
 {
     size_t i, j, k;
     unsigned char *servo_track;
     unsigned servo_channel;
-    audio_meta_t servo_meta;
-    talking_skull_t *t;
 
     servo_track = malloc(w->n_audio);
     servo_channel = w->meta.num_channels-1;
@@ -128,22 +127,21 @@ wav_extract_servo_track(wav_t *w)
     w->n_audio = j;
     w->meta.num_channels -= 1;
 
-    servo_meta = w->meta;
-    servo_meta.num_channels = 1;
-
-    t = talking_skull_new(&servo_meta, true, servo_track, k);
-
-    free(servo_track);
-
-    return t;
+    w->n_servo = k;
+    w->servo = servo_track;
 }
 
-talking_skull_t *
-wav_generate_servo_data(wav_t *w)
+audio_meta_t
+wav_get_meta(wav_t *w)
 {
-    assert(w);
+    return w->meta;
+}
 
-    return talking_skull_new(&w->meta, false, w->audio, w->n_audio);
+unsigned char *
+wav_get_data(wav_t *w, unsigned *n_bytes)
+{
+    *n_bytes = w->n_audio;
+    return w->audio;
 }
 
 void
@@ -157,6 +155,12 @@ wav_configure_audio(wav_t *w, audio_config_t *a)
 bool
 wav_play(wav_t *w, audio_t *audio)
 {
+    return wav_play_with_talking_skull(w, audio, NULL);
+}
+
+bool
+wav_play_with_talking_skull(wav_t *w, audio_t *audio, talking_skull_t *talking_skull)
+{
     size_t size;
     size_t i;
     bool rc = true;
@@ -165,6 +169,14 @@ wav_play(wav_t *w, audio_t *audio)
 
     size = audio_get_buffer_size(audio);
 
+    if (talking_skull) {
+	if (w->servo) {
+	    talking_skull_play(talking_skull, w->servo, w->n_servo);
+	} else {
+	    talking_skull_play(talking_skull, w->audio, w->n_audio);
+	}
+    }
+
     for (i = 0; i < w->n_audio; i += size) {
 	size_t this_size = i + size > w->n_audio ? w->n_audio - i : size;
 	if (! audio_play_buffer(audio, &w->audio[i], this_size)) {
@@ -172,6 +184,10 @@ wav_play(wav_t *w, audio_t *audio)
 	    rc = false;
 	    break;
 	}
+    }
+
+    if (talking_skull) {
+	talking_skull_wait_completion(talking_skull);
     }
 
     return rc;
