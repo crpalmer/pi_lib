@@ -20,7 +20,8 @@ piface_get(piface_t *p, unsigned pin);
 unsigned
 piface_get_all(piface_t *p);
 
-void
+/* returns the state of the 8 input bits */
+unsigned
 piface_wait_for_input(piface_t *p);
 
 void

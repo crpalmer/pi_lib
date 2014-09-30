@@ -52,13 +52,13 @@ piface_get_all(piface_t *p)
     return raw ^ 0xf;
 }
 
-void
+unsigned
 piface_wait_for_input(piface_t *p)
 {
     assert(p);
     assert(p->interrupts_enabled);
 
-    pifacedigital_wait_for_input(-1, p->hwaddr);
+    return pifacedigital_wait_for_input(-1, p->hwaddr);
 }
 
 void
