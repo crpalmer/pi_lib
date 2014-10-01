@@ -1,6 +1,8 @@
 *.o
 *.d
+.*.sw*
 lib.a
+test/audio
 test/maestro
 test/piface
 test/talking-skull
