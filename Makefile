@@ -7,9 +7,10 @@ TESTS = \
 	test/audio \
 	test/maestro \
 	test/piface \
-	test/talking-skull
+	test/talking-skull \
+	test/track
 
-AUDIO_OBJS = audio.o talking-skull.o wav.o
+AUDIO_OBJS = audio.o talking-skull.o track.o wav.o
 GPIO_OBJS = gpio.o piface.o
 NET_OBJS = net.o net-line-reader.o
 SERVO_OBJS = pi-usb.o maestro.o
@@ -49,6 +50,9 @@ test/piface: test/piface.o $(LIB)
 
 test/talking-skull: test/talking-skull.o $(LIB)
 	$(CC) test/talking-skull.o -o $@ $(LIBS)
+
+test/track: test/track.o $(LIB)
+	$(CC) test/track.o -o $@ $(LIBS)
 
 # compile and generate dependency info
 %.o: %.c
