@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <time.h>
 #include "util.h"
 
@@ -23,12 +24,12 @@ seed_random()
 double
 random_number()
 {
-    return random();
+    return random() / (LONG_MAX + 1.0);
 }
 
 bool
 randomly_with_prob(double prob)
 {
-    return random_number() < prob;
+    return random() < (prob * LONG_MAX);
 }
 
