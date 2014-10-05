@@ -15,6 +15,9 @@ int
 maestro_n_servos(maestro_t *m);
 
 int
+maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_full_range);
+
+int
 maestro_set_servo_is_inverted(maestro_t *m, servo_id_t id, int is_inverted);
 
 int

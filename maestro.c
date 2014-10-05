@@ -88,6 +88,22 @@ get_raw_parameter_ushort(maestro_t *m, int parameter, unsigned short *ret)
 }
 
 static int
+set_raw_parameter_ushort(maestro_t *m, int parameter, unsigned short value)
+{
+    char val_bytes[2];
+
+    val_bytes[0] = value & 0xff;
+    val_bytes[1] = (value >> 8) & 0xff;
+
+    if (usb_control_msg(m->handle, 0xc0, REQUEST_SET_PARAMETER, 0, parameter, val_bytes, 2, -1) < 0) {
+	fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
+	return 0;
+    }
+
+    return 1;
+}
+
+static int
 get_servo_config(maestro_t *m, servo_id_t id, servo_config_t *c)
 {
     unsigned char pos_tmp;
@@ -152,6 +168,21 @@ int
 maestro_n_servos(maestro_t *m)
 {
     return m->n_servos;
+}
+
+int
+maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_full_range)
+{
+    unsigned short total_us;
+    double total_units, speed;
+
+    if (id >= m->n_servos) return 0;
+
+    total_us = m->c[id].max_pos - m->c[id].min_pos + 1;
+    total_units = total_us / 0.25;
+    speed = total_units / (ms_for_full_range / 10.0);
+
+    return set_raw_parameter_ushort(m, PARAMETER_SERVO_SPEED(id), speed);
 }
 
 int
