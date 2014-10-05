@@ -11,6 +11,9 @@ seed_random();
 double
 random_number();
 
+unsigned
+random_number_in_range(unsigned low, unsigned high);
+
 bool
 randomly_with_prob(double prob);
 
