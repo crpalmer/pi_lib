@@ -14,7 +14,7 @@ AUDIO_OBJS = audio.o talking-skull.o track.o wav.o
 GPIO_OBJS = gpio.o piface.o
 NET_OBJS = net.o net-line-reader.o
 SERVO_OBJS = pi-usb.o maestro.o
-THREAD_OBJS = call-every.o
+THREAD_OBJS = call-every.o producer-consumer.o
 UTIL_OBJS = util.o file.o string-utils.o mem.o global-trace.o
 
 OBJS = \
