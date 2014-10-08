@@ -173,14 +173,20 @@ maestro_n_servos(maestro_t *m)
 int
 maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_full_range)
 {
-    unsigned short total_us;
-    double total_units, speed;
+    double speed;
 
     if (id >= m->n_servos) return 0;
 
-    total_us = m->c[id].max_pos - m->c[id].min_pos + 1;
-    total_units = total_us / 0.25;
-    speed = total_units / (ms_for_full_range / 10.0);
+    if (ms_for_full_range == 0) {
+	speed = 0;
+    } else {
+	unsigned short total_us;
+	double total_units;
+
+	total_us = m->c[id].max_pos - m->c[id].min_pos + 1;
+	total_units = total_us / 0.25;
+	speed = total_units / (ms_for_full_range / 10.0);
+    }
 
     return set_raw_parameter_ushort(m, PARAMETER_SERVO_SPEED(id), speed);
 }
