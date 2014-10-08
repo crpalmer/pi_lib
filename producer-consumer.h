@@ -7,9 +7,9 @@ producer_consumer_t *
 producer_consumer_new(size_t n_buffers);
 
 void *
-producer_consumer_consume(producer_consumer_t *);
+producer_consumer_consume(producer_consumer_t *, unsigned *seq);
 
-void
+unsigned
 producer_consumer_produce(producer_consumer_t *, void *buffer);
 
 void

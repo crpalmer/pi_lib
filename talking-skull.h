@@ -13,10 +13,10 @@ talking_skull_new(audio_meta_t *m, bool is_track, talking_skull_servo_update_t f
 void
 talking_skull_destroy(talking_skull_t *t);
 
-void
+unsigned
 talking_skull_play(talking_skull_t *t, unsigned char *data, unsigned n_bytes);
 
 void
-talking_skull_wait_completion(talking_skull_t *t);
+talking_skull_wait_completion(talking_skull_t *t, unsigned handle);
 
 #endif

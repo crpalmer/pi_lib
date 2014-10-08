@@ -9,6 +9,7 @@ struct producer_consumerS {
     size_t n_buffers;
     size_t n_full;
     size_t next_out, next_in;
+    unsigned seq_in, seq_out;
     pthread_mutex_t mutex;
     pthread_cond_t  cond;
 };
@@ -26,6 +27,8 @@ producer_consumer_new(size_t n_buffers)
     pc->n_full = 0;
     pc->next_in = 0;
     pc->next_out = 0;
+    pc->seq_in = 1;
+    pc->seq_out = 1;
     pthread_mutex_init(&pc->mutex, NULL);
     pthread_cond_init(&pc->cond, NULL);
 
@@ -33,7 +36,7 @@ producer_consumer_new(size_t n_buffers)
 }
 
 void *
-producer_consumer_consume(producer_consumer_t *pc)
+producer_consumer_consume(producer_consumer_t *pc, unsigned *seq)
 {
     void *ret;
 
@@ -45,6 +48,8 @@ producer_consumer_consume(producer_consumer_t *pc)
     ret = pc->buffers[pc->next_in];
     pc->next_in = (pc->next_in + 1) % pc->n_buffers;
     pc->n_full--;
+    if (seq) *seq = pc->seq_out;
+    pc->seq_out++;
 
     pthread_cond_signal(&pc->cond);
     pthread_mutex_unlock(&pc->mutex);
@@ -52,9 +57,11 @@ producer_consumer_consume(producer_consumer_t *pc)
     return ret;
 } 
 
-void
+unsigned
 producer_consumer_produce(producer_consumer_t *pc, void *buffer)
 {
+    unsigned seq;
+
     pthread_mutex_lock(&pc->mutex);
     while (pc->n_full == pc->n_buffers) {
 	pthread_cond_wait(&pc->cond, &pc->mutex);
@@ -64,8 +71,12 @@ producer_consumer_produce(producer_consumer_t *pc, void *buffer)
     pc->next_out = (pc->next_out + 1) % pc->n_buffers;
     pc->n_full++;
 
+    seq = pc->seq_in++;
+
     pthread_cond_signal(&pc->cond);
     pthread_mutex_unlock(&pc->mutex);
+
+    return seq;
 }
 
 void

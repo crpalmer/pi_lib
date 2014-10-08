@@ -62,5 +62,14 @@ audio_meta_init(audio_meta_t *m, unsigned sample_rate, unsigned num_channels, un
      m->num_channels = num_channels;
      m->bytes_per_sample = bytes_per_sample;
 }
+
+static inline void
+audio_meta_init_from_config(audio_meta_t *m, audio_config_t *c)
+{
+    m->sample_rate = c->rate;
+    m->num_channels = c->channels;
+    m->bytes_per_sample = (c->bits+7)/8;
+}
+
 #endif
 

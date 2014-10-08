@@ -42,6 +42,9 @@ struct talking_skullS {
     void *fn_data;
     pthread_t thread;
     producer_consumer_t *ops_pc;
+    unsigned seq_complete;
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
 };
 
 static servo_operations_t *
@@ -125,6 +128,13 @@ state_init(state_t *s, audio_meta_t *m, bool is_track)
 } 
 
 static void
+state_start_new_buffer(state_t *s)
+{
+    s->last_usec = s->last_printed_usec = 0;
+    s->i = 0;
+}
+
+static void
 state_update(state_t *s, servo_operations_t *ops, unsigned val)
 {
     s->i++;
@@ -166,9 +176,17 @@ update_main(void *t_as_vp)
     talking_skull_t *t = (talking_skull_t *) t_as_vp;
 
     while (true) {
-	servo_operations_t *ops = producer_consumer_consume(t->ops_pc);
+	unsigned seq;
+	servo_operations_t *ops;
+
+	ops = producer_consumer_consume(t->ops_pc, &seq);
 	servo_operations_play(ops, t->fn, t->fn_data);
 	servo_operations_destroy(ops);
+
+	pthread_mutex_lock(&t->mutex);
+	t->seq_complete = seq;
+	pthread_cond_signal(&t->cond);
+	pthread_mutex_unlock(&t->mutex);
     }
 
     return NULL;
@@ -183,6 +201,9 @@ talking_skull_new(audio_meta_t *m, bool is_track, talking_skull_servo_update_t f
     t = fatal_malloc(sizeof(*t));
     t->m = *m;
     t->ops_pc = producer_consumer_new(1);
+    t->seq_complete = 0;
+    pthread_mutex_init(&t->mutex, NULL);
+    pthread_cond_init(&t->cond, NULL);
 
     if (is_track) {
 	t->m.num_channels = 1;
@@ -197,7 +218,7 @@ talking_skull_new(audio_meta_t *m, bool is_track, talking_skull_servo_update_t f
     return t;
 }
 
-void
+unsigned
 talking_skull_play(talking_skull_t *t, unsigned char *data, unsigned n_bytes)
 {
     size_t i;
@@ -205,16 +226,22 @@ talking_skull_play(talking_skull_t *t, unsigned char *data, unsigned n_bytes)
 
     ops = servo_operations_new();
 
+    state_start_new_buffer(&t->state);
+
     for (i = 0; i < n_bytes; ) {
 	unsigned val = decode_value(&t->m, data, &i, t->state.max_possible);
 	state_update(&t->state, ops, val);
     }
 
-    producer_consumer_produce(t->ops_pc, ops);
+    return producer_consumer_produce(t->ops_pc, ops);
 }
 
 void
-talking_skull_wait_completion(talking_skull_t *t)
+talking_skull_wait_completion(talking_skull_t *t, unsigned seq)
 {
-    pthread_join(t->thread, NULL);
+    pthread_mutex_lock(&t->mutex);
+    while (t->seq_complete < seq) {
+	pthread_cond_wait(&t->cond, &t->mutex);
+    }
+    pthread_mutex_unlock(&t->mutex);
 }

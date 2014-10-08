@@ -164,6 +164,7 @@ wav_play_with_talking_skull(wav_t *w, audio_t *audio, talking_skull_t *talking_s
     size_t size;
     size_t i;
     bool rc = true;
+    unsigned handle;
 
     assert(w);
 
@@ -171,9 +172,9 @@ wav_play_with_talking_skull(wav_t *w, audio_t *audio, talking_skull_t *talking_s
 
     if (talking_skull) {
 	if (w->servo) {
-	    talking_skull_play(talking_skull, w->servo, w->n_servo);
+	    handle = talking_skull_play(talking_skull, w->servo, w->n_servo);
 	} else {
-	    talking_skull_play(talking_skull, w->audio, w->n_audio);
+	    handle = talking_skull_play(talking_skull, w->audio, w->n_audio);
 	}
     }
 
@@ -187,7 +188,7 @@ wav_play_with_talking_skull(wav_t *w, audio_t *audio, talking_skull_t *talking_s
     }
 
     if (talking_skull) {
-	talking_skull_wait_completion(talking_skull);
+	talking_skull_wait_completion(talking_skull, handle);
     }
 
     return rc;
