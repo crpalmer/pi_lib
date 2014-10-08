@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include "mem.h"
+#include "producer-consumer.h"
 #include "time-utils.h"
 #include "talking-skull.h"
 
@@ -29,15 +30,67 @@ typedef struct {
     double	pos;
 } servo_data_t;
 
+typedef struct {
+    size_t n, a;
+    servo_data_t *servo;
+} servo_operations_t;
+
 struct talking_skullS {
     audio_meta_t m;
-    size_t n_servo, a_servo;
-    servo_data_t *servo;
     state_t state;
     talking_skull_servo_update_t fn;
     void *fn_data;
     pthread_t thread;
+    producer_consumer_t *ops_pc;
 };
+
+static servo_operations_t *
+servo_operations_new(void)
+{
+    servo_operations_t *ops = fatal_malloc(sizeof(*ops));
+
+    ops->n = 0;
+    ops->a = 1024;
+    ops->servo = fatal_malloc(ops->a * sizeof(*ops->servo));
+
+    return ops;
+}
+
+static void
+servo_operations_add(servo_operations_t *ops, unsigned usec, double pos)
+{
+    if (ops->a <= ops->n) {
+	ops->a *= 2;
+	ops->servo = fatal_realloc(ops->servo, ops->a * sizeof(*ops->servo));
+    }
+    ops->servo[ops->n].usec = usec;
+    ops->servo[ops->n].pos  = pos;
+    ops->n++;
+}
+
+static void
+servo_operations_play(servo_operations_t *ops, talking_skull_servo_update_t fn, void *fn_data)
+{
+    struct timespec start, next;
+    unsigned cur = 0;
+
+    nano_gettime(&start);
+
+    while (cur < ops->n) {
+	next = start;
+	nano_add_usec(&next, ops->servo[cur].usec);
+	nano_sleep_until(&next);
+	fn(fn_data, ops->servo[cur].pos);
+	cur++;
+    }
+}
+
+static void
+servo_operations_destroy(servo_operations_t *ops)
+{
+    free(ops->servo);
+    free(ops);
+}
 
 static unsigned
 decode_value(audio_meta_t *m, unsigned char *data, size_t *cur, unsigned max_possible)
@@ -72,10 +125,8 @@ state_init(state_t *s, audio_meta_t *m, bool is_track)
 } 
 
 static void
-state_update(talking_skull_t *t, unsigned val)
+state_update(state_t *s, servo_operations_t *ops, unsigned val)
 {
-    state_t *s = &t->state;
-
     s->i++;
 
     if (val > s->mx) s->mx = val;
@@ -86,30 +137,43 @@ state_update(talking_skull_t *t, unsigned val)
     }
 
     if (s->n_samples % (s->n_per_servo * s->n_to_avg) == 0) {
+	unsigned usec;
 	unsigned this_usec = s->i * s->i_to_usec;
+	double pos;
 
-	if (t->n_servo >= t->a_servo) {
-	    t->a_servo *= 2;
-	    t->servo = fatal_realloc(t->servo, sizeof(*t->servo)*t->a_servo);
-	}
-
-	t->servo[t->n_servo].pos = ((double) s->sum) / s->n_to_avg / s->max_possible * 100;
-	t->servo[t->n_servo].usec = (this_usec - s->last_usec) / 2 + s->last_usec;
+	usec = (this_usec - s->last_usec) / 2 + s->last_usec;
+	pos = ((double) s->sum) / s->n_to_avg / s->max_possible * 100;
 	s->last_usec = this_usec;
 
+	servo_operations_add(ops, usec, pos);
+
 	if (PRINT_SERVO) {
-	    if (t->servo[t->n_servo].usec - s->last_printed_usec > 20*1000) {
-		unsigned this_val = t->servo[t->n_servo].pos / 2 + 0.5;
-		printf("%9.6f:%*c%*c\n", t->servo[t->n_servo].usec / (1000.0*1000.0), this_val+1, '*', 50 - this_val, '|');
-		s->last_printed_usec = t->servo[t->n_servo].usec;
+	    if (usec - s->last_printed_usec > 20*1000) {
+		unsigned this_val = pos / 2 + 0.5;
+		printf("%9.6f:%*c%*c\n", usec / (1000.0*1000.0), this_val+1, '*', 50 - this_val, '|');
+		s->last_printed_usec = usec;
 	    }
 	}
 
-	t->n_servo++;
 	s->n_samples = 0;
 	s->sum = 0;
     }
 }
+
+static void *
+update_main(void *t_as_vp)
+{
+    talking_skull_t *t = (talking_skull_t *) t_as_vp;
+
+    while (true) {
+	servo_operations_t *ops = producer_consumer_consume(t->ops_pc);
+	servo_operations_play(ops, t->fn, t->fn_data);
+	servo_operations_destroy(ops);
+    }
+
+    return NULL;
+}
+
 
 talking_skull_t *
 talking_skull_new(audio_meta_t *m, bool is_track, talking_skull_servo_update_t fn, void *fn_data)
@@ -118,9 +182,7 @@ talking_skull_new(audio_meta_t *m, bool is_track, talking_skull_servo_update_t f
 
     t = fatal_malloc(sizeof(*t));
     t->m = *m;
-    t->n_servo = 0;
-    t->a_servo = 1024;
-    t->servo = fatal_malloc(sizeof(*t->servo) * t->a_servo);
+    t->ops_pc = producer_consumer_new(1);
 
     if (is_track) {
 	t->m.num_channels = 1;
@@ -130,41 +192,25 @@ talking_skull_new(audio_meta_t *m, bool is_track, talking_skull_servo_update_t f
     t->fn = fn;
     t->fn_data = fn_data;
 
+    pthread_create(&t->thread, NULL, update_main, t);
+
     return t;
-}
-
-
-static void *
-update_main(void *t_as_vp)
-{
-
-    talking_skull_t *t = (talking_skull_t *) t_as_vp;
-    struct timespec start, next;
-    unsigned cur = 0;
-
-    nano_gettime(&start);
-    while (cur < t->n_servo) {
-	next = start;
-	nano_add_usec(&next, t->servo[cur].usec);
-	nano_sleep_until(&next);
-	t->fn(t->fn_data, t->servo[cur].pos);
-	cur++;
-    }
-
-    return NULL;
 }
 
 void
 talking_skull_play(talking_skull_t *t, unsigned char *data, unsigned n_bytes)
 {
     size_t i;
+    servo_operations_t *ops;
+
+    ops = servo_operations_new();
 
     for (i = 0; i < n_bytes; ) {
 	unsigned val = decode_value(&t->m, data, &i, t->state.max_possible);
-	state_update(t, val);
+	state_update(&t->state, ops, val);
     }
 
-    pthread_create(&t->thread, NULL, update_main, t);
+    producer_consumer_produce(t->ops_pc, ops);
 }
 
 void
