@@ -20,6 +20,8 @@ piface_get(piface_t *p, unsigned pin);
 unsigned
 piface_get_all(piface_t *p);
 
+#define PIFACE_IS_SELECTED(buttons, i) (((buttons) & (1<<(i))) == 0)
+
 /* returns the state of the 8 input bits */
 unsigned
 piface_wait_for_input(piface_t *p);
