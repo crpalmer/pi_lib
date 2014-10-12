@@ -38,6 +38,7 @@ void
 track_play(track_t *t)
 {
     audio_t *audio = audio_new(&t->audio_cfg, &t->audio_dev);
+    audio_set_volume(audio, 100);
     wav_play(t->wav, audio);
     audio_destroy(audio);
 }
