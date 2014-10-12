@@ -41,6 +41,12 @@ gpio_new(gpio_table_t *table, int n_table)
      return g;
 }
 
+static void
+set_gpio_id(gpio_t *g, size_t i, int value)
+{
+    fatal_echo(g->value_fname[i], "%d\n", value);
+}
+
 static int
 set_gpio(gpio_t *g, const char *name, int value)
 {
@@ -48,13 +54,12 @@ set_gpio(gpio_t *g, const char *name, int value)
 
      for (i = 0; i < g->n_table; i++) {
 	if (strcmp(g->table[i].name, name) == 0) {
-	     fatal_echo(g->value_fname[i], "%d\n", value);
+	     set_gpio_id(g, i, value);
 	     return 0;
 	}
     }
     return -1;
 }
-
 
 int
 gpio_low(gpio_t *g, const char *name)
@@ -66,6 +71,18 @@ int
 gpio_high(gpio_t *g, const char *name)
 {
      return set_gpio(g, name, 1);
+}
+
+void
+gpio_low_id(gpio_t *g, size_t id)
+{
+     set_gpio_id(g, id, 0);
+}
+
+void
+gpio_high_id(gpio_t *g, size_t id)
+{
+     set_gpio_id(g, id, 1);
 }
 
 void
