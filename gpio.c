@@ -11,14 +11,20 @@
 #define EXPORT_FNAME "/sys/class/gpio/export"
 #define UNEXPORT_FNAME "/sys/class/gpio/unexport"
 
-#define HIGH_VALUE 1
-#define LOW_VALUE 0
+#define HIGH_VALUE 0
+#define LOW_VALUE 1
 
 struct gpioS {
      gpio_table_t *table;
      char        **value_fname;
      int           n_table;
 };
+
+static void
+set_gpio_id(gpio_t *g, size_t i, int value)
+{
+    fatal_echo(g->value_fname[i], "%d\n", value);
+}
 
 gpio_t *
 gpio_new(gpio_table_t *table, int n_table)
@@ -37,17 +43,11 @@ gpio_new(gpio_table_t *table, int n_table)
 	fatal_echo(EXPORT_FNAME, "%d\n", g->table[i].gpio);
 
 	fatal_echo(direction, "out\n");
-	fatal_echo(g->value_fname[i], "%d\n", g->table[i].initially_high ? HIGH_VALUE : LOW_VALUE);
+	set_gpio_id(g, i, g->table[i].initially_high ? LOW_VALUE : HIGH_VALUE);
 	free(direction);
      }
 
      return g;
-}
-
-static void
-set_gpio_id(gpio_t *g, size_t i, int value)
-{
-    fatal_echo(g->value_fname[i], "%d\n", value);
 }
 
 static int
