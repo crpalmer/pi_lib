@@ -11,6 +11,20 @@
 
 #include "server.h"
 
+static void
+command(void *server_as_vp, int fd, const char *line)
+{
+    server_args_t *server = (server_args_t *) server_as_vp;
+
+    char *response = server->command(server->state, line);
+fprintf(stderr, "response: %s\n", response);
+    write(fd, response, strlen(response));
+    if (! strlen(response) || response[strlen(response)] != '\n') {
+	write(fd, "\n", 1);
+    }
+    free(response);
+}
+
 void *
 server_thread_main(void *server_as_vp)
 {
@@ -59,7 +73,7 @@ server_thread_main(void *server_as_vp)
 			     inet_ntoa(clientname.sin_addr),
 			   ntohs(clientname.sin_port));
 		    FD_SET(new, &active_fd_set);
-		    readers[new] = net_line_reader_new(new, server->command, server->state);
+		    readers[new] = net_line_reader_new(new, command, server);
 		} else {
 		    /* Data arriving on an already-connected socket. */
 		    if (net_line_reader_read(readers[i]) < 0){

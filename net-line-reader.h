@@ -3,7 +3,7 @@
 
 typedef struct net_line_readerS net_line_reader_t;
 
-typedef void (*net_line_reader_callback_t)(void *data, const char *line);
+typedef void (*net_line_reader_callback_t)(void *data, int socket, const char *line);
 
 net_line_reader_t *
 net_line_reader_new(int fd, net_line_reader_callback_t cb, void *data);

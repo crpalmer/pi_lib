@@ -3,7 +3,7 @@
 
 typedef struct {
     unsigned short port;
-    void (*command)(void *state, const char *cmd);
+    char *(*command)(void *state, const char *cmd);
     void *state;
 } server_args_t;
 

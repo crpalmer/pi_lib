@@ -50,7 +50,7 @@ net_line_reader_read(net_line_reader_t *r)
 	    if (r->n_buf > 0) {
 		r->buf[r->n_buf] = '\0';
 		if (global_trace) fprintf(stderr, "%s: %d line %s\n", __func__, r->fd, r->buf);
-		r->cb(r->data, r->buf);	
+		r->cb(r->data, r->fd, r->buf);
 	    }
 	    memmove(r->buf, &r->buf[r->n_buf + 1], n_bytes);
 	    r->n_buf = 0;
