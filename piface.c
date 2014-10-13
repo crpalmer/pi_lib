@@ -48,8 +48,7 @@ piface_get(piface_t *p, unsigned pin)
 unsigned
 piface_get_all(piface_t *p)
 {
-    unsigned raw = pifacedigital_read_reg(INPUT, p->hwaddr);
-    return raw ^ 0xf;
+    return pifacedigital_read_reg(INPUT, p->hwaddr);
 }
 
 unsigned
