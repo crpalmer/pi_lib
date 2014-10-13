@@ -21,6 +21,7 @@ unsigned
 piface_get_all(piface_t *p);
 
 #define PIFACE_IS_SELECTED(buttons, i) (((buttons) & (1<<(i))) == 0)
+#define PIFACE_NONE_SELECTED(buttons) ((buttons & 0xff) == 0xff)
 
 /* returns the state of the 8 input bits */
 unsigned
