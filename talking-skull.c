@@ -7,7 +7,7 @@
 #include "time-utils.h"
 #include "talking-skull.h"
 
-#define PRINT_SERVO     1
+#define PRINT_SERVO     0
 #define N_SERVO_PER_S   5000
 #define N_TO_AVG_TRACK  5
 #define N_TO_AVG_GENERATED 250
