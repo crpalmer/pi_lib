@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <pthread.h>
 #include "audio.h"
 #include "mem.h"
 #include "wav.h"
@@ -41,6 +42,22 @@ track_play(track_t *t)
     audio_set_volume(audio, 100);
     wav_play(t->wav, audio);
     audio_destroy(audio);
+}
+
+static void *
+play_main(void *t_as_vp)
+{
+    track_play(t_as_vp);
+    return NULL;
+}
+
+void
+track_play_asynchronously(track_t *t)
+{
+    pthread_t thread;
+
+    pthread_create(&thread, NULL, play_main, t);
+    pthread_detach(thread);
 }
 
 void
