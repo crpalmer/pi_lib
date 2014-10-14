@@ -7,6 +7,8 @@ typedef struct {
     void *state;
 } server_args_t;
 
+#define SERVER_OK "ok"
+
 void *
 server_thread_main(void *);
 
