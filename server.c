@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+#include <pthread.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "mem.h"
@@ -16,8 +17,9 @@ static void
 command(void *server_as_vp, int fd, const char *line)
 {
     server_args_t *server = (server_args_t *) server_as_vp;
-
     char *response = server->command(server->state, line);
+
+printf("response: %s\n", response);
 
     if (! strlen(response) || response[strlen(response)] != '\n') {
 	char *response2 = malloc(strlen(response) + 2);
@@ -30,17 +32,34 @@ command(void *server_as_vp, int fd, const char *line)
     free(response);
 }
 
+typedef struct {
+    int fd;
+    server_args_t *server;
+} connection_t;
+
+void *
+connection_main(void *c_as_vp)
+{
+    connection_t *c = (connection_t *) c_as_vp;
+    int fd = c->fd;
+    server_args_t *server = c->server;
+    net_line_reader_t *reader;
+
+    free(c);
+    reader = net_line_reader_new(fd, command, server);
+    while (net_line_reader_read(reader) >= 0) {
+    }
+    net_line_reader_destroy(reader);
+    close(fd);
+
+    return NULL;
+}
+
 void *
 server_thread_main(void *server_as_vp)
 {
     server_args_t *server = (server_args_t *) server_as_vp;
     int sock;
-    fd_set active_fd_set, read_fd_set;
-    int i;
-    struct sockaddr_in clientname;
-    size_t size;
-    net_line_reader_t **readers;
-    unsigned n_active = 0;
 
     signal(SIGPIPE, SIG_IGN);
 
@@ -50,52 +69,29 @@ server_thread_main(void *server_as_vp)
 	exit(1);
     }
 
-    readers = fatal_malloc(sizeof(*readers) * FD_SETSIZE);
-
-    /* Initialize the set of active sockets. */
-    FD_ZERO(&active_fd_set);
-    FD_SET(sock, &active_fd_set);
-
     while (1) {
-	/* Block until input arrives on one or more active sockets. */
-	read_fd_set = active_fd_set;
-	if (select(FD_SETSIZE, &read_fd_set, NULL, NULL, NULL) < 0) {
-	    perror("select");
-	    exit(EXIT_FAILURE);
-	 }
+	connection_t *c;
+	pthread_t thread;
+	int fd;
+	struct sockaddr_in clientname;
+	size_t size = sizeof(clientname);
 
-	/* Service all the sockets with input pending. */
-	for (i = 0; i < FD_SETSIZE; ++i) {
-	    if (FD_ISSET(i, &read_fd_set)) {
-		if (i == sock) {
-		    /* Connection request on original socket. */
-		    int new;
-		    size = sizeof(clientname);
-		    new = accept(sock, (struct sockaddr *) &clientname, &size);
-		    if (new < 0) {
-			perror("accept");
-			exit(EXIT_FAILURE);
-		    }
-		    fprintf(stderr,
-			     "Server: connect from host %s, port %hu.\n",
-			     inet_ntoa(clientname.sin_addr),
-			   ntohs(clientname.sin_port));
-		    FD_SET(new, &active_fd_set);
-		    readers[new] = net_line_reader_new(new, command, server);
-		    n_active++;
-		    printf("++ %u active connections.\n", n_active);
-		} else {
-		    /* Data arriving on an already-connected socket. */
-		    if (net_line_reader_read(readers[i]) < 0){
-			perror("read");
-			net_line_reader_destroy(readers[i]);
-			close(i);
-			n_active--;
-			printf("-- %u active connections.\n", n_active);
-			FD_CLR(i, &active_fd_set);
-		    }
-		}
-	    }
+	fd = accept(sock, (struct sockaddr *) &clientname, &size);
+	if (fd < 0) {
+	    perror("accept");
+	    exit(EXIT_FAILURE);
 	}
+
+	fprintf(stderr,
+		 "Server: connect from host %s, port %hu.\n",
+		 inet_ntoa(clientname.sin_addr),
+	       ntohs(clientname.sin_port));
+
+	c = malloc(sizeof(*c));
+	c->fd = fd;
+	c->server = server;
+
+	pthread_create(&thread, NULL, connection_main, c);
+	pthread_detach(thread);
     }
 }
