@@ -11,7 +11,7 @@
 #define SERVO_MIN 35
 #define SERVO_MAX 90
 
-#define EYES 2
+#define EYES 7
 
 typedef struct {
     maestro_t *m;
