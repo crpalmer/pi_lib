@@ -40,6 +40,7 @@ server_thread_main(void *server_as_vp)
     struct sockaddr_in clientname;
     size_t size;
     net_line_reader_t **readers;
+    unsigned n_active = 0;
 
     signal(SIGPIPE, SIG_IGN);
 
@@ -76,17 +77,21 @@ server_thread_main(void *server_as_vp)
 			exit(EXIT_FAILURE);
 		    }
 		    fprintf(stderr,
-			     "Server: connect from host %s, port %hd.\n",
+			     "Server: connect from host %s, port %hu.\n",
 			     inet_ntoa(clientname.sin_addr),
 			   ntohs(clientname.sin_port));
 		    FD_SET(new, &active_fd_set);
 		    readers[new] = net_line_reader_new(new, command, server);
+		    n_active++;
+		    printf("++ %u active connections.\n", n_active);
 		} else {
 		    /* Data arriving on an already-connected socket. */
 		    if (net_line_reader_read(readers[i]) < 0){
 			perror("read");
 			net_line_reader_destroy(readers[i]);
 			close(i);
+			n_active--;
+			printf("-- %u active connections.\n", n_active);
 			FD_CLR(i, &active_fd_set);
 		    }
 		}
