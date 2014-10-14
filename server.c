@@ -17,11 +17,15 @@ command(void *server_as_vp, int fd, const char *line)
     server_args_t *server = (server_args_t *) server_as_vp;
 
     char *response = server->command(server->state, line);
-fprintf(stderr, "response: %s\n", response);
-    write(fd, response, strlen(response));
+
     if (! strlen(response) || response[strlen(response)] != '\n') {
-	write(fd, "\n", 1);
+	char *response2 = malloc(strlen(response) + 2);
+	sprintf(response2, "%s\n", response);
+	free(response);
+	response = response2;
     }
+
+    write(fd, response, strlen(response));
     free(response);
 }
 
