@@ -13,11 +13,12 @@
 
 #include "server.h"
 
-static void
+static bool
 command(void *server_as_vp, int fd, const char *line)
 {
     server_args_t *server = (server_args_t *) server_as_vp;
     char *response = server->command(server->state, line);
+    bool success;
 
 printf("response: %s\n", response);
 
@@ -28,8 +29,10 @@ printf("response: %s\n", response);
 	response = response2;
     }
 
-    write(fd, response, strlen(response));
+    success = write(fd, response, strlen(response)) == strlen(response);
     free(response);
+
+    return success;
 }
 
 typedef struct {
