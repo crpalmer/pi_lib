@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "mem.h"
@@ -39,6 +40,8 @@ server_thread_main(void *server_as_vp)
     struct sockaddr_in clientname;
     size_t size;
     net_line_reader_t **readers;
+
+    signal(SIGPIPE, SIG_IGN);
 
     sock = net_listen(server->port);
     if (sock < 0) {
