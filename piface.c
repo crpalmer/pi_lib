@@ -5,6 +5,10 @@
 #include "mcp23s17.h"
 #include "piface.h"
 
+/* Disable the use of interrupts as this seems to have been buggy */
+
+#define USE_INTERRUPTS 0
+
 struct pifaceS {
    unsigned hwaddr;
    bool     interrupts_enabled;
@@ -54,10 +58,20 @@ piface_get_all(piface_t *p)
 unsigned
 piface_wait_for_input(piface_t *p)
 {
+#if USE_INTERRUPTS
     assert(p);
     assert(p->interrupts_enabled);
 
     return pifacedigital_wait_for_input(-1, p->hwaddr);
+#else
+    unsigned buttons;
+
+    assert(p);
+    while ((buttons = piface_get_all(p)) == 0xff) {
+	ms_sleep(1);
+    }
+    return buttons;
+#endif
 }
 
 void
