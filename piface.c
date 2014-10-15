@@ -25,7 +25,7 @@ piface_new_id(unsigned hwaddr)
 
     pifacedigital_open(hwaddr);
     p->interrupts_enabled = (pifacedigital_enable_interrupts() == 0);
-    if (! p->interrupts_enabled == 0) {
+    if (! p->interrupts_enabled) {
         fprintf(stderr, "%s: Could not enable interrupts.\n", __func__);
     }
 
