@@ -113,14 +113,14 @@ decode_value(audio_meta_t *m, unsigned char *data, size_t *cur, unsigned max_pos
 }
 
 static void
-state_init(state_t *s, audio_meta_t *m, bool is_track)
+state_init(state_t *s, audio_meta_t *m, size_t n_to_avg)
 {
     s->n_per_servo = m->sample_rate * m->num_channels / N_SERVO_PER_S;
     s->mx = 0;
     s->sum = 0;
     s->n_samples = 0;
     s->max_possible = (((unsigned) 1)<<(m->bytes_per_sample*8-1))-1;
-    s->n_to_avg = is_track ? N_TO_AVG_TRACK : N_TO_AVG_GENERATED;
+    s->n_to_avg = n_to_avg;
     s->last_usec = 0;
     s->last_printed_usec = 0;
     s->i = 0;
@@ -196,6 +196,18 @@ update_main(void *t_as_vp)
 talking_skull_t *
 talking_skull_new(audio_meta_t *m, bool is_track, talking_skull_servo_update_t fn, void *fn_data)
 {
+    audio_meta_t local_m = *m;
+
+    if (is_track) {
+	local_m.num_channels = 1;
+    }
+
+    return talking_skull_new_with_n_to_avg(&local_m, is_track ? N_TO_AVG_TRACK : N_TO_AVG_GENERATED, fn, fn_data);
+}
+
+talking_skull_t *
+talking_skull_new_with_n_to_avg(audio_meta_t *m, size_t n_to_avg, talking_skull_servo_update_t fn, void *fn_data)
+{
     talking_skull_t *t;
 
     t = fatal_malloc(sizeof(*t));
@@ -205,11 +217,7 @@ talking_skull_new(audio_meta_t *m, bool is_track, talking_skull_servo_update_t f
     pthread_mutex_init(&t->mutex, NULL);
     pthread_cond_init(&t->cond, NULL);
 
-    if (is_track) {
-	t->m.num_channels = 1;
-    }
-
-    state_init(&t->state, &t->m, is_track);
+    state_init(&t->state, &t->m, n_to_avg);
     t->fn = fn;
     t->fn_data = fn_data;
 
