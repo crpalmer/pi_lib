@@ -138,7 +138,7 @@ wav_get_meta(wav_t *w)
 }
 
 unsigned char *
-wav_get_data(wav_t *w, unsigned *n_bytes)
+wav_get_raw_data(wav_t *w, unsigned *n_bytes)
 {
     *n_bytes = w->n_audio;
     return w->audio;

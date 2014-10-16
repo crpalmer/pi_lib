@@ -20,6 +20,9 @@ wav_configure_audio(wav_t *w, audio_config_t *m);
 audio_meta_t
 wav_get_meta(wav_t *w);
 
+unsigned char *
+wav_get_raw_data(wav_t *w, size_t *n_ret);
+
 bool
 wav_play(wav_t *w, audio_t *audio);
 
