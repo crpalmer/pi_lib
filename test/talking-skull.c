@@ -8,7 +8,7 @@
 #include "wav.h"
 
 #define SERVO_ID 0
-#define SERVO_MIN 35
+#define SERVO_MIN 20
 #define SERVO_MAX 90
 
 #define EYES 7
