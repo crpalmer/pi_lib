@@ -34,6 +34,7 @@ audio_new(audio_config_t *cfg, audio_device_t *device)
     if ((pcm = pcm_open(device->card, device->device, device->playback ? PCM_OUT : PCM_IN, &config)) == NULL ||
 	! pcm_is_ready(pcm))
     {
+	fprintf(stderr, "Failed to open: %s\n", pcm_get_error(pcm));
 	return NULL;
     }
 
