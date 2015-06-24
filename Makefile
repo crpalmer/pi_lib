@@ -32,7 +32,7 @@ EXTERNALS = $E/tinyalsa/pcm.o $E/tinyalsa/mixer.o \
 
 all: $(LIB) $(TESTS)
 
-$(LIB): $(OBJS)
+$(LIB): $(OBJS) $(EXTERNALS)
 	@echo "Linking: $(LIB)"
 	@ar r $@ $(OBJS) $(EXTERNALS)
 
