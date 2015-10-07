@@ -213,3 +213,27 @@ maestro_set_servo_pos(maestro_t *m, servo_id_t id, double pos)
     real_pos = ((m->c[id].max_pos - m->c[id].min_pos) * pos + 50) / 100 + m->c[id].min_pos;
     return usb_control_msg(m->handle, 0x40, REQUEST_SET_TARGET, real_pos, id, NULL, 0, -1) >= 0;
 }
+
+void
+maestro_set_range(maestro_t *m, servo_id_t id, maestro_range_t range)
+{
+    switch(range) {
+    case STANDARD_SERVO:
+	m->c[id].min_pos = 1050*4;
+	m->c[id].max_pos = 1950*4;
+	break;
+    case EXTENDED_SERVO:
+	m->c[id].min_pos = 600*4;
+	m->c[id].max_pos = 2400*4;
+	break;
+    case TALKING_SKULL:
+	m->c[id].min_pos = 1100*4;
+	m->c[id].max_pos = 1680*4;
+	break;
+    case TALKING_DEER:
+	// TODO, this is a placeholder
+	m->c[id].min_pos = 1500*4;
+	m->c[id].max_pos = 1950*4;
+	break;
+    }
+}

@@ -5,6 +5,13 @@ typedef struct maestroS maestro_t;
 
 typedef unsigned char servo_id_t;
 
+typedef enum {
+    STANDARD_SERVO,
+    EXTENDED_SERVO,
+    TALKING_SKULL,
+    TALKING_DEER,
+} maestro_range_t;
+
 maestro_t *
 maestro_new(void);
 
@@ -13,6 +20,9 @@ maestro_destroy(maestro_t *m);
 
 int
 maestro_n_servos(maestro_t *m);
+
+void
+maestro_set_range(maestro_t *m, servo_id_t id, maestro_range_t range);
 
 int
 maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_full_range);

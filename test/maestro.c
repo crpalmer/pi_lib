@@ -5,7 +5,7 @@
 #include "pi-usb.h"
 #include "call-every.h"
 
-#define STEP_MS   5
+#define STEP_MS   100
 #define STEP_SIZE (100.0 / 5 / 1000 * STEP_MS)
 
 typedef struct {
@@ -28,6 +28,8 @@ update_servos(void *s_as_vp)
 	s->step= -s->step;
     }
 
+    printf("pos = %f\n", s->pos);
+
     if (! maestro_set_servo_pos(s->m, 0, s->pos)) printf("set_target failed.\n");
     if (! maestro_set_servo_pos(s->m, 1, s->pos)) printf("set_target failed.\n");
 }
@@ -44,6 +46,8 @@ main(int argc, char **argv)
 	fprintf(stderr, "couldn't find a recognized device.\n");
 	exit(1);
     }
+
+    //maestro_set_range(m, 0, TALKING_SKULL);
    
     printf("n-servos = %d\n", maestro_n_servos(m));
 

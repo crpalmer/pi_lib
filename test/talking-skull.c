@@ -8,8 +8,6 @@
 #include "wav.h"
 
 #define SERVO_ID 0
-#define SERVO_MIN 20
-#define SERVO_MAX 90
 
 #define EYES 7
 
@@ -26,7 +24,7 @@ update_servo(void *s_as_vp, double pos)
 
     pos *= s->gain;
     if (pos > 100) pos = 100;
-    maestro_set_servo_pos(s->m, SERVO_ID, pos * (SERVO_MAX - SERVO_MIN) / 100 + SERVO_MIN);
+    maestro_set_servo_pos(s->m, SERVO_ID, pos);
     piface_set(s->p, EYES, pos > 50);
 }
 
@@ -51,6 +49,7 @@ main(int argc, char **argv)
 	exit(1);
     }
     maestro_set_servo_is_inverted(s.m, SERVO_ID, 1);
+    maestro_set_range(s.m, SERVO_ID, TALKING_SKULL);
 
     while (argc > 1 && argv[1][0] == '-' && argv[1][1] == '-') {
 	if (strcmp(argv[1], "--") == 0) {
@@ -66,6 +65,13 @@ main(int argc, char **argv)
 
 	if (argc > 1 && strcmp(argv[1], "--servo") == 0) {
 	    has_servo_track = true;
+	    argc -= 1;
+	    argv += 1;
+	}
+
+	if (argc > 1 && strcmp(argv[1], "--deer") == 0) {
+	    maestro_set_servo_is_inverted(s.m, SERVO_ID, 0);
+	    maestro_set_range(s.m, SERVO_ID, TALKING_DEER);
 	    argc -= 1;
 	    argv += 1;
 	}
