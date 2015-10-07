@@ -30,10 +30,11 @@ typedef struct {
     double	pos;
 } servo_data_t;
 
-typedef struct {
+struct servo_operationsS {
     size_t n, a;
     servo_data_t *servo;
-} servo_operations_t;
+    int free_on_complete;
+};
 
 struct talking_skullS {
     audio_meta_t m;
@@ -45,6 +46,7 @@ struct talking_skullS {
     unsigned seq_complete;
     pthread_mutex_t mutex;
     pthread_cond_t cond;
+    servo_operations_t *ops;
 };
 
 static servo_operations_t *
@@ -55,6 +57,7 @@ servo_operations_new(void)
     ops->n = 0;
     ops->a = 1024;
     ops->servo = fatal_malloc(ops->a * sizeof(*ops->servo));
+    ops->free_on_complete = 0;
 
     return ops;
 }
@@ -181,7 +184,7 @@ update_main(void *t_as_vp)
 
 	ops = producer_consumer_consume(t->ops_pc, &seq);
 	servo_operations_play(ops, t->fn, t->fn_data);
-	servo_operations_destroy(ops);
+	if (ops->free_on_complete) servo_operations_destroy(ops);
 
 	pthread_mutex_lock(&t->mutex);
 	t->seq_complete = seq;
@@ -212,6 +215,7 @@ talking_skull_new_with_n_to_avg(audio_meta_t *m, size_t n_to_avg, talking_skull_
 
     t = fatal_malloc(sizeof(*t));
     t->m = *m;
+    t->ops = NULL;
     t->ops_pc = producer_consumer_new(1);
     t->seq_complete = 0;
     pthread_mutex_init(&t->mutex, NULL);
@@ -226,8 +230,8 @@ talking_skull_new_with_n_to_avg(audio_meta_t *m, size_t n_to_avg, talking_skull_
     return t;
 }
 
-unsigned
-talking_skull_play(talking_skull_t *t, unsigned char *data, unsigned n_bytes)
+servo_operations_t *
+talking_skull_prepare(talking_skull_t *t, unsigned char *data, unsigned n_bytes)
 {
     size_t i;
     servo_operations_t *ops;
@@ -241,7 +245,29 @@ talking_skull_play(talking_skull_t *t, unsigned char *data, unsigned n_bytes)
 	state_update(&t->state, ops, val);
     }
 
+    return ops;
+}
+
+unsigned
+talking_skull_play_prepared(talking_skull_t *t, servo_operations_t *ops)
+{
     return producer_consumer_produce(t->ops_pc, ops);
+}
+
+void
+talking_skull_free_prepared(talking_skull_t *t, servo_operations_t *ops)
+{
+    servo_operations_destroy(ops);
+}
+
+unsigned
+talking_skull_play(talking_skull_t *t, unsigned char *data, unsigned n_bytes)
+{
+    servo_operations_t *ops;
+
+    ops = talking_skull_prepare(t, data, n_bytes);
+    ops->free_on_complete = 1;
+    return talking_skull_play_prepared(t, ops);
 }
 
 void
