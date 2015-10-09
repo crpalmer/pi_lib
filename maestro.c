@@ -227,7 +227,7 @@ maestro_set_range(maestro_t *m, servo_id_t id, maestro_range_t range)
 	m->c[id].max_pos = 2400*4;
 	break;
     case TALKING_SKULL:
-	m->c[id].min_pos = 1100*4;
+	m->c[id].min_pos = 1000*4;
 	m->c[id].max_pos = 1680*4;
 	break;
     case TALKING_DEER:
