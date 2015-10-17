@@ -232,8 +232,8 @@ maestro_set_range(maestro_t *m, servo_id_t id, maestro_range_t range)
 	break;
     case TALKING_DEER:
 	// TODO, this is a placeholder
-	m->c[id].min_pos = 1500*4;
-	m->c[id].max_pos = 1950*4;
+	m->c[id].min_pos = 1400*4;
+	m->c[id].max_pos = 1800*4;
 	break;
     }
 }
