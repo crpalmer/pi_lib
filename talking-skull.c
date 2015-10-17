@@ -83,10 +83,15 @@ servo_operations_play(servo_operations_t *ops, talking_skull_servo_update_t fn, 
     nano_gettime(&start);
 
     while (cur < ops->n) {
+	struct timespec now;
+
+	nano_gettime(&now);
 	next = start;
 	nano_add_usec(&next, ops->servo[cur].usec);
-	nano_sleep_until(&next);
-	fn(fn_data, ops->servo[cur].pos);
+	if (nano_later_than(&next, &now)) {
+	    nano_sleep_until(&next);
+	    fn(fn_data, ops->servo[cur].pos);
+	}
 	cur++;
     }
 }
