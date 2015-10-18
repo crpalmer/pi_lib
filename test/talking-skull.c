@@ -49,7 +49,7 @@ main(int argc, char **argv)
 	exit(1);
     }
     maestro_set_servo_is_inverted(s.m, SERVO_ID, 1);
-    maestro_set_range(s.m, SERVO_ID, TALKING_SKULL);
+    maestro_set_servo_range(s.m, SERVO_ID, TALKING_SKULL);
 
     while (argc > 1 && argv[1][0] == '-' && argv[1][1] == '-') {
 	if (strcmp(argv[1], "--") == 0) {
@@ -71,7 +71,7 @@ main(int argc, char **argv)
 
 	if (argc > 1 && strcmp(argv[1], "--deer") == 0) {
 	    maestro_set_servo_is_inverted(s.m, SERVO_ID, 0);
-	    maestro_set_range(s.m, SERVO_ID, TALKING_DEER);
+	    maestro_set_servo_range(s.m, SERVO_ID, TALKING_DEER);
 	    argc -= 1;
 	    argv += 1;
 	}

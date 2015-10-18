@@ -215,7 +215,7 @@ maestro_set_servo_pos(maestro_t *m, servo_id_t id, double pos)
 }
 
 void
-maestro_set_range(maestro_t *m, servo_id_t id, maestro_range_t range)
+maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range)
 {
     switch(range) {
     case STANDARD_SERVO:
