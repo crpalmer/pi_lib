@@ -24,6 +24,9 @@ maestro_n_servos(maestro_t *m);
 void
 maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range);
 
+void
+maestro_set_servo_range_pct(maestro_t *m, servo_id_t id, double low, double high);
+
 int
 maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_full_range);
 

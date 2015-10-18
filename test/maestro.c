@@ -54,6 +54,7 @@ main(int argc, char **argv)
     e = call_every_new(STEP_MS, update_servos, (void *) &s);
 
     maestro_set_servo_is_inverted(m, 1, 1);
+    maestro_set_servo_range_pct(m, 1, 25, 75);
 
     s.m = m;
     s.pos = 50;

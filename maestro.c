@@ -237,3 +237,11 @@ maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range)
 	break;
     }
 }
+
+void
+maestro_set_servo_range_pct(maestro_t *m, servo_id_t id, double low, double high)
+{
+    double scale = (m->c[id].max_pos - m->c[id].min_pos + 1) / 100.0;
+    m->c[id].max_pos = m->c[id].min_pos + scale*high;
+    m->c[id].min_pos = m->c[id].min_pos + scale*low;
+}
