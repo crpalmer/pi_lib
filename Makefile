@@ -7,11 +7,12 @@ TESTS = \
 	test/audio \
 	test/maestro \
 	test/piface \
+	test/stepper \
 	test/talking-skull \
 	test/track
 
 AUDIO_OBJS = audio.o talking-skull.o track.o wav.o
-GPIO_OBJS = lights.o gpio.o piface.o
+GPIO_OBJS = lights.o gpio.o piface.o stepper.o
 NET_OBJS = net.o net-line-reader.o
 SERVER_OBJS = server.o
 SERVO_OBJS = pi-usb.o maestro.o
@@ -49,6 +50,9 @@ test/maestro: test/maestro.o $(LIB)
 
 test/piface: test/piface.o $(LIB)
 	$(CC) test/piface.o -o $@ $(LIBS)
+
+test/stepper: test/stepper.o $(LIB)
+	$(CC) test/stepper.o -o $@ $(LIBS)
 
 test/talking-skull: test/talking-skull.o $(LIB)
 	$(CC) test/talking-skull.o -o $@ $(LIBS)

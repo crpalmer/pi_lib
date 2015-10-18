@@ -30,6 +30,12 @@ void
 gpio_low_id(gpio_t *g, size_t id);
 #define gpio_on_id(g, id) gpio_low_id(g, id)
 
+static inline void gpio_set_id(gpio_t *g, size_t id, int is_on)
+{
+     if (is_on) gpio_on_id(g, id);
+     else gpio_off_id(g, id);
+}
+
 void
 gpio_destroy(gpio_t *g);
 
