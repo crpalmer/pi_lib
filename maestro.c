@@ -122,8 +122,6 @@ get_servo_config(maestro_t *m, servo_id_t id, servo_config_t *c)
     if (! get_raw_parameter_byte(m, PARAMETER_SERVO_SPEED(id), &speed_tmp)) return 0;
     c->speed = (speed_tmp >> 3) * (2 << (speed_tmp & 0x7));
 
-    fprintf(stderr, "servo %d: %d..%d @ %f\n", id, c->min_pos, c->max_pos, c->speed);
-
     return 1;
 }
 
