@@ -48,6 +48,7 @@ typedef struct {
     double		speed;
     unsigned char	acceleration;
     int			is_inverted;
+    unsigned short	current_real_pos;
 } servo_config_t;
 
 struct maestroS {
@@ -148,6 +149,7 @@ maestro_new(void)
 
     m->c = calloc(sizeof(*m->c), m->n_servos);
     for (i = 0; i < m->n_servos; i++) {
+	m->c[i].current_real_pos = 0;
 	get_servo_config(m, i, &m->c[i]);
     }
 
@@ -209,7 +211,13 @@ maestro_set_servo_pos(maestro_t *m, servo_id_t id, double pos)
     if (m->c[id].is_inverted) pos = 100 - pos;
 
     real_pos = ((m->c[id].max_pos - m->c[id].min_pos) * pos + 50) / 100 + m->c[id].min_pos;
-    return usb_control_msg(m->handle, 0x40, REQUEST_SET_TARGET, real_pos, id, NULL, 0, -1) >= 0;
+
+    if (m->c[id].current_real_pos == real_pos) {
+	return 1;
+    } else {
+	m->c[id].current_real_pos = real_pos;
+        return usb_control_msg(m->handle, 0x40, REQUEST_SET_TARGET, real_pos, id, NULL, 0, -1) >= 0;
+    }
 }
 
 void
