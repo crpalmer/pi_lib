@@ -239,7 +239,7 @@ maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range)
     case TALKING_DEER:
 	// TODO, this is a placeholder
 	m->c[id].min_pos = 1400*4;
-	m->c[id].max_pos = 1800*4;
+	m->c[id].max_pos = 1600*4;
 	break;
     case TALKING_SKULL2:
 	maestro_set_servo_range_pct(m, id, 13, 40);
