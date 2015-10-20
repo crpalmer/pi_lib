@@ -11,6 +11,9 @@ TESTS = \
 	test/talking-skull \
 	test/track
 
+UTILS = \
+	utils/servo
+
 AUDIO_OBJS = audio.o talking-skull.o track.o wav.o
 GPIO_OBJS = lights.o gpio.o piface.o stepper.o
 NET_OBJS = net.o net-line-reader.o
@@ -31,7 +34,7 @@ OBJS = \
 EXTERNALS = $E/tinyalsa/pcm.o $E/tinyalsa/mixer.o \
 	$E/mcp23s17.o $E/pifacedigital.o \
 
-all: $(LIB) $(TESTS)
+all: $(LIB) $(TESTS) $(UTILS)
 
 $(LIB): $(OBJS) $(EXTERNALS)
 	@echo "Linking: $(LIB)"
@@ -60,6 +63,9 @@ test/talking-skull: test/talking-skull.o $(LIB)
 test/track: test/track.o $(LIB)
 	$(CC) test/track.o -o $@ $(LIBS)
 
+utils/servo: utils/servo.o $(LIB)
+	$(CC) utils/servo.o -o $@ $(LIBS)
+
 # compile and generate dependency info
 %.o: %.c
 	@echo "Building: $*.c"
@@ -67,4 +73,4 @@ test/track: test/track.o $(LIB)
 	@gcc -MM $(CFLAGS) $*.c > $*.d
 
 clean:
-	-rm $(LIB) $(OBJS) $(OBJS:.o=.d) test/*.o test/*.d $(TESTS)
+	-rm $(LIB) $(OBJS) $(OBJS:.o=.d) test/*.o test/*.d $(TESTS) $(UTILS)
