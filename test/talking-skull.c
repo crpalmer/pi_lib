@@ -75,6 +75,13 @@ main(int argc, char **argv)
 	    argc -= 1;
 	    argv += 1;
 	}
+
+	if (argc > 1 && strcmp(argv[1], "--skull2") == 0) {
+	    maestro_set_servo_is_inverted(s.m, SERVO_ID, 0);
+	    maestro_set_servo_range(s.m, SERVO_ID, TALKING_SKULL2);
+	    argc -= 1;
+	    argv += 1;
+	}
     }
 
     w = wav_new(argv[1]);

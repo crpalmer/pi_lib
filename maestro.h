@@ -10,6 +10,7 @@ typedef enum {
     EXTENDED_SERVO,
     TALKING_SKULL,
     TALKING_DEER,
+    TALKING_SKULL2
 } maestro_range_t;
 
 maestro_t *
