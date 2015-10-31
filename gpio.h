@@ -3,10 +3,12 @@
 
 #include <stdbool.h>
 
+#define GPIO_IS_INPUT	-1
+
 typedef struct {
     const char *name;
     int         gpio;
-    bool	initially_high;
+    int		initially_high;
 } gpio_table_t;
 
 typedef struct gpioS gpio_t;
@@ -35,6 +37,12 @@ static inline void gpio_set_id(gpio_t *g, size_t id, int is_on)
      if (is_on) gpio_on_id(g, id);
      else gpio_off_id(g, id);
 }
+
+bool
+gpio_get(gpio_t *g, const char *name);
+
+bool
+gpio_get_id(gpio_t *g, unsigned id);
 
 void
 gpio_destroy(gpio_t *g);

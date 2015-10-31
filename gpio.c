@@ -26,6 +26,25 @@ set_gpio_id(gpio_t *g, size_t i, int value)
     fatal_echo(g->value_fname[i], "%d\n", value);
 }
 
+static bool
+get_gpio_id(gpio_t *g, size_t i)
+{
+    FILE *f = fopen(g->value_fname[i], "r");
+    int value;
+
+    if (! f) {
+	perror(g->value_fname[i]);
+	exit(1);
+    }
+
+    if (fscanf(f, "%d", &value) != 1) {
+	fprintf(stderr, "Failed to read value from %s\n", g->value_fname[i]);
+	exit(1);
+    }
+
+    return value != 0;
+}
+    
 gpio_t *
 gpio_new(gpio_table_t *table, int n_table)
 {
@@ -42,26 +61,40 @@ gpio_new(gpio_table_t *table, int n_table)
 
 	fatal_echo(EXPORT_FNAME, "%d\n", g->table[i].gpio);
 
-	fatal_echo(direction, "out\n");
-	set_gpio_id(g, i, g->table[i].initially_high ? LOW_VALUE : HIGH_VALUE);
+	if (g->table[i].initially_high == GPIO_IS_INPUT) {
+	    fatal_echo(direction, "in\n");
+	} else {
+	    fatal_echo(direction, "out\n");
+	    set_gpio_id(g, i, g->table[i].initially_high ? LOW_VALUE : HIGH_VALUE);
+	}
 	free(direction);
      }
 
      return g;
 }
 
-static int
-set_gpio(gpio_t *g, const char *name, int value)
+static bool
+find_id(gpio_t *g, const char *name, size_t *id)
 {
-     int i;
+     size_t i;
 
      for (i = 0; i < g->n_table; i++) {
 	if (strcmp(g->table[i].name, name) == 0) {
-	     set_gpio_id(g, i, value);
-	     return 0;
+	     *id = i;
+	     return true;
 	}
     }
-    return -1;
+    return false;
+}
+
+static int
+set_gpio(gpio_t *g, const char *name, int value)
+{
+    size_t id;
+
+    if (! find_id(g, name, &id)) return -1;
+    set_gpio_id(g, id, value);
+    return 0;
 }
 
 int
@@ -86,6 +119,21 @@ void
 gpio_high_id(gpio_t *g, size_t id)
 {
      set_gpio_id(g, id, HIGH_VALUE);
+}
+
+bool
+gpio_get(gpio_t *g, const char *name)
+{
+    size_t id;
+
+    if (! find_id(g, name, &id)) return false;
+    return gpio_get_id(g, id);
+}
+
+bool
+gpio_get_id(gpio_t *g, unsigned id)
+{
+    return get_gpio_id(g, id);
 }
 
 void
