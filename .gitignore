@@ -9,3 +9,4 @@ test/stepper
 test/talking-skull
 test/track
 utils/servo
+utils/wb

@@ -12,10 +12,11 @@ TESTS = \
 	test/track
 
 UTILS = \
-	utils/servo
+	utils/servo \
+	utils/wb
 
 AUDIO_OBJS = audio.o talking-skull.o track.o wav.o
-GPIO_OBJS = lights.o gpio.o piface.o stepper.o
+GPIO_OBJS = lights.o gpio.o piface.o stepper.o wb.o
 NET_OBJS = net.o net-line-reader.o
 SERVER_OBJS = server.o
 SERVO_OBJS = pi-usb.o maestro.o
@@ -65,6 +66,9 @@ test/track: test/track.o $(LIB)
 
 utils/servo: utils/servo.o $(LIB)
 	$(CC) utils/servo.o -o $@ $(LIBS)
+
+utils/wb: utils/wb.o $(LIB)
+	$(CC) utils/wb.o -o $@ $(LIBS)
 
 # compile and generate dependency info
 %.o: %.c
