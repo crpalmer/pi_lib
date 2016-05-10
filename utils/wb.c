@@ -18,7 +18,11 @@ main(int argc, char **argv)
 	    if (sscanf(&buf[1], "%d", &pin) == 1) {
 		printf("%d = %d\n", pin, wb_get(wb, pin-1));
 	    } else {
-		goto usage;
+		value = wb_get_all(wb);
+		for (pin = 7; pin >= 0; pin--) {
+		    printf("%d", (value & (1<<pin)) != 0);
+		}
+		printf("\n");
 	    }
 	} else if (buf[0] == 's') {
 	    if (sscanf(&buf[1], "%d %d %d", &bank, &pin, &value) == 3) {
@@ -28,7 +32,7 @@ main(int argc, char **argv)
 	    }
 	} else {
 usage:
-	    fprintf(stderr, "g <pin 1-8>\ns <bank 1/2> <pin 1-8> <value 0/1>\n");
+	    fprintf(stderr, "g [<pin 1-8>]\ns <bank 1/2> <pin 1-8> <value 0/1>\n");
 	}
     }
 
