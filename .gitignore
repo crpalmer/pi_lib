@@ -8,5 +8,6 @@ test/piface
 test/stepper
 test/talking-skull
 test/track
+test/wb
 utils/servo
 utils/wb

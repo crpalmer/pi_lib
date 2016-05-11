@@ -9,7 +9,8 @@ TESTS = \
 	test/piface \
 	test/stepper \
 	test/talking-skull \
-	test/track
+	test/track \
+	test/wb
 
 UTILS = \
 	utils/servo \
@@ -63,6 +64,9 @@ test/talking-skull: test/talking-skull.o $(LIB)
 
 test/track: test/track.o $(LIB)
 	$(CC) test/track.o -o $@ $(LIBS)
+
+test/wb: test/wb.o $(LIB)
+	$(CC) test/wb.o -o $@ $(LIBS)
 
 utils/servo: utils/servo.o $(LIB)
 	$(CC) utils/servo.o -o $@ $(LIBS)
