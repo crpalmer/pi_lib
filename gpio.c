@@ -42,6 +42,8 @@ get_gpio_id(gpio_t *g, size_t i)
 	exit(1);
     }
 
+    fclose(f);
+
     return value != 0;
 }
     
