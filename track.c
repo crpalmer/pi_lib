@@ -13,6 +13,7 @@ struct trackS {
     wav_t         *wav;
     audio_device_t audio_dev;
     audio_config_t audio_cfg;
+    unsigned	   volume;
 };
 
 track_t *
@@ -27,6 +28,7 @@ track_new(const char *fname)
 
     t = fatal_malloc(sizeof(*t));
     t->wav = wav;
+    t->volume = 100;
 
     audio_device_init_playback(&t->audio_dev);
     audio_config_init_default(&t->audio_cfg);
@@ -36,10 +38,16 @@ track_new(const char *fname)
 }
 
 void
+track_set_volume(track_t *t, unsigned volume)
+{
+    t->volume = volume;
+}
+
+void
 track_play(track_t *t)
 {
     audio_t *audio = audio_new(&t->audio_cfg, &t->audio_dev);
-    audio_set_volume(audio, 100);
+    audio_set_volume(audio, t->volume);
     wav_play(t->wav, audio);
     audio_destroy(audio);
 }

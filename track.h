@@ -7,6 +7,9 @@ track_t *
 track_new(const char *fname);
 
 void
+track_set_volume(track_t *t, unsigned volume);
+
+void
 track_play(track_t *t);
 
 void
