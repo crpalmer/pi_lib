@@ -6,9 +6,6 @@
 
 #include "wb.h"
 
-struct wbS {
-};
-
 #define N_INPUTS 8
 #define N_OUTPUTS 16
 
@@ -43,51 +40,42 @@ static struct {
     { "out2_8", 10, PI_OUTPUT },
 };
 
-wb_t *
-wb_new(void)
+int
+wb_init(void)
 {
-    wb_t *w;
     int i;
 
-    if (gpioInitialise() < 0) return NULL;
-
-    w = malloc(sizeof(*w));
+    if (gpioInitialise() < 0) return -1;
 
     for (i = 0; i < ARRAY_SIZE(gpio_table); i++) {
 	gpioSetMode(gpio_table[i].id, gpio_table[i].default_mode);
     }
 
-    return w;
+    return 0;
 }
 
-bool wb_get(wb_t *w, unsigned pin)
+bool wb_get(unsigned pin)
 {
     assert(pin < N_INPUTS);
     return gpioRead(gpio_table[pin].id);
 }
 
 unsigned
-wb_get_all(wb_t *w)
+wb_get_all(void)
 {
     size_t pin;
     unsigned ret = 0;
 
     for (pin = 0; pin < N_INPUTS; pin++) {
-	ret |= (wb_get(w, pin) << pin);
+	ret |= (wb_get(pin) << pin);
     }
 
     return ret;
 }
 
 void
-wb_set(wb_t *w, unsigned pin, unsigned value)
+wb_set(unsigned pin, unsigned value)
 {
     assert(pin < N_OUTPUTS);
     gpioWrite(gpio_table[pin + N_INPUTS].id, value);
-}
-
-void
-wb_destroy(wb_t *w)
-{
-    free(w);
 }

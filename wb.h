@@ -7,14 +7,12 @@ typedef struct wbS wb_t;
 
 #define WB_OUTPUT(bank, pin) ((bank)*8 + pin)
 
-wb_t *wb_new(void);
+int wb_init(void);
 
-bool wb_get(wb_t *, unsigned pin);
+bool wb_get(unsigned pin);
 
-unsigned wb_get_all(wb_t *);
+unsigned wb_get_all(void);
 
-void wb_set(wb_t *, unsigned pin, unsigned value);
-
-void wb_destroy(wb_t *);
+void wb_set(unsigned pin, unsigned value);
 
 #endif
