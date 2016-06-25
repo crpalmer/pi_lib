@@ -1,7 +1,7 @@
 LIB=lib.a
 D=$(HOME)/lib
 E=$D/externals
-CFLAGS=-Wall -Werror -g -I$E/include -I$D
+CFLAGS=-Wall -Werror -g -I$E/include -I$D -I$E/PIGPIO
 
 TESTS = \
 	test/audio \
@@ -35,6 +35,7 @@ OBJS = \
 
 EXTERNALS = $E/tinyalsa/pcm.o $E/tinyalsa/mixer.o \
 	$E/mcp23s17.o $E/pifacedigital.o \
+	$E/PIGPIO/pigpio.o $E/PIGPIO/command.o \
 
 all: $(LIB) $(TESTS) $(UTILS)
 
