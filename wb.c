@@ -9,10 +9,12 @@
 #define N_INPUTS 8
 #define N_OUTPUTS 16
 
+#define WB_PI_PWM (1<<30)
+
 static struct {
     const char *name;
     int id;
-    unsigned default_mode;
+    unsigned mode;
 } gpio_table[] = {
     { "in1", 14, PI_INPUT },
     { "in2", 15, PI_INPUT },
@@ -48,7 +50,7 @@ wb_init(void)
     if (gpioInitialise() < 0) return -1;
 
     for (i = 0; i < ARRAY_SIZE(gpio_table); i++) {
-	gpioSetMode(gpio_table[i].id, gpio_table[i].default_mode);
+	gpioSetMode(gpio_table[i].id, gpio_table[i].mode);
     }
 
     return 0;
@@ -76,6 +78,35 @@ wb_get_all(void)
 void
 wb_set(unsigned pin, unsigned value)
 {
+    int id = pin + N_INPUTS;
+
     assert(pin < N_OUTPUTS);
-    gpioWrite(gpio_table[pin + N_INPUTS].id, value);
+    if (gpio_table[id].mode != PI_OUTPUT) {
+	gpioSetMode(gpio_table[id].id, PI_OUTPUT);
+	gpio_table[id].mode = PI_OUTPUT;
+    }
+    gpioWrite(gpio_table[id].id, value);
+}
+
+#define DEFAULT_PWM_FREQ 1000
+#define PWM_RANGE 1000
+
+void
+wb_pwm(unsigned pin, float duty)
+{
+     wb_pwm_freq(pin, DEFAULT_PWM_FREQ, duty);
+}
+
+void
+wb_pwm_freq(unsigned pin, unsigned freq, float duty)
+{
+    int id = pin + N_INPUTS;
+
+    assert(pin < N_OUTPUTS);
+    if (gpio_table[id].mode != WB_PI_PWM) {
+	gpio_table[id].mode = WB_PI_PWM;
+	gpioSetPWMrange(gpio_table[id].id, PWM_RANGE);
+    }
+    gpioSetPWMfrequency(gpio_table[id].id, freq);
+    gpioPWM(gpio_table[id].id, duty * PWM_RANGE);
 }

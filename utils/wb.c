@@ -31,9 +31,19 @@ main(int argc, char **argv)
 	    } else {
 		goto usage;
 	    }
+	} else if (buf[0] == 'p') {
+	    unsigned freq;
+	    float fvalue;
+	    if (sscanf(&buf[1], "%d %d %u %f", &bank, &pin, &freq, &fvalue) == 4) {
+		wb_pwm_freq(WB_OUTPUT(bank-1, pin-1), freq, fvalue/100.0);
+	    } else if (sscanf(&buf[1], "%d %d %f", &bank, &pin, &fvalue) == 3) {
+		wb_pwm(WB_OUTPUT(bank-1, pin-1), fvalue/100.0);
+	    } else {
+		goto usage;
+	    }
 	} else {
 usage:
-	    fprintf(stderr, "g [<pin 1-8>]\ns <bank 1/2> <pin 1-8> <value 0/1>\n");
+	    fprintf(stderr, "g [<pin 1-8>]\np <bank 1/2> <pin 1-8> [<freq>] <duty%%>\ns <bank 1/2> <pin 1-8> <value 0/1>\n");
 	}
     }
 

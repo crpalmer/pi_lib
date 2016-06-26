@@ -15,4 +15,8 @@ unsigned wb_get_all(void);
 
 void wb_set(unsigned pin, unsigned value);
 
+void wb_pwm(unsigned pin, float duty);
+
+void wb_pwm_freq(unsigned pin, unsigned freq, float duty);
+
 #endif
