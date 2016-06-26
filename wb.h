@@ -19,4 +19,6 @@ void wb_pwm(unsigned pin, float duty);
 
 void wb_pwm_freq(unsigned pin, unsigned freq, float duty);
 
+void wb_servo(unsigned pin, unsigned pulse_ms);
+
 #endif

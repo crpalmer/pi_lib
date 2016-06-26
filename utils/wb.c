@@ -41,9 +41,15 @@ main(int argc, char **argv)
 	    } else {
 		goto usage;
 	    }
+	} else if (buf[0] == 'v') {
+	    if (sscanf(&buf[1], "%d %d %d", &bank, &pin, &value) == 3) {
+		wb_servo(WB_OUTPUT(bank-1, pin-1), value);
+	    } else {
+		goto usage;
+	    }
 	} else {
 usage:
-	    fprintf(stderr, "g [<pin 1-8>]\np <bank 1/2> <pin 1-8> [<freq>] <duty%%>\ns <bank 1/2> <pin 1-8> <value 0/1>\n");
+	    fprintf(stderr, "g [<pin 1-8>]\np <bank 1/2> <pin 1-8> [<freq>] <duty%%>\ns <bank 1/2> <pin 1-8> <value 0/1>\nv <bank 1/2> <pin 1-8> <servo pulse width in us>\n");
 	}
     }
 

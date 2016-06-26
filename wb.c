@@ -9,6 +9,7 @@
 #define N_INPUTS 8
 #define N_OUTPUTS 16
 
+#define WB_PI_SERVO (1<<29)
 #define WB_PI_PWM (1<<30)
 
 static struct {
@@ -109,4 +110,16 @@ wb_pwm_freq(unsigned pin, unsigned freq, float duty)
     }
     gpioSetPWMfrequency(gpio_table[id].id, freq);
     gpioPWM(gpio_table[id].id, duty * PWM_RANGE);
+}
+
+void
+wb_servo(unsigned pin, unsigned pulse_width)
+{
+    int id = pin + N_INPUTS;
+
+    assert(pin < N_OUTPUTS);
+    if (gpio_table[id].mode != WB_PI_SERVO) {
+	gpio_table[id].mode = WB_PI_SERVO;
+    }
+    gpioServo(gpio_table[id].id, pulse_width);
 }
