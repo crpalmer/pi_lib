@@ -104,6 +104,7 @@ wb_pwm_freq(unsigned pin, unsigned freq, float duty)
     int id = pin + N_INPUTS;
 
     assert(pin < N_OUTPUTS);
+    assert(duty > 0 && duty < 1);
     if (gpio_table[id].mode != WB_PI_PWM) {
 	gpio_table[id].mode = WB_PI_PWM;
 	gpioSetPWMrange(gpio_table[id].id, PWM_RANGE);
