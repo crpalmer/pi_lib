@@ -152,14 +152,28 @@ wav_configure_audio(wav_t *w, audio_config_t *a)
     a->bits = w->meta.bytes_per_sample * 8;
 }
 
+static bool wav_play_internal(wav_t *wav, audio_t *audio, talking_skull_t *ts, volatile bool *stop_needed);
+
 bool
 wav_play(wav_t *w, audio_t *audio)
 {
-    return wav_play_with_talking_skull(w, audio, NULL);
+    return wav_play_with_stop_needed(w, audio, NULL);
+}
+
+bool
+wav_play_with_stop_needed(wav_t *w, audio_t *audio, volatile bool *stop_needed)
+{
+    return wav_play_internal(w, audio,  NULL, stop_needed);
 }
 
 bool
 wav_play_with_talking_skull(wav_t *w, audio_t *audio, talking_skull_t *talking_skull)
+{
+    return wav_play_internal(w, audio, talking_skull, NULL);
+}
+
+static bool
+wav_play_internal(wav_t *w, audio_t *audio, talking_skull_t *talking_skull, volatile bool *stop_needed)
 {
     size_t size;
     size_t i;
@@ -178,7 +192,7 @@ wav_play_with_talking_skull(wav_t *w, audio_t *audio, talking_skull_t *talking_s
 	}
     }
 
-    for (i = 0; i < w->n_audio; i += size) {
+    for (i = 0; i < w->n_audio && (! stop_needed || ! *stop_needed); i += size) {
 	size_t this_size = i + size > w->n_audio ? w->n_audio - i : size;
 	if (! audio_play_buffer(audio, &w->audio[i], this_size)) {
 	    perror("Error playing sample");

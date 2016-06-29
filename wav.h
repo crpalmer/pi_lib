@@ -27,6 +27,9 @@ bool
 wav_play(wav_t *w, audio_t *audio);
 
 bool
+wav_play_with_stop_needed(wav_t *w, audio_t *audio, volatile bool *stop_needed);
+
+bool
 wav_play_with_talking_skull(wav_t *w, audio_t *audio, talking_skull_t *);
 
 void
