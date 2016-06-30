@@ -5,6 +5,7 @@
 #include <string.h>
 #include <signal.h>
 #include <pthread.h>
+#include "string-utils.h"
 #include "tinyalsa/asoundlib.h"
 #include "talking-skull.h"
 #include "time-utils.h"
@@ -49,6 +50,8 @@ void stream_close(int sig)
     signal(sig, SIG_IGN);
 }
 
+#define MEDIA_DIR "/home/crpalmer/halloween-media"
+
 wav_t *
 wav_new(const char *fname)
 {
@@ -60,8 +63,13 @@ wav_new(const char *fname)
     bool more_chunks = true;
 
     if ((f = fopen(fname, "rb")) == NULL) {
-	perror(fname);
-	return NULL;
+	char *alt_name = maprintf("%s/%s", MEDIA_DIR, fname);
+	f = fopen(alt_name, "rb");
+	free(alt_name);
+	if (! f) {
+	    perror(fname);
+	    return NULL;
+	}
     }
 
     fread(&riff_wave_header, sizeof(riff_wave_header), 1, f);
