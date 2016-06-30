@@ -6,6 +6,12 @@ typedef struct trackS track_t;
 track_t *
 track_new(const char *fname);
 
+track_t *
+track_new_fatal(const char *fname);
+
+track_t *
+track_new(const char *fname);
+
 void
 track_set_volume(track_t *t, unsigned volume);
 

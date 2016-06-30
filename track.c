@@ -37,6 +37,17 @@ track_new(const char *fname)
     return t;
 }
 
+track_t *
+track_new_fatal(const char *fname)
+{
+    track_t *t;
+
+    if ((t = track_new(fname)) == NULL) {
+	exit(1);
+    }
+    return t;
+}
+
 void
 track_set_volume(track_t *t, unsigned volume)
 {
