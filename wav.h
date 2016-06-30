@@ -1,6 +1,7 @@
 #ifndef __WAV_H__
 #define __WAV_H__
 
+#include "stop.h"
 #include "talking-skull.h"
 #include "util.h"
 
@@ -25,6 +26,9 @@ wav_get_raw_data(wav_t *w, size_t *n_ret);
 
 bool
 wav_play(wav_t *w, audio_t *audio);
+
+bool
+wav_play_with_stop(wav_t *w, audio_t *audio, stop_t *stop);
 
 bool
 wav_play_with_talking_skull(wav_t *w, audio_t *audio, talking_skull_t *);

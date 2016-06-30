@@ -22,7 +22,7 @@ NET_OBJS = net.o net-line-reader.o
 SERVER_OBJS = server.o
 SERVO_OBJS = pi-usb.o maestro.o
 THREAD_OBJS = call-every.o producer-consumer.o
-UTIL_OBJS = util.o file.o string-utils.o mem.o global-trace.o
+UTIL_OBJS = util.o file.o stop.o string-utils.o mem.o global-trace.o
 
 OBJS = \
 	$(AUDIO_OBJS) \

@@ -161,13 +161,7 @@ wav_configure_audio(wav_t *w, audio_config_t *a)
 }
 
 bool
-wav_play(wav_t *w, audio_t *audio)
-{
-    return wav_play_with_talking_skull(w, audio, NULL);
-}
-
-bool
-wav_play_with_talking_skull(wav_t *w, audio_t *audio, talking_skull_t *talking_skull)
+play_internal(wav_t *w, audio_t *audio, talking_skull_t *talking_skull, stop_t *stop)
 {
     size_t size;
     size_t i;
@@ -175,6 +169,7 @@ wav_play_with_talking_skull(wav_t *w, audio_t *audio, talking_skull_t *talking_s
     unsigned handle;
 
     assert(w);
+    assert(! talking_skull || ! stop);
 
     size = audio_get_buffer_size(audio);
 
@@ -186,7 +181,7 @@ wav_play_with_talking_skull(wav_t *w, audio_t *audio, talking_skull_t *talking_s
 	}
     }
 
-    for (i = 0; i < w->n_audio; i += size) {
+    for (i = 0; i < w->n_audio && ! stop_requested(stop); i += size) {
 	size_t this_size = i + size > w->n_audio ? w->n_audio - i : size;
 	if (! audio_play_buffer(audio, &w->audio[i], this_size)) {
 	    perror("Error playing sample");
@@ -199,7 +194,27 @@ wav_play_with_talking_skull(wav_t *w, audio_t *audio, talking_skull_t *talking_s
 	talking_skull_wait_completion(talking_skull, handle);
     }
 
+    stop_stopped(stop);
+
     return rc;
+}
+
+bool
+wav_play(wav_t *w, audio_t *audio)
+{
+    return wav_play_with_stop(w, audio, NULL);
+}
+
+bool
+wav_play_with_stop(wav_t *w, audio_t *audio, stop_t *stop)
+{
+    return play_internal(w, audio, NULL, stop);
+}
+
+bool
+wav_play_with_talking_skull(wav_t *w, audio_t *audio, talking_skull_t *talking_skull)
+{
+    return play_internal(w, audio, talking_skull, NULL);
 }
 
 void

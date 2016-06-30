@@ -57,25 +57,45 @@ track_set_volume(track_t *t, unsigned volume)
 void
 track_play(track_t *t)
 {
+    track_play_with_stop(t, NULL);
+}
+
+void
+track_play_with_stop(track_t *t, stop_t *stop)
+{
     audio_t *audio = audio_new(&t->audio_cfg, &t->audio_dev);
     audio_set_volume(audio, t->volume);
-    wav_play(t->wav, audio);
+    wav_play_with_stop(t->wav, audio, stop);
     audio_destroy(audio);
 }
 
+typedef struct {
+    track_t *t;
+    stop_t *stop;
+} thread_data_t;
+
 static void *
-play_main(void *t_as_vp)
+play_main(void *td_as_vp)
 {
-    track_play(t_as_vp);
+    thread_data_t *td = (thread_data_t *) td_as_vp;
+
+    track_play_with_stop(td->t, td->stop);
+    free(td);
     return NULL;
 }
 
 void
-track_play_asynchronously(track_t *t)
+track_play_asynchronously(track_t *t, stop_t *stop)
 {
     pthread_t thread;
+    thread_data_t *td = fatal_malloc(sizeof(*td));
 
-    pthread_create(&thread, NULL, play_main, t);
+    td->t = t;
+    td->stop = stop;
+
+    if (stop) stop_reset(stop);
+
+    pthread_create(&thread, NULL, play_main, td);
     pthread_detach(thread);
 }
 

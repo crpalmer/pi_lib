@@ -3,6 +3,9 @@
 
 typedef struct trackS track_t;
 
+#include <stdbool.h>
+#include "stop.h"
+
 track_t *
 track_new(const char *fname);
 
@@ -19,7 +22,10 @@ void
 track_play(track_t *t);
 
 void
-track_play_asynchronously(track_t *t);
+track_play_with_stop(track_t *t, stop_t *stop);
+
+void
+track_play_asynchronously(track_t *t, stop_t *stop);
 
 void
 track_destroy(track_t *);
