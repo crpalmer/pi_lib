@@ -51,6 +51,9 @@ wb_init(void)
     if (gpioInitialise() < 0) return -1;
 
     for (i = 0; i < ARRAY_SIZE(gpio_table); i++) {
+	if (gpio_table[i].mode == PI_INPUT) {
+	    gpioSetPullUpDown(gpio_table[i].id, PI_PUD_DOWN);
+	}
 	gpioSetMode(gpio_table[i].id, gpio_table[i].mode);
     }
 
@@ -122,4 +125,23 @@ wb_servo(unsigned pin, unsigned pulse_width)
 	gpio_table[id].mode = WB_PI_SERVO;
     }
     gpioServo(gpio_table[id].id, pulse_width);
+}
+
+void
+wb_set_pull_up(unsigned pin, wb_pull_up_mode_t mode)
+{
+    int id = pin - 1;
+
+    assert(pin < N_OUTPUTS);
+    switch(mode) {
+    case WB_PULL_UP_NONE:
+	gpioSetPullUpDown(gpio_table[id].id, PI_PUD_OFF);
+	break;
+    case WB_PULL_UP_DOWN:
+	gpioSetPullUpDown(gpio_table[id].id, PI_PUD_DOWN);
+	break;
+    case WB_PULL_UP_UP:
+	gpioSetPullUpDown(gpio_table[id].id, PI_PUD_UP);
+	break;
+    }
 }

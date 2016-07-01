@@ -25,6 +25,12 @@ main(int argc, char **argv)
 		}
 		printf("\n");
 	    }
+	} else if (buf[0] == '=' || buf[0] == '+' || buf[0] == '-') {
+	    if (sscanf(&buf[1], "%d", &pin) == 1) {
+		wb_set_pull_up(pin, buf[0] == '=' ? WB_PULL_UP_NONE : buf[0] == '+' ? WB_PULL_UP_UP : WB_PULL_UP_DOWN);
+	    } else {
+		goto usage;
+	    }
 	} else if (buf[0] == 's') {
 	    if (sscanf(&buf[1], "%d %d %d", &bank, &pin, &value) == 3) {
 		wb_set(WB_OUTPUT(bank, pin), value);
@@ -49,7 +55,7 @@ main(int argc, char **argv)
 	    }
 	} else {
 usage:
-	    fprintf(stderr, "g [<pin 1-8>]\np <bank 1/2> <pin 1-8> [<freq>] <duty%%>\ns <bank 1/2> <pin 1-8> <value 0/1>\nv <bank 1/2> <pin 1-8> <servo pulse width in us>\n");
+	    fprintf(stderr, "g [<pin 1-8>]\np <bank 1/2> <pin 1-8> [<freq>] <duty%%>\ns <bank 1/2> <pin 1-8> <value 0/1>\nv <bank 1/2> <pin 1-8> <servo pulse width in us>- <pin 1-8> set pull down\n+ <pin 1-8> set pull up\n= <pin 1-8> remove pulll up/down\n");
 	}
     }
 
