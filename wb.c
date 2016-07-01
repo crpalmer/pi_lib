@@ -59,8 +59,8 @@ wb_init(void)
 
 bool wb_get(unsigned pin)
 {
-    assert(pin < N_INPUTS);
-    return gpioRead(gpio_table[pin].id);
+    assert(1 <= pin && pin <= N_INPUTS);
+    return gpioRead(gpio_table[pin-1].id);
 }
 
 unsigned
@@ -69,8 +69,8 @@ wb_get_all(void)
     size_t pin;
     unsigned ret = 0;
 
-    for (pin = 0; pin < N_INPUTS; pin++) {
-	ret |= (wb_get(pin) << pin);
+    for (pin = 1; pin <= N_INPUTS; pin++) {
+	ret |= (wb_get(pin) << (pin-1));
     }
 
     return ret;

@@ -51,7 +51,7 @@ main(int argc, char **argv)
 	     fprintf(stderr, "Invalid output bank, must be either 0 or 1\n");
 	     exit(1);
 	}
-	output_test(bank-1);
+	output_test(bank);
     } else if (argc != 1) {
 	fprintf(stderr, "usage: [--out bank]\n");
 	exit(1);

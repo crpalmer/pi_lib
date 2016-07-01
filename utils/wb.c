@@ -17,7 +17,7 @@ main(int argc, char **argv)
 
 	if (buf[0] == 'g') {
 	    if (sscanf(&buf[1], "%d", &pin) == 1) {
-		printf("%d = %d\n", pin, wb_get(pin-1));
+		printf("%d = %d\n", pin, wb_get(pin));
 	    } else {
 		value = wb_get_all();
 		for (pin = 7; pin >= 0; pin--) {
@@ -27,7 +27,7 @@ main(int argc, char **argv)
 	    }
 	} else if (buf[0] == 's') {
 	    if (sscanf(&buf[1], "%d %d %d", &bank, &pin, &value) == 3) {
-		wb_set(WB_OUTPUT(bank-1, pin-1), value);
+		wb_set(WB_OUTPUT(bank, pin), value);
 	    } else {
 		goto usage;
 	    }
@@ -35,15 +35,15 @@ main(int argc, char **argv)
 	    unsigned freq;
 	    float fvalue;
 	    if (sscanf(&buf[1], "%d %d %u %f", &bank, &pin, &freq, &fvalue) == 4) {
-		wb_pwm_freq(WB_OUTPUT(bank-1, pin-1), freq, fvalue/100.0);
+		wb_pwm_freq(WB_OUTPUT(bank, pin), freq, fvalue/100.0);
 	    } else if (sscanf(&buf[1], "%d %d %f", &bank, &pin, &fvalue) == 3) {
-		wb_pwm(WB_OUTPUT(bank-1, pin-1), fvalue/100.0);
+		wb_pwm(WB_OUTPUT(bank, pin), fvalue/100.0);
 	    } else {
 		goto usage;
 	    }
 	} else if (buf[0] == 'v') {
 	    if (sscanf(&buf[1], "%d %d %d", &bank, &pin, &value) == 3) {
-		wb_servo(WB_OUTPUT(bank-1, pin-1), value);
+		wb_servo(WB_OUTPUT(bank, pin), value);
 	    } else {
 		goto usage;
 	    }
