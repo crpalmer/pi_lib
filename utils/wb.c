@@ -25,6 +25,21 @@ main(int argc, char **argv)
 		}
 		printf("\n");
 	    }
+	} else if (buf[0] == 'G') {
+	    int last = -1;
+
+	    while (true) {
+		int cur = wb_get_all();
+		if (cur != last) {
+		    int pin;
+
+		    last = cur;
+		    for (pin = 7; pin >= 0; pin--) {
+			printf("%d", (cur & (1<<pin)) != 0);
+		    }
+		    printf("\n");
+		}
+	    }
 	} else if (buf[0] == '=' || buf[0] == '+' || buf[0] == '-') {
 	    if (sscanf(&buf[1], "%d", &pin) == 1) {
 		wb_set_pull_up(pin, buf[0] == '=' ? WB_PULL_UP_NONE : buf[0] == '+' ? WB_PULL_UP_UP : WB_PULL_UP_DOWN);
