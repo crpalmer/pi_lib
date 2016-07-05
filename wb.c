@@ -92,13 +92,10 @@ wb_set(unsigned pin, unsigned value)
     gpioWrite(gpio_table[id].id, value);
 }
 
-#define DEFAULT_PWM_FREQ 1000
-#define PWM_RANGE 1000
-
 void
 wb_pwm(unsigned pin, float duty)
 {
-     wb_pwm_freq(pin, DEFAULT_PWM_FREQ, duty);
+     wb_pwm_freq(pin, 0, duty);
 }
 
 void
@@ -109,10 +106,9 @@ wb_pwm_freq(unsigned pin, unsigned freq, float duty)
     assert(pin < N_OUTPUTS);
     if (gpio_table[id].mode != WB_PI_PWM) {
 	gpio_table[id].mode = WB_PI_PWM;
-	gpioSetPWMrange(gpio_table[id].id, PWM_RANGE);
     }
-    gpioSetPWMfrequency(gpio_table[id].id, freq);
-    gpioPWM(gpio_table[id].id, duty * PWM_RANGE);
+    if (freq) gpioSetPWMfrequency(gpio_table[id].id, freq);
+    gpioPWM(gpio_table[id].id, duty * gpioGetPWMrange(gpio_table[id].id));
 }
 
 void
