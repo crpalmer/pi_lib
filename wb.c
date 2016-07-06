@@ -7,10 +7,12 @@
 #include "wb.h"
 
 #define N_INPUTS 8
-#define N_OUTPUTS 16
+#define N_OUTPUTS_PER_BANK 16
 
 #define WB_PI_SERVO (1<<29)
 #define WB_PI_PWM (1<<30)
+
+#define WB_OUTPUT(bank, pin) (((bank-1))*8 + (pin-1) + N_INPUTS)
 
 static struct {
     const char *name;
@@ -43,6 +45,22 @@ static struct {
     { "out2_8", 10, PI_OUTPUT },
 };
 
+static inline unsigned
+get_input_id(unsigned pin)
+{
+    assert(1 <= pin && pin <= N_INPUTS);
+    return pin - 1;
+}
+
+static inline unsigned
+get_output_id(unsigned bank, unsigned pin)
+{
+    assert(1 <= bank && bank <= 2);
+    assert(1 <= pin && pin <= N_OUTPUTS_PER_BANK);
+
+    return (bank-1)*N_OUTPUTS_PER_BANK + (pin-1) + N_INPUTS;
+}
+
 int
 wb_init(void)
 {
@@ -62,8 +80,8 @@ wb_init(void)
 
 bool wb_get(unsigned pin)
 {
-    assert(1 <= pin && pin <= N_INPUTS);
-    return gpioRead(gpio_table[pin-1].id);
+    int id = get_input_id(pin);
+    return gpioRead(gpio_table[id].id);
 }
 
 unsigned
@@ -80,11 +98,10 @@ wb_get_all(void)
 }
 
 void
-wb_set(unsigned pin, unsigned value)
+wb_set(unsigned bank, unsigned pin, unsigned value)
 {
-    int id = pin + N_INPUTS;
+    int id = get_output_id(bank, pin);
 
-    assert(pin < N_OUTPUTS);
     if (gpio_table[id].mode != PI_OUTPUT) {
 	gpioSetMode(gpio_table[id].id, PI_OUTPUT);
 	gpio_table[id].mode = PI_OUTPUT;
@@ -93,17 +110,16 @@ wb_set(unsigned pin, unsigned value)
 }
 
 void
-wb_pwm(unsigned pin, float duty)
+wb_pwm(unsigned bank, unsigned pin, float duty)
 {
-     wb_pwm_freq(pin, 0, duty);
+     wb_pwm_freq(bank, pin, 0, duty);
 }
 
 void
-wb_pwm_freq(unsigned pin, unsigned freq, float duty)
+wb_pwm_freq(unsigned bank, unsigned pin, unsigned freq, float duty)
 {
-    int id = pin + N_INPUTS;
+    int id = get_output_id(bank, pin);
 
-    assert(pin < N_OUTPUTS);
     if (gpio_table[id].mode != WB_PI_PWM) {
 	gpio_table[id].mode = WB_PI_PWM;
     }
@@ -112,11 +128,10 @@ wb_pwm_freq(unsigned pin, unsigned freq, float duty)
 }
 
 void
-wb_servo(unsigned pin, unsigned pulse_width)
+wb_servo(unsigned bank, unsigned pin, unsigned pulse_width)
 {
-    int id = pin + N_INPUTS;
+    int id = get_output_id(bank, pin);
 
-    assert(pin < N_OUTPUTS);
     if (gpio_table[id].mode != WB_PI_SERVO) {
 	gpio_table[id].mode = WB_PI_SERVO;
     }
@@ -126,9 +141,8 @@ wb_servo(unsigned pin, unsigned pulse_width)
 void
 wb_set_pull_up(unsigned pin, wb_pull_up_mode_t mode)
 {
-    int id = pin - 1;
+    int id = get_input_id(pin);
 
-    assert(pin < N_OUTPUTS);
     switch(mode) {
     case WB_PULL_UP_NONE:
 	gpioSetPullUpDown(gpio_table[id].id, PI_PUD_OFF);

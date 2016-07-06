@@ -11,9 +11,9 @@ static void output_test(int bank)
 
 	for (i = 0; i < 8; i++) {
 	    printf("enable output %d\n", i+1);
-	    wb_set(WB_OUTPUT(bank, i), 1);
+	    wb_set(bank, i, 1);
 	    sleep(1);
-	    wb_set(WB_OUTPUT(bank, i), 0);
+	    wb_set(bank, i, 0);
 	}
     }
 }
