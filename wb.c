@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "pigpio.h"
+#include "time-utils.h"
 #include "util.h"
 
 #include "wb.h"
@@ -154,4 +155,61 @@ wb_set_pull_up(unsigned pin, wb_pull_up_mode_t mode)
 	gpioSetPullUpDown(gpio_table[id].id, PI_PUD_UP);
 	break;
     }
+}
+
+#define DEFAULT_DEBOUNCE_MS 2
+
+
+unsigned wb_wait_for_pins_full(unsigned pins, unsigned values, unsigned debounce_ms, unsigned max_ms)
+{
+    unsigned yes[N_INPUTS] = { 0, };
+    struct timespec yes_start[N_INPUTS];
+    struct timespec start, now;
+
+fprintf(stderr, "%x %x\n", pins, values);
+
+    nano_gettime(&start);
+
+    while (true) {
+	unsigned pin;
+
+        nano_gettime(&now);
+
+	for (pin = 1; pin <= N_INPUTS; pin++) {
+	    unsigned value = (values >> pin) & 1;
+	    if (! (pins & (1<<pin))) continue;
+	    if (wb_get(pin) == value) {
+		if (! yes[pin]) {
+		    yes[pin] = 1;
+		    yes_start[pin] = now;
+		}
+		if (nano_elapsed_ms(&now, &yes_start[pin]) >= debounce_ms) {
+		    return pin;
+		}
+	    } else {
+		yes[pin] = 0;
+	    }
+	    if (max_ms != -1 && nano_elapsed_ms(&now, &start) > max_ms) return 0;
+	}
+    }
+}
+
+unsigned wb_wait_for_pins_timeout(unsigned pins, unsigned values, unsigned max_ms)
+{
+    return wb_wait_for_pins_full(pins, values, DEFAULT_DEBOUNCE_MS, max_ms);
+}
+
+unsigned wb_wait_for_pins(unsigned pins, unsigned values)
+{
+     return wb_wait_for_pins_timeout(pins, values, -1);
+}
+
+bool wb_wait_for_pin_timeout(unsigned pin, unsigned value, unsigned max_ms)
+{
+    return wb_wait_for_pins_timeout(WB_PIN_MASK(pin), value ? WB_PIN_MASK(pin) : 0, max_ms);
+}
+
+void wb_wait_for_pin(unsigned pin, unsigned value)
+{
+    wb_wait_for_pin_timeout(pin, value, -1);
 }

@@ -68,9 +68,17 @@ main(int argc, char **argv)
 	    } else {
 		goto usage;
 	    }
+	} else if (buf[0] == 'w' || buf[0] == 'W') {
+	    unsigned mask, values = buf[0] == 'w' ? WB_PIN_MASK_ALL : 0;
+	    if (sscanf(&buf[1], "%d", &pin) == 1) {
+		mask = WB_PIN_MASK(pin);
+	    } else {
+		mask = WB_PIN_MASK_ALL;
+	    }
+	    printf("wait got pin %d\n", wb_wait_for_pins(mask, values));
 	} else {
 usage:
-	    fprintf(stderr, "g [<pin 1-8>]\np <bank 1/2> <pin 1-8> [<freq>] <duty%%>\ns <bank 1/2> <pin 1-8> <value 0/1>\nv <bank 1/2> <pin 1-8> <servo pulse width in us>- <pin 1-8> set pull down\n+ <pin 1-8> set pull up\n= <pin 1-8> remove pulll up/down\n");
+	    fprintf(stderr, "g [<pin 1-8>]\np <bank 1/2> <pin 1-8> [<freq>] <duty%%>\ns <bank 1/2> <pin 1-8> <value 0/1>\nv <bank 1/2> <pin 1-8> <servo pulse width in us>- <pin 1-8> set pull down\n+ <pin 1-8> set pull up\n= <pin 1-8> remove pulll up/down\nw [ <pin 1-8> ] wait for a pin to read true\nW [ <pin 1-8> ] wait for a pin to read false\n");
 	}
     }
 
