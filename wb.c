@@ -8,7 +8,7 @@
 #include "wb.h"
 
 #define N_INPUTS 8
-#define N_OUTPUTS_PER_BANK 16
+#define N_OUTPUTS_PER_BANK 8
 
 #define WB_PI_SERVO (1<<29)
 #define WB_PI_PWM (1<<30)
