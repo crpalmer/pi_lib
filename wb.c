@@ -166,8 +166,6 @@ unsigned wb_wait_for_pins_full(unsigned pins, unsigned values, unsigned debounce
     struct timespec yes_start[N_INPUTS];
     struct timespec start, now;
 
-fprintf(stderr, "%x %x\n", pins, values);
-
     nano_gettime(&start);
 
     while (true) {
