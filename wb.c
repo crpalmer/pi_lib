@@ -46,6 +46,8 @@ static struct {
     { "out2_8", 10, PI_OUTPUT },
 };
 
+static bool wb_is_init = false;
+
 static inline unsigned
 get_input_id(unsigned pin)
 {
@@ -67,6 +69,8 @@ wb_init(void)
 {
     int i;
 
+    if (wb_is_init) return 0;
+
     if (gpioInitialise() < 0) return -1;
 
     for (i = 0; i < ARRAY_SIZE(gpio_table); i++) {
@@ -75,6 +79,8 @@ wb_init(void)
 	}
 	gpioSetMode(gpio_table[i].id, gpio_table[i].mode);
     }
+
+    wb_is_init = true;
 
     return 0;
 }
