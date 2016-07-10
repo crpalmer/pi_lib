@@ -4,13 +4,20 @@
 typedef struct trackS track_t;
 
 #include <stdbool.h>
+#include "audio-config.h"
 #include "stop.h"
 
 track_t *
 track_new(const char *fname);
 
 track_t *
+track_new_audio_dev(const char *fname, audio_device_t *dev);
+
+track_t *
 track_new_fatal(const char *fname);
+
+track_t *
+track_new_audio_dev_fatal(const char *fname, audio_device_t *dev);
 
 track_t *
 track_new(const char *fname);

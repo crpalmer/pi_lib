@@ -19,6 +19,15 @@ struct trackS {
 track_t *
 track_new(const char *fname)
 {
+    audio_device_t dev;
+
+    audio_device_init_playback(&dev);
+    return track_new_audio_dev(fname, &dev);
+}
+
+track_t *
+track_new_audio_dev(const char *fname, audio_device_t *dev)
+{
     track_t *t;
     wav_t *wav;
 
@@ -27,10 +36,10 @@ track_new(const char *fname)
     }
 
     t = fatal_malloc(sizeof(*t));
+    t->audio_dev = *dev;
     t->wav = wav;
     t->volume = 100;
 
-    audio_device_init_playback(&t->audio_dev);
     audio_config_init_default(&t->audio_cfg);
     wav_configure_audio(t->wav, &t->audio_cfg);
 
@@ -43,6 +52,17 @@ track_new_fatal(const char *fname)
     track_t *t;
 
     if ((t = track_new(fname)) == NULL) {
+	exit(1);
+    }
+    return t;
+}
+
+track_t *
+track_new_audio_dev_fatal(const char *fname, audio_device_t *dev)
+{
+    track_t *t;
+
+    if ((t = track_new_audio_dev(fname, dev)) == NULL) {
 	exit(1);
     }
     return t;
