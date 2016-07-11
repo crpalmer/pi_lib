@@ -28,7 +28,6 @@ void
 stop_request_stop(stop_t *stop)
 {
     pthread_mutex_lock(&stop->lock);
-    assert(! stop->requested);
     stop->requested = true;
     pthread_mutex_unlock(&stop->lock);
 }
