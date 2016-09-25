@@ -9,8 +9,8 @@ static void output_test(int bank)
     while (true) {
 	int i;
 
-	for (i = 0; i < 8; i++) {
-	    printf("enable output %d\n", i+1);
+	for (i = 1; i <= 8; i++) {
+	    printf("enable output %d\n", i);
 	    wb_set(bank, i, 1);
 	    sleep(1);
 	    wb_set(bank, i, 0);
