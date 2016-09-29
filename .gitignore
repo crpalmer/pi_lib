@@ -9,5 +9,6 @@ test/stepper
 test/talking-skull
 test/track
 test/wb
+utils/maestro
 utils/servo
 utils/wb

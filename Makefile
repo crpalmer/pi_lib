@@ -13,6 +13,7 @@ TESTS = \
 	test/wb
 
 UTILS = \
+	utils/maestro \
 	utils/servo \
 	utils/wb
 
@@ -68,6 +69,9 @@ test/track: test/track.o $(LIB)
 
 test/wb: test/wb.o $(LIB)
 	$(CC) test/wb.o -o $@ $(LIBS)
+
+utils/maestro: utils/maestro.o $(LIB)
+	$(CC) utils/maestro.o -o $@ $(LIBS)
 
 utils/servo: utils/servo.o $(LIB)
 	$(CC) utils/servo.o -o $@ $(LIBS)
