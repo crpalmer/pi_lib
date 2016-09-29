@@ -45,7 +45,6 @@ typedef struct {
     unsigned short	max_pos;
     unsigned short	neutral;
     unsigned char	range;
-    double		speed;
     unsigned char	acceleration;
     int			is_inverted;
     unsigned short	current_real_pos;
@@ -89,26 +88,9 @@ get_raw_parameter_ushort(maestro_t *m, int parameter, unsigned short *ret)
 }
 
 static int
-set_raw_parameter_ushort(maestro_t *m, int parameter, unsigned short value)
-{
-    char val_bytes[2];
-
-    val_bytes[0] = value & 0xff;
-    val_bytes[1] = (value >> 8) & 0xff;
-
-    if (usb_control_msg(m->handle, 0xc0, REQUEST_SET_PARAMETER, 0, parameter, val_bytes, 2, -1) < 0) {
-	fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
-	return 0;
-    }
-
-    return 1;
-}
-
-static int
 get_servo_config(maestro_t *m, servo_id_t id, servo_config_t *c)
 {
     unsigned char pos_tmp;
-    unsigned char speed_tmp;
 
     if (id >= m->n_servos) return 0;
 
@@ -120,8 +102,6 @@ get_servo_config(maestro_t *m, servo_id_t id, servo_config_t *c)
     c->max_pos = pos_tmp << 6;
     if (! get_raw_parameter_ushort(m, PARAMETER_SERVO_NEUTRAL(id), &c->neutral)) return 0;
     if (! get_raw_parameter_byte(m, PARAMETER_SERVO_RANGE(id), &c->range)) return 0;
-    if (! get_raw_parameter_byte(m, PARAMETER_SERVO_SPEED(id), &speed_tmp)) return 0;
-    c->speed = (speed_tmp >> 3) * (2 << (speed_tmp & 0x7));
 
     return 1;
 }
@@ -188,7 +168,12 @@ maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_full_range)
 	speed = total_units / (ms_for_full_range / 10.0);
     }
 
-    return set_raw_parameter_ushort(m, PARAMETER_SERVO_SPEED(id), speed);
+    if (usb_control_msg(m->handle, 0x40, REQUEST_SET_SERVO_VARIABLE, speed, id, NULL, 0, -1) < 0) {
+       fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
+       return 0;
+    }
+
+    return 0;
 }
 
 int
