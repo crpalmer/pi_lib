@@ -151,13 +151,13 @@ maestro_n_servos(maestro_t *m)
 }
 
 int
-maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_full_range)
+maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_range)
 {
     double speed;
 
     if (id >= m->n_servos) return 0;
 
-    if (ms_for_full_range == 0) {
+    if (ms_for_range == 0) {
 	speed = 0;
     } else {
 	unsigned short total_us;
@@ -165,7 +165,7 @@ maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_full_range)
 
 	total_us = m->c[id].max_pos - m->c[id].min_pos + 1;
 	total_units = total_us / 0.25;
-	speed = total_units / (ms_for_full_range / 10.0);
+	speed = total_units / (ms_for_range / 10.0);
     }
 
     if (usb_control_msg(m->handle, 0x40, REQUEST_SET_SERVO_VARIABLE, speed, id, NULL, 0, -1) < 0) {

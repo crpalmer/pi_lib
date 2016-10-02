@@ -29,7 +29,7 @@ void
 maestro_set_servo_range_pct(maestro_t *m, servo_id_t id, double low, double high);
 
 int
-maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_full_range);
+maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_range);
 
 int
 maestro_set_servo_is_inverted(maestro_t *m, servo_id_t id, int is_inverted);
