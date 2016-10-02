@@ -5,6 +5,7 @@
 
 typedef struct talking_skullS talking_skull_t;
 typedef struct servo_operationsS servo_operations_t;
+typedef struct talking_skull_actorS talking_skull_actor_t;
 
 typedef void (*talking_skull_servo_update_t)(void *data, double pos);
 
@@ -28,5 +29,11 @@ talking_skull_play_prepared(talking_skull_t *, servo_operations_t *);
 
 void
 talking_skull_wait_completion(talking_skull_t *t, unsigned handle);
+
+talking_skull_actor_t *
+talking_skull_actor_new(const char *fname, talking_skull_servo_update_t update, void *data);
+
+void
+talking_skull_actor_play(talking_skull_actor_t *a);
 
 #endif

@@ -6,6 +6,7 @@
 #include "producer-consumer.h"
 #include "time-utils.h"
 #include "talking-skull.h"
+#include "wav.h"
 
 #define PRINT_SERVO     0
 #define N_SERVO_PER_S   5000
@@ -283,4 +284,39 @@ talking_skull_wait_completion(talking_skull_t *t, unsigned seq)
 	pthread_cond_wait(&t->cond, &t->mutex);
     }
     pthread_mutex_unlock(&t->mutex);
+}
+
+struct talking_skull_actorS {
+    wav_t *servo;
+    audio_meta_t meta_servo;
+    talking_skull_t *talking_skull;
+    unsigned char *servo_data;
+    size_t n_servo_data;
+    servo_operations_t *ops;
+};
+
+talking_skull_actor_t *
+talking_skull_actor_new(const char *fname, talking_skull_servo_update_t update, void *data)
+{
+    talking_skull_actor_t *a;
+    wav_t *servo;
+
+    if ((servo = wav_new(fname)) == NULL) {
+	return NULL;
+    }
+
+    a = fatal_malloc(sizeof(*a));
+    a->servo = servo;
+    a->meta_servo = wav_get_meta(a->servo);
+    a->servo_data = wav_get_raw_data(a->servo, &a->n_servo_data);
+    a->talking_skull = talking_skull_new(&a->meta_servo, true, update, data);
+    a->ops = talking_skull_prepare(a->talking_skull, a->servo_data, a->n_servo_data);
+
+    return a;
+}
+
+void
+talking_skull_actor_play(talking_skull_actor_t *a)
+{
+    talking_skull_play_prepared(a->talking_skull, a->ops);
 }
