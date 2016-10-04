@@ -218,13 +218,12 @@ maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range)
 	m->c[id].max_pos = 2400*4;
 	break;
     case TALKING_SKULL:
-	m->c[id].min_pos = 1000*4;
-	m->c[id].max_pos = 1680*4;
+	maestro_set_servo_range_pct(m, id, 30, 75);
+	maestro_set_servo_is_inverted(m, id, 1);
 	break;
     case TALKING_DEER:
-	// TODO, this is a placeholder
-	m->c[id].min_pos = 1400*4;
-	m->c[id].max_pos = 1600*4;
+	maestro_set_servo_range_pct(m, id, 20, 50);
+	maestro_set_servo_is_inverted(m, id, 1);
 	break;
     case TALKING_SKULL2:
 	maestro_set_servo_range_pct(m, id, 13, 40);
