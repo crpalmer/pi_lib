@@ -15,6 +15,7 @@ TESTS = \
 UTILS = \
 	utils/maestro \
 	utils/servo \
+	utils/talking-skull-dump \
 	utils/wb
 
 AUDIO_OBJS = audio.o talking-skull.o track.o wav.o
@@ -75,6 +76,9 @@ utils/maestro: utils/maestro.o $(LIB)
 
 utils/servo: utils/servo.o $(LIB)
 	$(CC) utils/servo.o -o $@ $(LIBS)
+
+utils/talking-skull-dump: utils/talking-skull-dump.o $(LIB)
+	$(CC) utils/talking-skull-dump.o -o $@ $(LIBS)
 
 utils/wb: utils/wb.o $(LIB)
 	$(CC) utils/wb.o -o $@ $(LIBS)
