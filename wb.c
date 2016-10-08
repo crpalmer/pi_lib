@@ -71,7 +71,10 @@ wb_init(void)
 
     if (wb_is_init) return 0;
 
-    if (gpioInitialise() < 0) return -1;
+    if ((i = gpioInitialise()) < 0) {
+	fprintf(stderr, "gpioInitialize returned %d\n", i);
+	return i;
+    }
 
     for (i = 0; i < ARRAY_SIZE(gpio_table); i++) {
 	if (gpio_table[i].mode == PI_INPUT) {
