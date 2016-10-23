@@ -90,6 +90,10 @@ server_thread_main(void *server_as_vp)
 		 inet_ntoa(clientname.sin_addr),
 	       ntohs(clientname.sin_port));
 
+	if (server->on_connect) {
+	    server->on_connect(server->state, &clientname, size);
+	}
+
 	c = malloc(sizeof(*c));
 	c->fd = fd;
 	c->server = server;
