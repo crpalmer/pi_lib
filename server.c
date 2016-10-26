@@ -13,11 +13,19 @@
 
 #include "server.h"
 
+typedef struct {
+    int fd;
+    server_args_t *server;
+    struct sockaddr_in *addr;
+    size_t size;
+} connection_t;
+
 static bool
-command(void *server_as_vp, int fd, const char *line)
+command(void *c_as_vp, int fd, const char *line)
 {
-    server_args_t *server = (server_args_t *) server_as_vp;
-    char *response = server->command(server->state, line);
+    connection_t *c = (connection_t *) c_as_vp;
+    server_args_t *server = c->server;
+    char *response = server->command(server->state, line, c->addr, c->size);
     bool success;
 
 printf("response: %s\n", response);
@@ -35,21 +43,15 @@ printf("response: %s\n", response);
     return success;
 }
 
-typedef struct {
-    int fd;
-    server_args_t *server;
-} connection_t;
-
 void *
 connection_main(void *c_as_vp)
 {
     connection_t *c = (connection_t *) c_as_vp;
     int fd = c->fd;
-    server_args_t *server = c->server;
     net_line_reader_t *reader;
 
     free(c);
-    reader = net_line_reader_new(fd, command, server);
+    reader = net_line_reader_new(fd, command, c_as_vp);
     while (net_line_reader_read(reader) >= 0) {
     }
     net_line_reader_destroy(reader);
@@ -90,13 +92,12 @@ server_thread_main(void *server_as_vp)
 		 inet_ntoa(clientname.sin_addr),
 	       ntohs(clientname.sin_port));
 
-	if (server->on_connect) {
-	    server->on_connect(server->state, &clientname, size);
-	}
-
 	c = malloc(sizeof(*c));
 	c->fd = fd;
 	c->server = server;
+	c->addr = (struct sockaddr_in *) fatal_malloc(size);
+	memcpy(c->addr, &clientname, size);
+	c->size = size;
 
 	pthread_create(&thread, NULL, connection_main, c);
 	pthread_detach(thread);
