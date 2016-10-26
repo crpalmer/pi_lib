@@ -50,12 +50,12 @@ connection_main(void *c_as_vp)
     int fd = c->fd;
     net_line_reader_t *reader;
 
-    free(c);
     reader = net_line_reader_new(fd, command, c_as_vp);
     while (net_line_reader_read(reader) >= 0) {
     }
     net_line_reader_destroy(reader);
     close(fd);
+    free(c);
 
     return NULL;
 }
