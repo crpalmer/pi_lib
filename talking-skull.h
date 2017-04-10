@@ -33,6 +33,12 @@ talking_skull_wait_completion(talking_skull_t *t, unsigned handle);
 talking_skull_actor_t *
 talking_skull_actor_new(const char *fname, talking_skull_servo_update_t update, void *data);
 
+talking_skull_actor_t *
+talking_skull_actor_new_from_audio(const char *fname, talking_skull_servo_update_t update, void *data);
+
+talking_skull_actor_t *
+talking_skull_actor_new_with_n_to_avg(const char *fname, talking_skull_servo_update_t update, void *data, unsigned n_to_avg);
+
 void
 talking_skull_actor_play(talking_skull_actor_t *a);
 

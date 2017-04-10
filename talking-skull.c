@@ -296,7 +296,7 @@ struct talking_skull_actorS {
 };
 
 talking_skull_actor_t *
-talking_skull_actor_new(const char *fname, talking_skull_servo_update_t update, void *data)
+talking_skull_actor_new_with_n_to_avg(const char *fname, talking_skull_servo_update_t update, void *data, unsigned n_to_avg)
 {
     talking_skull_actor_t *a;
     wav_t *servo;
@@ -309,10 +309,22 @@ talking_skull_actor_new(const char *fname, talking_skull_servo_update_t update, 
     a->servo = servo;
     a->meta_servo = wav_get_meta(a->servo);
     a->servo_data = wav_get_raw_data(a->servo, &a->n_servo_data);
-    a->talking_skull = talking_skull_new(&a->meta_servo, true, update, data);
+    a->talking_skull = talking_skull_new_with_n_to_avg(&a->meta_servo, n_to_avg, update, data);
     a->ops = talking_skull_prepare(a->talking_skull, a->servo_data, a->n_servo_data);
 
     return a;
+}
+
+talking_skull_actor_t *
+talking_skull_actor_new(const char *fname, talking_skull_servo_update_t update, void *data)
+{
+    return talking_skull_actor_new_with_n_to_avg(fname, update, data, N_TO_AVG_TRACK);
+}
+
+talking_skull_actor_t *
+talking_skull_actor_new_from_audio(const char *fname, talking_skull_servo_update_t update, void *data)
+{
+    return talking_skull_actor_new_with_n_to_avg(fname, update, data, N_TO_AVG_GENERATED);
 }
 
 void
