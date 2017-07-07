@@ -12,6 +12,8 @@ void stop_stop(stop_t *);
 bool stop_requested(stop_t *);
 void stop_stopped(stop_t *);
 
+bool stop_is_stopped(stop_t *);
+
 void stop_reset(stop_t *);
 
 void stop_destroy(stop_t *);

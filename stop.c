@@ -77,3 +77,10 @@ stop_destroy(stop_t *stop)
 {
     free(stop);
 }
+
+bool
+stop_is_stopped(stop_t *stop)
+{
+    return stop->stopped;
+}
+
