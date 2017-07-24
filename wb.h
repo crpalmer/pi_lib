@@ -22,6 +22,8 @@ unsigned wb_get_all(void);
 
 void wb_set(unsigned bank, unsigned pin, unsigned value);
 
+void wb_set_outputs(unsigned mask, unsigned values);
+
 void wb_pwm(unsigned bank, unsigned pin, float duty);
 
 void wb_pwm_freq(unsigned bank, unsigned pin, unsigned freq, float duty);

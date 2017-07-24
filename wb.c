@@ -120,6 +120,21 @@ wb_set(unsigned bank, unsigned pin, unsigned value)
 }
 
 void
+wb_set_outputs(unsigned mask, unsigned values)
+{
+    int bank, pin;
+    unsigned cur_bit = 1;
+
+    for (bank = 1; bank <= 2; bank++) {
+	for (pin = 1; pin <= 8; pin++, cur_bit <<= 1) {
+	    if ((mask & cur_bit) != 0) {
+		wb_set(bank, pin, (values & cur_bit) != 0);
+	    }
+	}
+    }
+}
+
+void
 wb_pwm(unsigned bank, unsigned pin, float duty)
 {
      wb_pwm_freq(bank, pin, 0, duty);
