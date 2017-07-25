@@ -18,7 +18,7 @@ UTILS = \
 	utils/talking-skull-dump \
 	utils/wb
 
-AUDIO_OBJS = audio.o talking-skull.o track.o wav.o
+AUDIO_OBJS = audio.o talker-auto-gain.o talking-skull.o track.o wav.o
 GPIO_OBJS = lights.o gpio.o piface.o stepper.o wb.o
 NET_OBJS = net.o net-line-reader.o
 SERVER_OBJS = server.o
