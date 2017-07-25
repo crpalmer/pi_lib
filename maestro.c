@@ -237,6 +237,13 @@ void
 maestro_set_servo_range_pct(maestro_t *m, servo_id_t id, double low, double high)
 {
     double scale = (m->c[id].max_pos - m->c[id].min_pos + 1) / 100.0;
+
+    if (m->c[id].is_inverted) {
+	double o_low = low, o_high = high;
+	low = 100 - o_high;
+	high = 100 - o_low;
+    }
+
     m->c[id].max_pos = m->c[id].min_pos + scale*high;
     m->c[id].min_pos = m->c[id].min_pos + scale*low;
 }
