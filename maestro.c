@@ -189,13 +189,15 @@ int
 maestro_set_servo_pos(maestro_t *m, servo_id_t id, double pos)
 {
     unsigned short real_pos;
+    double real_pos_real;
 
     if (id >= m->n_servos) return 0;
     if (pos > 100) return 0;
 
     if (m->c[id].is_inverted) pos = 100 - pos;
 
-    real_pos = ((m->c[id].max_pos - m->c[id].min_pos) * pos + 50) / 100 + m->c[id].min_pos;
+    real_pos_real = (m->c[id].max_pos - m->c[id].min_pos) * pos / 100.0;
+    real_pos = (unsigned short) (real_pos_real + 0.5) + m->c[id].min_pos;
 
     if (m->c[id].current_real_pos == real_pos) {
 	return 1;
