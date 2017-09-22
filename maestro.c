@@ -302,6 +302,15 @@ maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range)
 	maestro_set_servo_range_pct(m, id, 15, 33);
 	maestro_set_servo_is_inverted(m, id, 1);
 	break;
+    case HITEC_HS65:
+	maestro_set_servo_physical_range(m, id, 610, 2360);
+	break;
+    case HITEC_HS81:
+	maestro_set_servo_physical_range(m, id, 640, 2250);
+	break;
+    case HITEC_HS425:
+	maestro_set_servo_physical_range(m, id, 553, 2520);
+	break;
     }
 }
 
