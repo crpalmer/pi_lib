@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "pi-usb.h"
 #include "maestro.h"
+#include "util.h"
 
 #define POLOLU_VENDOR_ID        0x1ffb
 #define MAESTRO_PRODUCT_ID      0x0089
@@ -29,6 +30,7 @@
 
 /* ============================ parameters ======================== */
 
+#define PARAMETER_INITIALIZED 0
 #define PARAMETER_SERIAL_MODE 3
 #define PARAMETER_SERVO_HOME(id) (30+(id)*9)
 #define PARAMETER_SERVO_MIN(id) (32+(id)*9)
@@ -38,11 +40,15 @@
 #define PARAMETER_SERVO_SPEED(id) (37+(id)*9)
 #define PARAMETER_SERVO_ACCELERATION(id) (38+(id)*9)
 
+#define SERIAL_MODE_USB 0
+
+#define SERVO_POS_MULTIPLIER 4
+
 typedef struct {
     servo_id_t		servo_id;
     unsigned short	home;
-    unsigned short	min_pos;
-    unsigned short	max_pos;
+    unsigned short	min_pos_us;
+    unsigned short	max_pos_us;
     unsigned short	neutral;
     unsigned char	range;
     unsigned char	acceleration;
@@ -88,6 +94,34 @@ get_raw_parameter_ushort(maestro_t *m, int parameter, unsigned short *ret)
 }
 
 static int
+set_raw_parameter_byte(maestro_t *m, int parameter, unsigned char value)
+{
+    unsigned short index = (1<<8) | parameter;
+
+    if (usb_control_msg(m->handle, 0x40, REQUEST_SET_PARAMETER, value, index, NULL, 0, -1) < 0) {
+	fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
+	return 0;
+    }
+
+    return 1;
+}
+
+#if 0
+static int
+set_raw_parameter_ushort(maestro_t *m, int parameter, unsigned short value)
+{
+    unsigned short index = (2<<8) | parameter;
+
+    if (usb_control_msg(m->handle, 0x40, REQUEST_SET_PARAMETER, value, index, NULL, 0, -1) < 0) {
+	fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
+	return 0;
+    }
+
+    return 1;
+}
+#endif
+
+static int
 get_servo_config(maestro_t *m, servo_id_t id, servo_config_t *c)
 {
     unsigned char pos_tmp;
@@ -97,11 +131,37 @@ get_servo_config(maestro_t *m, servo_id_t id, servo_config_t *c)
     c->servo_id = id;
     if (! get_raw_parameter_ushort(m, PARAMETER_SERVO_HOME(id), &c->home)) return 0;
     if (! get_raw_parameter_byte(m, PARAMETER_SERVO_MIN(id), &pos_tmp)) return 0;
-    c->min_pos = pos_tmp << 6;
+    c->min_pos_us = pos_tmp * 64 / SERVO_POS_MULTIPLIER;
     if (! get_raw_parameter_byte(m, PARAMETER_SERVO_MAX(id), &pos_tmp)) return 0;
-    c->max_pos = pos_tmp << 6;
+    c->max_pos_us = pos_tmp * 64 / SERVO_POS_MULTIPLIER;
     if (! get_raw_parameter_ushort(m, PARAMETER_SERVO_NEUTRAL(id), &c->neutral)) return 0;
     if (! get_raw_parameter_byte(m, PARAMETER_SERVO_RANGE(id), &c->range)) return 0;
+
+    return 1;
+}
+
+static void
+get_all_servos_config(maestro_t *m)
+{
+    unsigned i;
+
+    for (i = 0; i < m->n_servos; i++) {
+	m->c[i].current_real_pos = 0;
+	get_servo_config(m, i, &m->c[i]);
+    }
+}
+
+static int
+restart_controller(maestro_t *m)
+{
+    if (usb_control_msg(m->handle, 0x40, REQUEST_REINITIALIZE, 0, 0, NULL, 0, -1) < 0) {
+	fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
+	return 0;
+    }
+
+    ms_sleep(1500);
+
+    get_all_servos_config(m);
 
     return 1;
 }
@@ -111,7 +171,7 @@ maestro_new(void)
 {
     struct usb_device *dev = pi_usb_device(POLOLU_VENDOR_ID, MAESTRO_PRODUCT_ID);
     maestro_t *m;
-    unsigned i;
+    unsigned char serial_mode;
 
     if (! dev) return NULL;
 
@@ -128,9 +188,11 @@ maestro_new(void)
     m->handle = usb_open(dev);
 
     m->c = calloc(sizeof(*m->c), m->n_servos);
-    for (i = 0; i < m->n_servos; i++) {
-	m->c[i].current_real_pos = 0;
-	get_servo_config(m, i, &m->c[i]);
+    get_all_servos_config(m);
+
+    if (get_raw_parameter_byte(m, PARAMETER_SERIAL_MODE, &serial_mode) && serial_mode != SERIAL_MODE_USB) {
+	fprintf(stderr, "WARNING: serial mode %d is not usb mode, resetting it\n", serial_mode);
+	set_raw_parameter_byte(m, PARAMETER_SERIAL_MODE, SERIAL_MODE_USB);
     }
 
     return m;
@@ -163,7 +225,7 @@ maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_range)
 	unsigned short total_us;
 	double total_units;
 
-	total_us = m->c[id].max_pos - m->c[id].min_pos + 1;
+	total_us = m->c[id].max_pos_us - m->c[id].min_pos_us + 1;
 	total_units = total_us / 0.25;
 	speed = total_units / (ms_for_range / 10.0);
     }
@@ -188,7 +250,7 @@ maestro_set_servo_is_inverted(maestro_t *m, servo_id_t id, int is_inverted)
 int
 maestro_set_servo_pos(maestro_t *m, servo_id_t id, double pos)
 {
-    unsigned short real_pos;
+    unsigned short real_pos, real_pos_us;
     double real_pos_real;
 
     if (id >= m->n_servos) return 0;
@@ -196,8 +258,11 @@ maestro_set_servo_pos(maestro_t *m, servo_id_t id, double pos)
 
     if (m->c[id].is_inverted) pos = 100 - pos;
 
-    real_pos_real = (m->c[id].max_pos - m->c[id].min_pos) * pos / 100.0;
-    real_pos = (unsigned short) (real_pos_real + 0.5) + m->c[id].min_pos;
+    real_pos_real = (m->c[id].max_pos_us - m->c[id].min_pos_us) * pos / 100.0;
+    real_pos_us = (unsigned short) (real_pos_real + 0.5) + m->c[id].min_pos_us;
+    real_pos = real_pos_us * SERVO_POS_MULTIPLIER;
+
+printf("real_pos = %d (%d us)\n", real_pos, real_pos_us);
 
     if (m->c[id].current_real_pos == real_pos) {
 	return 1;
@@ -207,17 +272,24 @@ maestro_set_servo_pos(maestro_t *m, servo_id_t id, double pos)
     }
 }
 
+int
+maestro_set_servo_physical_range(maestro_t *m, servo_id_t id, unsigned min_us, unsigned max_us)
+{
+    if (! set_raw_parameter_byte(m, PARAMETER_SERVO_MIN(id), min_us/64*SERVO_POS_MULTIPLIER)) return 0;
+    if (! set_raw_parameter_byte(m, PARAMETER_SERVO_MAX(id), max_us/64*SERVO_POS_MULTIPLIER)) return 0;
+    get_servo_config(m, id, &m->c[id]);
+    return 1;
+}
+
 void
 maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range)
 {
     switch(range) {
     case STANDARD_SERVO:
-	m->c[id].min_pos = 1050*4;
-	m->c[id].max_pos = 1950*4;
+	maestro_set_servo_physical_range(m, id, 1050, 1950);
 	break;
     case EXTENDED_SERVO:
-	m->c[id].min_pos = 600*4;
-	m->c[id].max_pos = 2400*4;
+	maestro_set_servo_physical_range(m, id, 600, 2400);
 	break;
     case TALKING_SKULL:
 	maestro_set_servo_range_pct(m, id, 30, 75);
@@ -236,7 +308,7 @@ maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range)
 void
 maestro_set_servo_range_pct(maestro_t *m, servo_id_t id, double low, double high)
 {
-    double scale = (m->c[id].max_pos - m->c[id].min_pos + 1) / 100.0;
+    double scale = (m->c[id].max_pos_us - m->c[id].min_pos_us + 1) / 100.0;
 
     if (m->c[id].is_inverted) {
 	double o_low = low, o_high = high;
@@ -244,6 +316,15 @@ maestro_set_servo_range_pct(maestro_t *m, servo_id_t id, double low, double high
 	high = 100 - o_low;
     }
 
-    m->c[id].max_pos = m->c[id].min_pos + scale*high;
-    m->c[id].min_pos = m->c[id].min_pos + scale*low;
+    m->c[id].max_pos_us = m->c[id].min_pos_us + scale*high;
+    m->c[id].min_pos_us = m->c[id].min_pos_us + scale*low;
+}
+
+int
+maestro_factory_reset(maestro_t *m)
+{
+    if (! set_raw_parameter_byte(m, PARAMETER_INITIALIZED, 0xff)) return 0;
+    restart_controller(m);
+    ms_sleep(1500);
+    return 1;
 }

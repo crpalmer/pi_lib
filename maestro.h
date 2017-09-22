@@ -20,7 +20,13 @@ void
 maestro_destroy(maestro_t *m);
 
 int
+maestro_factory_reset(maestro_t *m);
+
+int
 maestro_n_servos(maestro_t *m);
+
+int
+maestro_set_servo_physical_range(maestro_t *m, servo_id_t id, unsigned min_us, unsigned max_us);
 
 void
 maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range);

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "maestro.h"
 #include "pi-usb.h"
 
@@ -31,11 +32,20 @@ main(int argc, char **argv)
 		maestro_set_servo_range_pct(m, c, d, dd);
 		continue;
 	    }
+	} if (buf[0] == 'R') {
+	    if (sscanf(&buf[1], "%d %d %d", &c, &d, &dd) == 3) {
+		maestro_set_servo_physical_range(m, c, d, dd);
+		continue;
+	    }
 	} else if (buf[0] == 's') {
 	    if (sscanf(&buf[1], "%d %d", &c, &d) == 2) {
 		maestro_set_servo_speed(m, c, d);
 		continue;
 	    }
+	} else if (strcmp(buf, "factory reset\n") == 0) {
+	    printf("Resetting the config and restarting the controller\n");
+	    maestro_factory_reset(m);
+	    continue;
 	} else if (sscanf(buf, "%d %d", &c, &d) == 2) {
 	    maestro_set_servo_pos(m, c, d);
 	    continue;
@@ -43,7 +53,9 @@ main(int argc, char **argv)
 
         fprintf(stderr, "i channel [0/1] - set is_inverted\n");
         fprintf(stderr, "r channel low%% high%% - set range\n");
+	fprintf(stderr, "R channel min_us max_us - set physical range\n");
         fprintf(stderr, "s channel ms - set speed (ms for whole range)\n");
+	fprintf(stderr, "factory reset\n");
 	fprintf(stderr, "channel pos%%\n");
     }
 
