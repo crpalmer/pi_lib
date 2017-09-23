@@ -172,6 +172,7 @@ maestro_new(void)
     struct usb_device *dev = pi_usb_device(POLOLU_VENDOR_ID, MAESTRO_PRODUCT_ID);
     maestro_t *m;
     unsigned char serial_mode;
+    int i;
 
     if (! dev) return NULL;
 
@@ -189,6 +190,7 @@ maestro_new(void)
 
     m->c = calloc(sizeof(*m->c), m->n_servos);
     get_all_servos_config(m);
+    for (i = 0; i < m->n_servos; i++) maestro_set_servo_range(m, i, STANDARD_SERVO);
 
     if (get_raw_parameter_byte(m, PARAMETER_SERIAL_MODE, &serial_mode) && serial_mode != SERIAL_MODE_USB) {
 	fprintf(stderr, "WARNING: serial mode %d is not usb mode, resetting it\n", serial_mode);
