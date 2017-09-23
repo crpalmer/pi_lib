@@ -1,16 +1,30 @@
 #include <stdio.h>
+#include <fcntl.h>
 #include "pi-usb.h"
 #include "maestro.h"
 #include "util.h"
 
+#define DEBUG 0
+
+#define SERIAL_DEVICE		"/dev/ttyACM0"
+
 #define POLOLU_VENDOR_ID        0x1ffb
 #define MAESTRO_PRODUCT_ID      0x0089
 
+// USB serial messages for normal control
+#define COMMAND_SET_TARGET		0x84
+#define COMMAND_SET_SPEED		0x87
+#define COMMAND_SET_ACCELERATION	0x89
+#define COMMAND_GET_POSITION		0x90
+#define COMMAND_GET_MOVING_STATE	0x93
+#define COMMAND_GET_ERRORS		0xA1
+#define COMMAND_GO_HOME			0xA2
+
+// USB control messages for hardward setup
 #define REQUEST_GET_PARAMETER 0x81
 #define REQUEST_SET_PARAMETER 0x82
 #define REQUEST_GET_VARIABLES 0x83
 #define REQUEST_SET_SERVO_VARIABLE 0x84
-#define REQUEST_SET_TARGET 0x85
 #define REQUEST_CLEAR_ERRORS 0x86
 #define REQUEST_GET_SERVO_SETTINGS 0x87
 
@@ -59,6 +73,7 @@ typedef struct {
 struct maestroS {
     struct usb_device	  *dev;
     struct usb_dev_handle *handle;
+    int			   fd;
     int			   n_servos;
     servo_config_t	  *c;
 };
@@ -121,6 +136,25 @@ set_raw_parameter_ushort(maestro_t *m, int parameter, unsigned short value)
 }
 #endif
 
+int
+send_cmd_ushort(maestro_t *m, servo_id_t id, unsigned char cmd, unsigned short data)
+{
+    unsigned char bytes[4];
+
+    bytes[0] = cmd;
+    bytes[1] = id;
+    bytes[2] = data%128;
+    bytes[3] = data/128;
+
+    if (write(m->fd, bytes, 4) != 4) {
+	perror("write");
+	return 0;
+    }
+
+    return 1;
+}
+
+
 static int
 get_servo_config(maestro_t *m, servo_id_t id, servo_config_t *c)
 {
@@ -137,6 +171,7 @@ get_servo_config(maestro_t *m, servo_id_t id, servo_config_t *c)
     if (! get_raw_parameter_ushort(m, PARAMETER_SERVO_NEUTRAL(id), &c->neutral)) return 0;
     if (! get_raw_parameter_byte(m, PARAMETER_SERVO_RANGE(id), &c->range)) return 0;
 
+    if (DEBUG) printf("config %d: home %d pos %d..%d neutral %d range %d\n", id, c->home, c->min_pos_us, c->max_pos_us, c->neutral, c->range);
     return 1;
 }
 
@@ -190,11 +225,22 @@ maestro_new(void)
 
     m->c = calloc(sizeof(*m->c), m->n_servos);
     get_all_servos_config(m);
-    for (i = 0; i < m->n_servos; i++) maestro_set_servo_range(m, i, STANDARD_SERVO);
 
     if (get_raw_parameter_byte(m, PARAMETER_SERIAL_MODE, &serial_mode) && serial_mode != SERIAL_MODE_USB) {
 	fprintf(stderr, "WARNING: serial mode %d is not usb mode, resetting it\n", serial_mode);
 	set_raw_parameter_byte(m, PARAMETER_SERIAL_MODE, SERIAL_MODE_USB);
+	restart_controller(m);
+    }
+
+    if ((m->fd = open(SERIAL_DEVICE, O_RDWR | O_NOCTTY)) < 0) {
+	perror(SERIAL_DEVICE);
+	maestro_destroy(m);
+	return NULL;
+    }
+
+    for (i = 0; i < m->n_servos; i++) {
+	maestro_set_servo_range(m, i, STANDARD_SERVO);
+	maestro_set_servo_speed(m, i, 0);
     }
 
     return m;
@@ -205,6 +251,7 @@ maestro_destroy(maestro_t *m)
 {
     free(m->c);
     usb_close(m->handle);
+    if (m->fd >= 0) close(m->fd);
     free(m);
 }
 
@@ -217,7 +264,7 @@ maestro_n_servos(maestro_t *m)
 int
 maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_range)
 {
-    double speed;
+    unsigned speed;
 
     if (id >= m->n_servos) return 0;
 
@@ -232,10 +279,9 @@ maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_range)
 	speed = total_units / (ms_for_range / 10.0);
     }
 
-    if (usb_control_msg(m->handle, 0x40, REQUEST_SET_SERVO_VARIABLE, speed, id, NULL, 0, -1) < 0) {
-       fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
-       return 0;
-    }
+    if (DEBUG) printf("speed %d => %d\n", ms_for_range, speed);
+
+    return send_cmd_ushort(m, id, COMMAND_SET_SPEED, speed);
 
     return 0;
 }
@@ -264,13 +310,13 @@ maestro_set_servo_pos(maestro_t *m, servo_id_t id, double pos)
     real_pos_us = (unsigned short) (real_pos_real + 0.5) + m->c[id].min_pos_us;
     real_pos = real_pos_us * SERVO_POS_MULTIPLIER;
 
-printf("real_pos = %d (%d us)\n", real_pos, real_pos_us);
+    if (DEBUG) printf("real_pos = %d (%d us)\n", real_pos, real_pos_us);
 
     if (m->c[id].current_real_pos == real_pos) {
 	return 1;
     } else {
 	m->c[id].current_real_pos = real_pos;
-        return usb_control_msg(m->handle, 0x40, REQUEST_SET_TARGET, real_pos, id, NULL, 0, -1) >= 0;
+        return send_cmd_ushort(m, id, COMMAND_SET_TARGET, real_pos);
     }
 }
 
