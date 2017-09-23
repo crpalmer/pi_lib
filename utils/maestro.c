@@ -5,11 +5,28 @@
 #include "pi-usb.h"
 
 static char buf[1024];
+static char str[1024];
+
+const struct {
+    const char *str;
+    maestro_range_t value;
+} ranges[] = {
+    { "standard", STANDARD_SERVO },
+    { "extended", EXTENDED_SERVO },
+    { "talking-skull", TALKING_SKULL },
+    { "talking-deer", TALKING_DEER },
+    { "talking-skull2", TALKING_SKULL2 },
+    { "hs65", HITEC_HS65 },
+    { "hs81", HITEC_HS81 },
+    { "hs85", HITEC_HS425 },
+    { NULL, -1 }
+};
 
 int
 main(int argc, char **argv)
 {
     maestro_t *m;
+    int i;
 
     pi_usb_init();
 
@@ -36,6 +53,12 @@ main(int argc, char **argv)
 	    if (sscanf(&buf[1], "%d %d %d", &c, &d, &dd) == 3) {
 		maestro_set_servo_physical_range(m, c, d, dd);
 		continue;
+	    } else if (sscanf(&buf[1], "%d %s", &c, str) == 2) {
+		for (i = 0; ranges[i].str && strcasecmp(ranges[i].str, str) != 0; i++) {}
+		if (ranges[i].str) {
+		    maestro_set_servo_range(m, c, ranges[i].value);
+		    continue;
+		}
 	    }
 	} else if (buf[0] == 's') {
 	    if (sscanf(&buf[1], "%d %d", &c, &d) == 2) {
@@ -54,6 +77,9 @@ main(int argc, char **argv)
         fprintf(stderr, "i channel [0/1] - set is_inverted\n");
         fprintf(stderr, "r channel low%% high%% - set range\n");
 	fprintf(stderr, "R channel min_us max_us - set physical range\n");
+	fprintf(stderr, "R channel name - range by name:");
+	for (i = 0; ranges[i].str; i++) fprintf(stderr, " %s", ranges[i].str);
+	fprintf(stderr, "\n");
         fprintf(stderr, "s channel ms - set speed (ms for whole range)\n");
 	fprintf(stderr, "factory reset\n");
 	fprintf(stderr, "channel pos%%\n");
