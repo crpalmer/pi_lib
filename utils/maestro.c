@@ -19,6 +19,7 @@ const struct {
     { "hs65", HITEC_HS65 },
     { "hs81", HITEC_HS81 },
     { "hs85", HITEC_HS425 },
+    { "parallax", PARALLAX_STANDARD },
     { NULL, -1 }
 };
 

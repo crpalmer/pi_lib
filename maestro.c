@@ -359,6 +359,9 @@ maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range)
     case HITEC_HS425:
 	maestro_set_servo_physical_range(m, id, 553, 2520);
 	break;
+    case PARALLAX_STANDARD:
+	maestro_set_servo_physical_range(m, id, 750, 2250);
+	break;
     }
 }
 
