@@ -6,7 +6,8 @@
 
 #define DEBUG 0
 
-#define SERIAL_DEVICE		"/dev/ttyACM0"
+#define MAX_SERIAL_DEVICES	10
+#define SERIAL_DEVICE_FMT	"/dev/ttyACM%d"
 
 #define POLOLU_VENDOR_ID        0x1ffb
 #define MAESTRO_PRODUCT_ID      0x0089
@@ -232,8 +233,18 @@ maestro_new(void)
 	restart_controller(m);
     }
 
-    if ((m->fd = open(SERIAL_DEVICE, O_RDWR | O_NOCTTY)) < 0) {
-	perror(SERIAL_DEVICE);
+    for (i = 0; i < MAX_SERIAL_DEVICES; i++) {
+	char serial_device[128];
+
+	sprintf(serial_device, SERIAL_DEVICE_FMT, i);
+	if ((m->fd = open(serial_device, O_RDWR | O_NOCTTY)) < 0) {
+	    perror(serial_device);
+	} else {
+	    break;
+	}
+    }
+
+    if (i >+ MAX_SERIAL_DEVICES) {
 	maestro_destroy(m);
 	return NULL;
     }
