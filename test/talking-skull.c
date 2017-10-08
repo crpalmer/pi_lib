@@ -65,6 +65,12 @@ main(int argc, char **argv)
 	    argv += 1;
 	}
 
+	if (argc > 1 && strcmp(argv[1], "--baxter") == 0) {
+	    maestro_set_servo_range(s.m, SERVO_ID, BAXTER_MOUTH);
+	    argc -= 1;
+	    argv += 1;
+	}
+
 	if (argc > 1 && strcmp(argv[1], "--deer") == 0) {
 	    maestro_set_servo_is_inverted(s.m, SERVO_ID, 0);
 	    maestro_set_servo_range(s.m, SERVO_ID, TALKING_DEER);
