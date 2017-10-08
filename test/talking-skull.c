@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include "pi-usb.h"
 #include "maestro.h"
-#include "piface.h"
 #include "talking-skull.h"
 #include "wav.h"
 
@@ -13,7 +12,6 @@
 
 typedef struct {
     maestro_t *m;
-    piface_t  *p;
     double     gain;
 } state_t;
 
@@ -25,7 +23,6 @@ update_servo(void *s_as_vp, double pos)
     pos *= s->gain;
     if (pos > 100) pos = 100;
     maestro_set_servo_pos(s->m, SERVO_ID, pos);
-    piface_set(s->p, EYES, pos > 50);
 }
 
 int
@@ -43,7 +40,6 @@ main(int argc, char **argv)
     pi_usb_init();
 
     s.gain = 1;
-    s.p = piface_new();
     if ((s.m = maestro_new()) == NULL) {
 	fprintf(stderr, "couldn't find a recognized device.\n");
 	exit(1);
