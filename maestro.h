@@ -11,6 +11,7 @@ typedef enum {
     TALKING_SKULL,
     TALKING_DEER,
     TALKING_SKULL2,
+    BAXTER_MOUTH,
     HITEC_HS65,
     HITEC_HS81,
     HITEC_HS425,
