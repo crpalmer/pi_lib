@@ -8,20 +8,30 @@
 #include "talking-skull.h"
 #include "wav.h"
 
-#define PRINT_SERVO     0
-#define N_SERVO_PER_S   5000
-#define N_TO_AVG_TRACK  5
-#define N_TO_AVG_GENERATED 250
+#define PRINT_SERVO     	0
+
+/* An audio stream is broken in N_SERVO_POS_PER_S chunks / second.
+   Each chunk is then broken down into n_to_avg runs.
+   Each run is turned into a value by taking the max value in the run.
+
+   So by default for a servo track we will take the max value each 100ms
+   and for a synthesized stream from actual audio will be take the max
+   each 10,000'th of a second and average 100 of those values to get one
+   value.
+ */
+
+#define N_SERVO_POS_PER_S	100
+#define N_TO_AVG_TRACK		1
+#define N_TO_AVG_GENERATED	100
 
 typedef struct {
-    unsigned n_per_servo;
+    unsigned n_per_sample;
     unsigned mx;
     unsigned long long sum;
     unsigned n_samples;
     unsigned max_possible;
     unsigned n_to_avg;
     unsigned last_usec;
-    unsigned last_printed_usec;
     unsigned long long i;
     double i_to_usec;
 } state_t;
@@ -116,7 +126,7 @@ decode_value(audio_meta_t *m, unsigned char *data, size_t *cur, unsigned max_pos
     } while ((*cur) % m->bytes_per_sample);
 
     if (val < 0) val = -val;
-    if (val < 0) val = max_possible;
+    if (val > max_possible) val = max_possible;
 
     return val;
 }
@@ -124,14 +134,13 @@ decode_value(audio_meta_t *m, unsigned char *data, size_t *cur, unsigned max_pos
 static void
 state_init(state_t *s, audio_meta_t *m, size_t n_to_avg)
 {
-    s->n_per_servo = m->sample_rate * m->num_channels / N_SERVO_PER_S;
+    s->n_per_sample = m->sample_rate * m->num_channels / (N_SERVO_POS_PER_S * n_to_avg);
     s->mx = 0;
     s->sum = 0;
     s->n_samples = 0;
     s->max_possible = (((unsigned) 1)<<(m->bytes_per_sample*8-1))-1;
     s->n_to_avg = n_to_avg;
     s->last_usec = 0;
-    s->last_printed_usec = 0;
     s->i = 0;
     s->i_to_usec = 1000.0 * 1000 / m->sample_rate / m->num_channels;
 } 
@@ -139,7 +148,7 @@ state_init(state_t *s, audio_meta_t *m, size_t n_to_avg)
 static void
 state_start_new_buffer(state_t *s)
 {
-    s->last_usec = s->last_printed_usec = 0;
+    s->last_usec = 0;
     s->i = 0;
 }
 
@@ -150,12 +159,12 @@ state_update(state_t *s, servo_operations_t *ops, unsigned val)
 
     if (val > s->mx) s->mx = val;
 
-    if (++s->n_samples % s->n_per_servo == 0) {
+    if (++s->n_samples % s->n_per_sample == 0) {
 	s->sum += s->mx;
 	s->mx = 0;
     }
 
-    if (s->n_samples % (s->n_per_servo * s->n_to_avg) == 0) {
+    if (s->n_samples % (s->n_per_sample * s->n_to_avg) == 0) {
 	unsigned usec;
 	unsigned this_usec = s->i * s->i_to_usec;
 	double pos;
@@ -167,11 +176,8 @@ state_update(state_t *s, servo_operations_t *ops, unsigned val)
 	servo_operations_add(ops, usec, pos);
 
 	if (PRINT_SERVO) {
-	    if (usec - s->last_printed_usec > 20*1000) {
-		unsigned this_val = pos / 2 + 0.5;
-		printf("%9.6f:%*c%*c\n", usec / (1000.0*1000.0), this_val+1, '*', 50 - this_val, '|');
-		s->last_printed_usec = usec;
-	    }
+	    unsigned this_val = pos / 2 + 0.5;
+	    printf("%9.6f:%*c%*c sum %lld / %d = %.1f\n", usec / (1000.0*1000.0), this_val+1, '*', 50 - this_val, '|', s->sum, s->n_to_avg, ((double) s->sum) / s->n_to_avg);
 	}
 
 	s->n_samples = 0;
