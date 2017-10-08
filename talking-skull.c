@@ -169,7 +169,7 @@ state_update(state_t *s, servo_operations_t *ops, unsigned val)
 	unsigned this_usec = s->i * s->i_to_usec;
 	double pos;
 
-	usec = (this_usec - s->last_usec) / 2 + s->last_usec;
+	usec = s->last_usec;
 	pos = ((double) s->sum) / s->n_to_avg / s->max_possible * 100;
 	s->last_usec = this_usec;
 
