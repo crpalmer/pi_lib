@@ -371,8 +371,8 @@ maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range)
 	maestro_set_servo_range_pct(m, id, 0, 75);
 	break;
     case BAXTER_TAIL:
-	maestro_set_servo_range(m, id, HITEC_HS81);
-	//maestro_set_servo_range_pct(m, id, 25, 75);
+	maestro_set_servo_range(m, id, HITEC_HS425);
+	maestro_set_servo_range_pct(m, id, 10, 40);
 	break;
     case HITEC_HS65:
 	maestro_set_servo_physical_range(m, id, 610, 2360);
