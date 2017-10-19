@@ -362,9 +362,17 @@ maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range)
 	maestro_set_servo_is_inverted(m, id, 1);
 	break;
     case BAXTER_MOUTH:
+	maestro_set_servo_range(m, id, HITEC_HS425);
+	maestro_set_servo_range_pct(m, id, 0, 25);
+	maestro_set_servo_speed(m, id, 350);
+	break;
+    case BAXTER_HEAD:
+	maestro_set_servo_range(m, id, PARALLAX_STANDARD);
+	maestro_set_servo_range_pct(m, id, 0, 75);
+	break;
+    case BAXTER_TAIL:
 	maestro_set_servo_range(m, id, HITEC_HS81);
-	maestro_set_servo_range_pct(m, id, 45, 95);
-	maestro_set_servo_is_inverted(m, id, true);
+	//maestro_set_servo_range_pct(m, id, 25, 75);
 	break;
     case HITEC_HS65:
 	maestro_set_servo_physical_range(m, id, 610, 2360);

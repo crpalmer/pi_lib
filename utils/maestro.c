@@ -16,9 +16,12 @@ const struct {
     { "talking-skull", TALKING_SKULL },
     { "talking-deer", TALKING_DEER },
     { "talking-skull2", TALKING_SKULL2 },
+    { "baxter-mouth", BAXTER_MOUTH },
+    { "baxter-head", BAXTER_HEAD },
+    { "baxter-tail", BAXTER_TAIL },
     { "hs65", HITEC_HS65 },
     { "hs81", HITEC_HS81 },
-    { "hs85", HITEC_HS425 },
+    { "hs425", HITEC_HS425 },
     { "parallax", PARALLAX_STANDARD },
     { NULL, -1 }
 };
