@@ -364,7 +364,7 @@ maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range)
     case BAXTER_MOUTH:
 	maestro_set_servo_range(m, id, HITEC_HS425);
 	maestro_set_servo_range_pct(m, id, 0, 25);
-	maestro_set_servo_speed(m, id, 350);
+	maestro_set_servo_speed(m, id, 250);
 	break;
     case BAXTER_HEAD:
 	maestro_set_servo_range(m, id, PARALLAX_STANDARD);
