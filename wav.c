@@ -50,7 +50,13 @@ void stream_close(int sig)
     signal(sig, SIG_IGN);
 }
 
-#define MEDIA_DIR "/home/crpalmer/halloween-media"
+static const char *media_dirs[] = {
+     ".",
+     "/home/crpalmer/halloween-media",
+     "/home/crpalmer/halloween-media.master"
+};
+
+#define N_MEDIA_DIRS (sizeof(media_dirs) / sizeof(media_dirs[0]))
 
 wav_t *
 wav_new(const char *fname)
@@ -61,15 +67,18 @@ wav_new(const char *fname)
     struct chunk_header chunk_header;
     struct chunk_fmt fmt;
     bool more_chunks = true;
+    int i;
 
-    if ((f = fopen(fname, "rb")) == NULL) {
-	char *alt_name = maprintf("%s/%s", MEDIA_DIR, fname);
-	f = fopen(alt_name, "rb");
-	free(alt_name);
-	if (! f) {
-	    perror(fname);
-	    return NULL;
-	}
+    for (i = 0, f = NULL; i < N_MEDIA_DIRS && !f; i++) {
+	char *this_name = maprintf("%s/%s", media_dirs[i], fname);
+
+	f = fopen(this_name, "rb");
+	free(this_name);
+    }
+
+    if (!f) {
+	perror(fname);
+	return NULL;
     }
 
     fread(&riff_wave_header, sizeof(riff_wave_header), 1, f);
