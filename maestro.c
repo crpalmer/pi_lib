@@ -356,7 +356,7 @@ maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range)
 	break;
     case TALKING_DEER:
 	maestro_set_servo_range(m, id, HITEC_HS425);
-	maestro_set_servo_range_pct(m, id, 25, 50);
+	maestro_set_servo_range_pct(m, id, 0, 20);
 	break;
     case TALKING_SKULL2:
 	maestro_set_servo_range_pct(m, id, 15, 33);
@@ -373,7 +373,7 @@ maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range)
 	break;
     case BAXTER_TAIL:
 	maestro_set_servo_range(m, id, HITEC_HS425);
-	maestro_set_servo_range_pct(m, id, 10, 40);
+	maestro_set_servo_range_pct(m, id, 0, 30);
 	break;
     case HITEC_HS65:
 	maestro_set_servo_physical_range(m, id, 610, 2360);
