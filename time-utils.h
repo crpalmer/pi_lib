@@ -64,6 +64,15 @@ nano_elapsed_ms(struct timespec *newer, struct timespec *later)
     return ms;
 }
 
+static inline int
+nano_elapsed_ms_now(struct timespec *start)
+{
+    struct timespec now;
+
+    nano_gettime(&now);
+    return nano_elapsed_ms(&now, start);
+}
+
 static inline void
 nano_sleep_until(struct timespec *t)
 {
