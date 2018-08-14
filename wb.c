@@ -107,6 +107,25 @@ wb_get_all(void)
     return ret;
 }
 
+unsigned
+wb_get_all_with_debounce(unsigned debounce_ms)
+{
+    unsigned val;
+    struct timespec start;
+
+    nano_gettime(&start);
+    val = wb_get_all();
+    while (1) {
+	unsigned cur = wb_get_all();
+	if (cur != val) {
+	    val = cur;
+	    nano_gettime(&start);
+	} else if (nano_elapsed_ms_now(&start) >= debounce_ms) {
+	    return val;
+	}
+    }
+}
+
 void
 wb_set(unsigned bank, unsigned pin, unsigned value)
 {

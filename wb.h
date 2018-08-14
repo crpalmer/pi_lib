@@ -19,6 +19,7 @@ int wb_init(void);
 bool wb_get(unsigned pin);
 
 unsigned wb_get_all(void);
+unsigned wb_get_all_with_debounce(unsigned debounce_ms);
 
 void wb_set(unsigned bank, unsigned pin, unsigned value);
 
