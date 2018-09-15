@@ -32,8 +32,8 @@ thread_main(void *dc_as_vp)
 	int pin = delta > 0 ? dc->inc : dc->dec;
 	int i;
 
-	if (dc->target * 2*PAUSE + 3*RESET_PAUSE < abs_delta * 2*PAUSE) {
-	     /* Faster to just reset and go */
+	if (dc->target * 2*PAUSE + 3*RESET_PAUSE < abs_delta * 2*PAUSE || (delta < 0 && dc->dec < 0)) {
+	     /* Faster to just reset and go or else impossible */
 	    dc->actual = 0;
 	    ms_sleep(RESET_PAUSE);
 	    wb_set(dc->bank, dc->reset, 1);
