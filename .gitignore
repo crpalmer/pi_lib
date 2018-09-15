@@ -9,6 +9,7 @@ test/stepper
 test/talking-skull
 test/track
 test/wb
+utils/digital-counter
 utils/maestro
 utils/servo
 utils/talking-skull-dump

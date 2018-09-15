@@ -13,13 +13,14 @@ TESTS = \
 	test/wb
 
 UTILS = \
+	utils/digital-counter \
 	utils/maestro \
 	utils/servo \
 	utils/talking-skull-dump \
 	utils/wb
 
 AUDIO_OBJS = audio.o talker-auto-gain.o talking-skull.o track.o wav.o
-GPIO_OBJS = lights.o gpio.o piface.o stepper.o wb.o
+GPIO_OBJS = digital-counter.o lights.o gpio.o piface.o stepper.o wb.o
 NET_OBJS = net.o net-line-reader.o
 SERVER_OBJS = server.o
 SERVO_OBJS = pi-usb.o maestro.o
@@ -70,6 +71,9 @@ test/track: test/track.o $(LIB)
 
 test/wb: test/wb.o $(LIB)
 	$(CC) test/wb.o -o $@ $(LIBS)
+
+utils/digital-counter: utils/digital-counter.o $(LIB)
+	$(CC) utils/digital-counter.o -o $@ $(LIBS)
 
 utils/maestro: utils/maestro.o $(LIB)
 	$(CC) utils/maestro.o -o $@ $(LIBS)
