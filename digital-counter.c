@@ -17,6 +17,7 @@ struct digital_counterS {
 };
 
 #define RESET_PAUSE 100
+#define POST_RESET_PAUSE 1000
 #define PAUSE 10
 
 static void *
@@ -32,14 +33,14 @@ thread_main(void *dc_as_vp)
 	int pin = delta > 0 ? dc->inc : dc->dec;
 	int i;
 
-	if (dc->target * 2*PAUSE + 3*RESET_PAUSE < abs_delta * 2*PAUSE || (delta < 0 && dc->dec < 0)) {
+	if (dc->target * 2*PAUSE + 2*RESET_PAUSE + POST_RESET_PAUSE < abs_delta * 2*PAUSE || (delta < 0 && dc->dec < 0)) {
 	     /* Faster to just reset and go or else impossible */
 	    dc->actual = 0;
 	    ms_sleep(RESET_PAUSE);
 	    wb_set(dc->bank, dc->reset, 1);
 	    ms_sleep(RESET_PAUSE);
 	    wb_set(dc->bank, dc->reset, 0);
-	    ms_sleep(RESET_PAUSE);
+	    ms_sleep(POST_RESET_PAUSE);
 	    continue;
 	} 
 
