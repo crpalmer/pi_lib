@@ -16,6 +16,9 @@ typedef struct digital_counterS digital_counter_t;
 digital_counter_t *
 digital_counter_new(int bank, int inc, int dec, int reset);
 
+void
+digital_counter_set_pause(digital_counter_t *, int pause, int reset_pause, int post_reset_pause);
+
 void digital_counter_set(digital_counter_t *, int new_value);
 
 void digital_counter_add(digital_counter_t *, int n);

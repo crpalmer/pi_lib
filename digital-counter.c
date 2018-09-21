@@ -7,6 +7,7 @@
 #include "digital-counter.h"
 
 struct digital_counterS {
+    int pause, reset_pause, post_reset_pause;
     int bank;
     int inc, dec, reset;
     int target, actual;
@@ -33,14 +34,14 @@ thread_main(void *dc_as_vp)
 	int pin = delta > 0 ? dc->inc : dc->dec;
 	int i;
 
-	if (dc->target * 2*PAUSE + 2*RESET_PAUSE + POST_RESET_PAUSE < abs_delta * 2*PAUSE || (delta < 0 && dc->dec < 0)) {
+	if (dc->target * 2*dc->pause + 2*dc->reset_pause + dc->post_reset_pause < abs_delta * 2*dc->pause || (delta < 0 && dc->dec < 0)) {
 	     /* Faster to just reset and go or else impossible */
 	    dc->actual = 0;
-	    ms_sleep(RESET_PAUSE);
+	    ms_sleep(dc->reset_pause);
 	    wb_set(dc->bank, dc->reset, 1);
-	    ms_sleep(RESET_PAUSE);
+	    ms_sleep(dc->reset_pause);
 	    wb_set(dc->bank, dc->reset, 0);
-	    ms_sleep(POST_RESET_PAUSE);
+	    ms_sleep(dc->post_reset_pause);
 	    continue;
 	} 
 
@@ -49,9 +50,9 @@ thread_main(void *dc_as_vp)
 	if (abs_delta > 5) abs_delta = 5;
 	for (i = 0; i < abs_delta; i++) {
 	    wb_set(dc->bank, pin, 1);
-	    ms_sleep(PAUSE);
+	    ms_sleep(dc->pause);
 	    wb_set(dc->bank, pin, 0);
-	    ms_sleep(PAUSE);
+	    ms_sleep(dc->pause);
 	}
 
 	pthread_mutex_lock(&dc->lock);
@@ -69,6 +70,10 @@ digital_counter_new(int bank, int inc, int dec, int reset)
 {
     digital_counter_t *dc = malloc(sizeof(digital_counter_t));
 
+    dc->pause = PAUSE;
+    dc->reset_pause = RESET_PAUSE;
+    dc->post_reset_pause = POST_RESET_PAUSE;
+
     dc->target = 0;
     dc->actual = 99999;
     dc->bank = bank;
@@ -84,6 +89,14 @@ digital_counter_new(int bank, int inc, int dec, int reset)
     digital_counter_reset(dc);
 
     return dc;
+}
+
+void
+digital_counter_set_pause(digital_counter_t *dc, int pause, int reset_pause, int post_reset_pause)
+{
+    if (pause > 0) dc->pause = pause;
+    if (reset_pause > 0) dc->reset_pause = reset_pause;
+    if (post_reset_pause > 0) dc->post_reset_pause = post_reset_pause;
 }
 
 void

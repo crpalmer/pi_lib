@@ -26,8 +26,12 @@ int main(int argc, char **argv)
 	    digital_counter_add(dc, -atoi(&line[1]));
 	} else if (line[0] == '0') {
 	    digital_counter_reset(dc);
+	} else if (line[0] == 'P') {
+	    int pause = -1, reset_pause = -1, post_reset_pause = -1;
+	    sscanf(&line[1], "%d %d %d", &pause, &reset_pause, &post_reset_pause);
+	    digital_counter_set_pause(dc, pause, reset_pause, post_reset_pause);
 	} else {
-	    fprintf(stderr, "= value / + inc / - dec / 0\n");
+	    fprintf(stderr, "= value / + inc / - dec / 0 / p ms-to-pause ms-reset-pause ms-post-reset-pause\n");
 	}
     }
 }
