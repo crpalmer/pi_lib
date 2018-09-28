@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <memory.h>
 #include <pthread.h>
 #include "mem.h"
 #include "producer-consumer.h"
@@ -211,13 +212,14 @@ update_main(void *t_as_vp)
 talking_skull_t *
 talking_skull_new(audio_meta_t *m, bool is_track, talking_skull_servo_update_t fn, void *fn_data)
 {
-    audio_meta_t local_m = *m;
+    audio_meta_t local_m;
 
+    if (m) local_m = *m;
     if (is_track) {
 	local_m.num_channels = 1;
     }
 
-    return talking_skull_new_with_n_to_avg(&local_m, is_track ? N_TO_AVG_TRACK : N_TO_AVG_GENERATED, fn, fn_data);
+    return talking_skull_new_with_n_to_avg(m ? &local_m : NULL, is_track ? N_TO_AVG_TRACK : N_TO_AVG_GENERATED, fn, fn_data);
 }
 
 talking_skull_t *
@@ -226,7 +228,10 @@ talking_skull_new_with_n_to_avg(audio_meta_t *m, size_t n_to_avg, talking_skull_
     talking_skull_t *t;
 
     t = fatal_malloc(sizeof(*t));
-    t->m = *m;
+
+    if (m) t->m = *m;
+    else memset(&t->m, 0, sizeof(t->m));
+
     t->ops = NULL;
     t->ops_pc = producer_consumer_new(1);
     t->seq_complete = 0;
@@ -325,6 +330,35 @@ talking_skull_actor_t *
 talking_skull_actor_new(const char *fname, talking_skull_servo_update_t update, void *data)
 {
     return talking_skull_actor_new_with_n_to_avg(fname, update, data, N_TO_AVG_TRACK);
+}
+
+talking_skull_actor_t *
+talking_skull_actor_new_vsa(const char *fname, talking_skull_servo_update_t update, void *data)
+{
+    talking_skull_actor_t *a;
+    FILE *f;
+    unsigned i = 0;
+    char buf[128];
+
+    if ((f = fopen(fname, "r")) == NULL) {
+	perror(fname);
+	return NULL;
+    }
+
+    a = fatal_malloc(sizeof(*a));
+    a->servo = NULL;
+    a->talking_skull = talking_skull_new(NULL, 0, update, data);
+    a->ops = servo_operations_new();
+
+    state_start_new_buffer(&a->talking_skull->state);
+
+    while (fgets(buf, sizeof(buf), f) != NULL) {
+	int pos = atoi(buf);
+	if (i > 0) servo_operations_add(a->ops, 1000*1000*(i*.033), pos/254.0 * 100);
+	i++;
+    }
+
+    return a;
 }
 
 talking_skull_actor_t *

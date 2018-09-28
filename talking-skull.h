@@ -34,6 +34,9 @@ talking_skull_actor_t *
 talking_skull_actor_new(const char *fname, talking_skull_servo_update_t update, void *data);
 
 talking_skull_actor_t *
+talking_skull_actor_new_vsa(const char *fname, talking_skull_servo_update_t update, void *data);
+
+talking_skull_actor_t *
 talking_skull_actor_new_from_audio(const char *fname, talking_skull_servo_update_t update, void *data);
 
 talking_skull_actor_t *
