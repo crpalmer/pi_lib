@@ -34,5 +34,7 @@ int main(int argc, char **argv)
 	    fprintf(stderr, "= value / + inc / - dec / 0 / p ms-to-pause ms-reset-pause ms-post-reset-pause\n");
 	}
     }
+
+    return 0;
 }
 
