@@ -354,7 +354,7 @@ talking_skull_actor_new_vsa(const char *fname, talking_skull_servo_update_t upda
 
     while (fgets(buf, sizeof(buf), f) != NULL) {
 	int pos = atoi(buf);
-	if (i > 0) servo_operations_add(a->ops, 1000*1000*(i*.033), pos/254.0 * 100);
+	if (i > 0 && pos >= 0) servo_operations_add(a->ops, 1000*1000*(i*.033), pos/254.0 * 100);
 	i++;
     }
 
