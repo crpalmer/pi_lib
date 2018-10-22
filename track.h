@@ -35,6 +35,9 @@ void
 track_play_asynchronously(track_t *t, stop_t *stop);
 
 void
+track_play_loop(track_t *t, stop_t *stop);
+
+void
 track_destroy(track_t *);
 
 #endif

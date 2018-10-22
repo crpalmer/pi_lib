@@ -119,6 +119,37 @@ track_play_asynchronously(track_t *t, stop_t *stop)
     pthread_detach(thread);
 }
 
+typedef struct {
+    track_t *t;
+    stop_t  *stop;
+} loop_args_t;
+
+void *
+loop_main(void *args_as_vp)
+{
+    loop_args_t *args = (loop_args_t *) args_as_vp;
+
+    while (! args->stop || ! stop_requested(args->stop)) {
+	track_play(args->t);
+    }
+
+    stop_stopped(args->stop);
+    free(args);
+
+    return NULL;
+}
+
+void
+track_play_loop(track_t *t, stop_t *stop)
+{
+    pthread_t thread;
+
+    loop_args_t *args = fatal_malloc(sizeof(*args));
+    args->t = t;
+    args->stop = stop;
+    pthread_create(&thread, NULL, loop_main, args);
+}
+
 void
 track_destroy(track_t *t)
 {
