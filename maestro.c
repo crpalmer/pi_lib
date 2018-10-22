@@ -210,7 +210,10 @@ maestro_new(void)
     unsigned char serial_mode;
     int i;
 
-    if (! dev) return NULL;
+    if (! dev) {
+	fprintf(stderr, "maestro: no board found\n");
+	return NULL;
+    }
 
     m = malloc(sizeof(*m));
     m->dev = dev;
@@ -219,7 +222,10 @@ maestro_new(void)
     case 0x8a: m->n_servos = 12; break;
     case 0x8b: m->n_servos = 18; break;
     case 0x8c: m->n_servos = 24; break;
-    default: free(m); return NULL;
+    default:
+	fprintf(stderr, "maestro: unknown product 0x%x\n", dev->descriptor.idProduct);
+	free(m);
+	return NULL;
     }
 
     m->handle = usb_open(dev);
