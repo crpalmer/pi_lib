@@ -357,7 +357,7 @@ maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range)
 	maestro_set_servo_physical_range(m, id, 600, 2400);
 	break;
     case TALKING_SKULL:
-	maestro_set_servo_range_pct(m, id, 30, 75);
+	maestro_set_servo_physical_range(m, id, 1700, 1950);
 	maestro_set_servo_is_inverted(m, id, 1);
 	break;
     case TALKING_DEER:
