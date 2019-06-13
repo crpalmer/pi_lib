@@ -15,6 +15,7 @@ TESTS = \
 UTILS = \
 	utils/digital-counter \
 	utils/maestro \
+	utils/mcp23017 \
 	utils/servo \
 	utils/talking-skull-dump \
 	utils/wb
@@ -79,6 +80,10 @@ utils/digital-counter: utils/digital-counter.o $(LIB)
 utils/maestro: utils/maestro.o $(LIB)
 	$(CC) utils/maestro.o -o $@ $(LIBS)
 
+utils/mcp23017: utils/mcp23017.o $(LIB)
+	$(CXX) utils/mcp23017.o -o $@ $(LIBS)
+
+# compile and generate dependency info
 utils/servo: utils/servo.o $(LIB)
 	$(CC) utils/servo.o -o $@ $(LIBS)
 
