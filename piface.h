@@ -1,6 +1,10 @@
 #ifndef __PIFACE_H__
 #define __PIFACE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "util.h"
 
 typedef struct pifaceS piface_t;
@@ -29,5 +33,9 @@ piface_wait_for_input(piface_t *p);
 
 void
 piface_destroy(piface_t *p);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

@@ -1,6 +1,10 @@
 #ifndef __TIME_UTILS_H__
 #define __TIME_UTILS_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <time.h>
 #include <assert.h>
 
@@ -78,5 +82,9 @@ nano_sleep_until(struct timespec *t)
 {
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, t, NULL);
 }
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

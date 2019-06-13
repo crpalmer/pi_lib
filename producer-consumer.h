@@ -1,6 +1,10 @@
 #ifndef __PRODUCER_CONSUMER_H__
 #define __PRODUCER_CONSUMER_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct producer_consumerS producer_consumer_t;
 
 producer_consumer_t *
@@ -14,5 +18,9 @@ producer_consumer_produce(producer_consumer_t *, void *buffer);
 
 void
 producer_consumer_destroy(producer_consumer_t *);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

@@ -1,6 +1,10 @@
 #ifndef __WB_H__
 #define __WB_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 
 typedef struct wbS wb_t;
@@ -42,5 +46,9 @@ unsigned wb_wait_for_pins(unsigned pins, unsigned values);
 bool wb_wait_for_pin_timeout(unsigned pin, unsigned value, unsigned max_ms);
 
 void wb_wait_for_pin(unsigned pin, unsigned value);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

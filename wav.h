@@ -1,6 +1,10 @@
 #ifndef __WAV_H__
 #define __WAV_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "stop.h"
 #include "talking-skull.h"
 #include "util.h"
@@ -35,5 +39,9 @@ wav_play_with_talking_skull(wav_t *w, audio_t *audio, talking_skull_t *);
 
 void
 wav_destroy(wav_t *w);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

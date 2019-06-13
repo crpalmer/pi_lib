@@ -1,6 +1,10 @@
 #ifndef __AUDIO_CONFIG_H__
 #define __AUDIO_CONFIG_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "util.h"
 
 typedef struct {
@@ -70,6 +74,10 @@ audio_meta_init_from_config(audio_meta_t *m, audio_config_t *c)
     m->num_channels = c->channels;
     m->bytes_per_sample = (c->bits+7)/8;
 }
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif
 

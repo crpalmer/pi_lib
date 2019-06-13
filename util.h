@@ -1,6 +1,10 @@
 #ifndef __UTIL_H__
 #define __UTIL_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
@@ -19,6 +23,10 @@ randomly_with_prob(double prob);
 
 void
 ms_sleep(unsigned ms);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif
 

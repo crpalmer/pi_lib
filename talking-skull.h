@@ -1,6 +1,10 @@
 #ifndef __TALKING_SKULL__
 #define __TALKING_SKULL__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "audio-config.h"
 
 typedef struct talking_skullS talking_skull_t;
@@ -44,5 +48,9 @@ talking_skull_actor_new_with_n_to_avg(const char *fname, talking_skull_servo_upd
 
 void
 talking_skull_actor_play(talking_skull_actor_t *a);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

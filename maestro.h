@@ -1,6 +1,10 @@
 #ifndef __MAESTRO_H__
 #define __MAESTRO_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct maestroS maestro_t;
 
 typedef unsigned char servo_id_t;
@@ -49,5 +53,9 @@ maestro_set_servo_is_inverted(maestro_t *m, servo_id_t id, int is_inverted);
 
 int
 maestro_set_servo_pos(maestro_t *m, servo_id_t id, double pos_0_100);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

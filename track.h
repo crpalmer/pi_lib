@@ -1,6 +1,10 @@
 #ifndef __TRACK_H__
 #define __TRACK_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct trackS track_t;
 
 #include <stdbool.h>
@@ -39,5 +43,9 @@ track_play_loop(track_t *t, stop_t *stop);
 
 void
 track_destroy(track_t *);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

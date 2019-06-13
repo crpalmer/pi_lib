@@ -1,6 +1,10 @@
 #ifndef __GPIO_H__
 #define __GPIO_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 
 #define GPIO_IS_INPUT	-1
@@ -46,5 +50,9 @@ gpio_get_id(gpio_t *g, unsigned id);
 
 void
 gpio_destroy(gpio_t *g);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

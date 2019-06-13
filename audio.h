@@ -1,6 +1,10 @@
 #ifndef __AUDIO_H__
 #define __AUDIO_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "audio-config.h"
 #include "util.h"
 
@@ -23,5 +27,9 @@ audio_play_buffer(audio_t *, const unsigned char *buffer, size_t size);
 
 void
 audio_destroy(audio_t *);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

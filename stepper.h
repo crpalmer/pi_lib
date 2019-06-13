@@ -1,6 +1,10 @@
 #ifndef __STEPPER_H__
 #define __STEPPER_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define STEPPER_N_COILS 4
 
 typedef struct stepperS stepper_t;
@@ -14,6 +18,10 @@ void stepper_forward(stepper_t *s, unsigned n);
 void stepper_backward(stepper_t *s, unsigned n);
 
 void stepper_destroy(stepper_t *s);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif
 

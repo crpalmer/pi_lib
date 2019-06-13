@@ -1,6 +1,10 @@
 #ifndef __SERVER_H__
 #define __SERVER_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -16,5 +20,9 @@ typedef struct {
 
 void *
 server_thread_main(void *);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

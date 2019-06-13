@@ -38,7 +38,7 @@ audio_new(audio_config_t *cfg, audio_device_t *device)
 	return NULL;
     }
 
-    c = fatal_malloc(sizeof(*c));
+    c = (audio_t *) fatal_malloc(sizeof(*c));
     c->pcm = pcm;
     c->cfg = *cfg;
     c->dev = *device;

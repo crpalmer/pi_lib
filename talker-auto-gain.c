@@ -36,7 +36,7 @@ update_history_and_gain(talker_auto_gain_t *t, double pos)
 talker_auto_gain_t *
 talker_auto_gain_new(double gain_target, double epsilon, int n_history)
 {
-    talker_auto_gain_t *t = fatal_malloc(sizeof(*t));
+    talker_auto_gain_t *t = (talker_auto_gain_t *) fatal_malloc(sizeof(*t));
 
     memset(t, 0, sizeof(*t));
     t->gain = 1;

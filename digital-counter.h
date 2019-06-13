@@ -1,6 +1,10 @@
 #ifndef __DIGITAL_COUNTER_H__
 #define __DIGITAL_COUNTER_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* wiring:
 
    You need the wb to have a high side driver for the selected bank.
@@ -26,5 +30,9 @@ void digital_counter_add(digital_counter_t *, int n);
 void digital_counter_reset(digital_counter_t *);
 
 void digital_counter_free(digital_counter_t *);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif
