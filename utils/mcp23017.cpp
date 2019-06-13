@@ -43,13 +43,20 @@ main(int argc, char **argv)
 	    case 'g': 
 		printf("%d\n", ensure_input(bank, pin)->get());
 		break;
+	    case 'G':  {
+		input_t *input = ensure_input(bank, pin);
+		unsigned cur = input->get();
+		while (cur == input->get()) {}
+		printf("%d\n", !cur);
+		break;
+	    }
 	    case '1':
 	    case '0':
 		ensure_output(bank, pin)->set(buf[0] - '0');
 		break;
 	    }
 	} else if (buf[0] == '?') {
-	    printf("g bank pin : get value\n[1|0] bank pin : set value\n[+|=] bank pin : set/clear pullup\n");
+	    printf("g bank pin : get value\nG bank pin : wait for value to change\n[1|0] bank pin : set value\n[+|=] bank pin : set/clear pullup\n");
 	} else if (buf[0] && buf[0] != '\n') {
 	    printf("invalid command\n");
 	}
