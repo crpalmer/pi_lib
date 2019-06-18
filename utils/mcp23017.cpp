@@ -27,7 +27,7 @@ int
 main(int argc, char **argv)
 {
     gpioInitialise();
-    mcp = new MCP23017(0x27);
+    mcp = new MCP23017();
 
     while (fgets(buf, sizeof(buf), stdin) != NULL && ! feof(stdin)) {
 	unsigned bank, pin;

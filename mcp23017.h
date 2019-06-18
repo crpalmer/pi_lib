@@ -14,7 +14,7 @@ class MCP23017 {
     friend MCP23017_output;
 
 public:
-    MCP23017(unsigned address);
+    MCP23017(unsigned address = 0x27);
     ~MCP23017();
 
     input_t *get_input(unsigned bank, unsigned pin);
