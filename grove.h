@@ -3,12 +3,16 @@
 
 #include <assert.h>
 #include "pigpio.h"
+#include "motor.h"
+
+class grove_motor_t;
 
 class GroveDC {
 public:
     GroveDC(unsigned addr);
     void direction(unsigned id, int dir);
-    void speed(unsigned id1, unsigned speed);
+    void speed(unsigned id, unsigned speed);
+    motor_t *get_motor(unsigned id);
 
 protected:
     void set_speed();
@@ -36,6 +40,17 @@ private:
     int cur_step;
     int dir;
     unsigned phases;
+};
+
+class grove_motor_t : public motor_t {
+public:
+    grove_motor_t(GroveDC *g, unsigned id) : g(g), id(id) { }
+    void speed(double speed) { g->speed(id, 255*speed); }
+    void direction(bool forward) { g->direction(id, forward ? +1 : -1); }
+
+private:
+    GroveDC *g;
+    unsigned id;
 };
 
 #endif
