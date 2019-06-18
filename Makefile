@@ -21,8 +21,8 @@ UTILS = \
 	utils/wb
 
 AUDIO_OBJS = audio.o talker-auto-gain.o talking-skull.o track.o wav.o
-GPIO_OBJS = digital-counter.o lights.o gpio.o mcp23017.o piface.o stepper.o \
-	wb.o ween-board.o
+GPIO_OBJS = digital-counter.o lights.o gpio.o grove.o mcp23017.o piface.o \
+	stepper.o wb.o ween-board.o
 NET_OBJS = net.o net-line-reader.o
 SERVER_OBJS = server.o
 SERVO_OBJS = pi-usb.o maestro.o
