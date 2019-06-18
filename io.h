@@ -5,6 +5,7 @@ class output_t {
 public:
      ~output_t() {}
      virtual void set(unsigned value) = 0;
+     virtual void pwm(double pct_on) { set(pct_on >= 0.5); }
 };
 
 class input_t {
