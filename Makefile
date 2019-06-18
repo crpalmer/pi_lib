@@ -22,8 +22,9 @@ UTILS = \
 	utils/wb
 
 AUDIO_OBJS = audio.o talker-auto-gain.o talking-skull.o track.o wav.o
-GPIO_OBJS = digital-counter.o lights.o gpio.o grove.o mcp23017.o piface.o \
-	stepper.o wb.o ween-board.o
+GPIO_OBJS = digital-counter.o lights.o gpio.o mcp23017.o piface.o wb.o \
+	    ween-board.o
+MOTOR_OBJS = grove.o l298n.o stepper.o
 NET_OBJS = net.o net-line-reader.o
 SERVER_OBJS = server.o
 SERVO_OBJS = pi-usb.o maestro.o
@@ -33,6 +34,7 @@ UTIL_OBJS = util.o file.o stop.o string-utils.o mem.o global-trace.o
 OBJS = \
 	$(AUDIO_OBJS) \
 	$(GPIO_OBJS) \
+	$(MOTOR_OBJS) \
 	$(NET_OBJS) \
 	$(SERVER_OBJS) \
 	$(SERVO_OBJS) \
