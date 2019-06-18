@@ -6,6 +6,7 @@ CFLAGS=-Wall -Werror -g -I$E/include -I$D -I$E/PIGPIO
 TESTS = \
 	test/audio \
 	test/maestro \
+	test/one-off \
 	test/piface \
 	test/stepper \
 	test/talking-skull \
@@ -58,6 +59,9 @@ test/audio: test/audio.o $(LIB)
 
 test/maestro: test/maestro.o $(LIB)
 	$(CC) test/maestro.o -o $@ $(LIBS)
+
+test/one-off: test/one-off.o $(LIB)
+	$(CXX) test/one-off.o -o $@ $(LIBS)
 
 test/piface: test/piface.o $(LIB)
 	$(CC) test/piface.o -o $@ $(LIBS)

@@ -4,6 +4,7 @@
 lib.a
 test/audio
 test/maestro
+test/one-off
 test/piface
 test/stepper
 test/talking-skull
