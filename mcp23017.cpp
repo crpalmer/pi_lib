@@ -29,7 +29,7 @@ public:
 	this->pin = pin;
     }
 
-    void set(unsigned value) override { parent->set(bank, pin, value); }
+    void set(bool value) override { parent->set(bank, pin, value); }
 
 private:
     MCP23017 *parent;
@@ -67,7 +67,7 @@ unsigned MCP23017::get(unsigned bank, unsigned pin)
     return (i2cReadByteData(bus, in_val_addr[bank]) & pin_value(pin)) != 0;
 }
 
-void MCP23017::set(unsigned bank, unsigned pin, unsigned value)
+void MCP23017::set(unsigned bank, unsigned pin, bool value)
 {
     assert_bank_pin(bank, pin);
     assert_output(bank, pin);

@@ -20,7 +20,7 @@ public:
 	this->id = id;
     }
 
-    void set(unsigned value) override { wb_set(bank, id, value); };
+    void set(bool value) override { wb_set(bank, id, value); };
 
 private:
     unsigned bank;

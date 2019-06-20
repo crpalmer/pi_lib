@@ -23,7 +23,7 @@ public:
 protected:
     unsigned get(unsigned bank, unsigned pin);
     void set_pullup(unsigned bank, unsigned pin, unsigned up);
-    void set(unsigned bank, unsigned pin, unsigned value);
+    void set(unsigned bank, unsigned pin, bool value);
 
 private:
     void write_dir(unsigned bank);
