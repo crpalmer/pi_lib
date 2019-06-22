@@ -81,7 +81,7 @@ test/wb: test/wb.o $(LIB)
 	$(CC) test/wb.o -o $@ $(LIBS)
 
 utils/digital-counter: utils/digital-counter.o $(LIB)
-	$(CC) utils/digital-counter.o -o $@ $(LIBS)
+	$(CXX) utils/digital-counter.o -o $@ $(LIBS)
 
 utils/maestro: utils/maestro.o $(LIB)
 	$(CC) utils/maestro.o -o $@ $(LIBS)
