@@ -2,12 +2,17 @@
 #define __WB_H__
 
 #ifdef __cplusplus
+
+#include "io.h"
+
+input_t *wb_get_input(unsigned pin);
+output_t *wb_get_output(unsigned bank, unsigned pin);
+output_t *wb_get_output(unsigned pin);
+
 extern "C" {
 #endif
 
 #include <stdbool.h>
-
-typedef struct wbS wb_t;
 
 #define WB_PIN_MASK(pin) (1<<(pin))
 #define WB_PIN_MASK_ALL (0x1fe)

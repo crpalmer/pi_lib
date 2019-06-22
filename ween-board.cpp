@@ -1,4 +1,3 @@
-#include "ween-board.h"
 #include "wb.h"
 
 class ween_board_input_t : public input_t {
@@ -28,12 +27,17 @@ private:
 };
 
 
-input_t *ween_board_t::get_input(unsigned id)
+input_t *wb_get_input(unsigned id)
 {
     return new ween_board_input_t(id);
 }
 
-output_t *ween_board_t::get_output(unsigned bank, unsigned id)
+output_t *wb_get_output(unsigned bank, unsigned id)
 {
     return new ween_board_output_t(bank, id);
+}
+
+output_t *wb_get_output(unsigned pin)
+{
+    return wb_get_output(pin / 8, pin % 8);
 }
