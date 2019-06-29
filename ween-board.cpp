@@ -39,5 +39,5 @@ output_t *wb_get_output(unsigned bank, unsigned id)
 
 output_t *wb_get_output(unsigned pin)
 {
-    return wb_get_output(pin / 8, pin % 8);
+    return wb_get_output(pin / 8 + 1, pin % 8 + 1);
 }
