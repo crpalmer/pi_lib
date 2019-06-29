@@ -17,7 +17,12 @@ digital_counter_t::digital_counter_t(output_t *inc, output_t *dec, output_t *res
     post_reset_pause = POST_RESET_PAUSE;
 
     stop = 0;
-    target = actual = 0;
+    target = 0;
+    actual = 0xffff;
+
+    inc->set(0);
+    if (dec) dec->set(0);
+    reset->set(0);
 
     pthread_mutex_init(&lock, NULL);
     pthread_cond_init(&cond, NULL);
