@@ -1,6 +1,8 @@
 #ifndef __DIGITAL_COUNTER_H__
 #define __DIGITAL_COUNTER_H__
 
+#include "pthread.h"
+
 #ifdef __cplusplus
 
 #include "io.h"
