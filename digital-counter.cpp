@@ -21,7 +21,6 @@ digital_counter_t::digital_counter_t(output_t *inc, output_t *dec, output_t *res
 
     pthread_mutex_init(&lock, NULL);
     pthread_cond_init(&cond, NULL);
-printf("creating thread\n");
     pthread_create(&thread, NULL, thread_main, this);
 }
 
@@ -62,7 +61,6 @@ void digital_counter_t::set_pause(int pause, int reset_pause, int post_reset_pau
 void *digital_counter_t::thread_main(void *this_as_vp) {
     digital_counter_t *dc = (digital_counter_t *) this_as_vp;
 
-printf("created thread\n");
     pthread_mutex_lock(&dc->lock);
     while (! dc->stop) {
 	int delta = dc->target - dc->actual;
@@ -70,8 +68,6 @@ printf("created thread\n");
 	int step = delta > 0 ? 1 : -1;
 	output_t *output = delta > 0 ? dc->inc : dc->dec;
 	int i;
-
-printf("target %u actual %u\n", dc->target, dc->actual);
 
 	if (dc->target * 2*dc->pause + 2*dc->reset_pause + dc->post_reset_pause < abs_delta * 2*dc->pause || (delta < 0 && ! dc->dec)) {
 	     /* Faster to just reset and go or else impossible */
