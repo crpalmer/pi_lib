@@ -6,6 +6,8 @@ public:
      ~output_t() {}
      virtual void set(bool value) = 0;
      virtual void pwm(double pct_on) { set(pct_on >= 0.5); }
+     virtual void on() { set(1); }
+     virtual void off() { set(0); }
 };
 
 class input_t {
