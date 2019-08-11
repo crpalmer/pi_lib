@@ -29,7 +29,6 @@ private:
 };
 
 #else
-extern "C" {
 
 /* wiring:
 
@@ -57,7 +56,6 @@ void digital_counter_reset(digital_counter_t *);
 
 void digital_counter_free(digital_counter_t *);
 
-};
 #endif
 
 #endif
