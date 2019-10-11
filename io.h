@@ -17,6 +17,7 @@ public:
      virtual void set_pullup_up() = 0;
      virtual void set_pullup_down() = 0;
      virtual void clear_pullup() = 0;
+     virtual void set_debounce(unsigned ms) { }
 };
 
 #endif
