@@ -24,6 +24,7 @@ typedef enum {
 } wb_pull_up_mode_t;
 
 int wb_init(void);
+int wb_init_v2(void);
 
 bool wb_get(unsigned pin);
 

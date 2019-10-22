@@ -15,11 +15,15 @@
 
 #define WB_OUTPUT(bank, pin) (((bank-1))*8 + (pin-1) + N_INPUTS)
 
-static struct {
+typedef struct {
     const char *name;
     int id;
     unsigned mode;
-} gpio_table[] = {
+} gpio_table_t;
+
+#define N_GPIO_TABLE 24
+
+static gpio_table_t gpio_table1[N_GPIO_TABLE] = {
     { "in1", 14, PI_INPUT },
     { "in2", 15, PI_INPUT },
     { "in3", 18, PI_INPUT },
@@ -46,6 +50,35 @@ static struct {
     { "out2_8", 10, PI_OUTPUT },
 };
 
+static gpio_table_t gpio_table2[N_GPIO_TABLE] = {
+    { "in1", 23, PI_INPUT },
+    { "in2", 18, PI_INPUT },
+    { "in3", 15, PI_INPUT },
+    { "in4", 14, PI_INPUT },
+    { "in5", 22, PI_INPUT },
+    { "in6", 27, PI_INPUT },
+    { "in7", 17, PI_INPUT },
+    { "in8", 4, PI_INPUT },
+    { "out1_1", 24, PI_OUTPUT },
+    { "out1_2", 25, PI_OUTPUT },
+    { "out1_3", 8, PI_OUTPUT },
+    { "out1_4", 7, PI_OUTPUT },
+    { "out1_5", 12, PI_OUTPUT },
+    { "out1_6", 16, PI_OUTPUT },
+    { "out1_7", 20, PI_OUTPUT },
+    { "out1_8", 21, PI_OUTPUT },
+    { "out2_1", 26, PI_OUTPUT },
+    { "out2_2", 19, PI_OUTPUT },
+    { "out2_3", 13, PI_OUTPUT },
+    { "out2_4", 6, PI_OUTPUT },
+    { "out2_5", 5, PI_OUTPUT },
+    { "out2_6", 11, PI_OUTPUT },
+    { "out2_7", 9, PI_OUTPUT },
+    { "out2_8", 10, PI_OUTPUT },
+};
+
+static gpio_table_t *gpio_table = gpio_table1;
+
 static bool wb_is_init = false;
 
 static inline unsigned
@@ -64,8 +97,8 @@ get_output_id(unsigned bank, unsigned pin)
     return (bank-1)*N_OUTPUTS_PER_BANK + (pin-1) + N_INPUTS;
 }
 
-int
-wb_init(void)
+static int
+wb_init_common(void)
 {
     int i;
 
@@ -76,7 +109,7 @@ wb_init(void)
 	return i;
     }
 
-    for (i = 0; i < ARRAY_SIZE(gpio_table); i++) {
+    for (i = 0; i < N_GPIO_TABLE; i++) {
 	if (gpio_table[i].mode == PI_INPUT) {
 	    gpioSetPullUpDown(gpio_table[i].id, PI_PUD_DOWN);
 	}
@@ -86,6 +119,20 @@ wb_init(void)
     wb_is_init = true;
 
     return 0;
+}
+
+int
+wb_init()
+{
+    gpio_table = gpio_table1;
+    return wb_init_common();
+}
+
+int
+wb_init_v2()
+{
+    gpio_table = gpio_table2;
+    return wb_init_common();
 }
 
 bool wb_get(unsigned pin)

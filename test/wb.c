@@ -41,9 +41,18 @@ main(int argc, char **argv)
 {
     int bank;
 
-    if (wb_init() < 0) {
-	fprintf(stderr, "Failed to initialize wb\n");
-	exit(1);
+    if (argc > 1 && strcmp(argv[1], "--v2") == 0) {
+	if (wb_init_v2() < 0) {
+	    fprintf(stderr, "Failed to initialize wb\n");
+	    exit(1);
+	}
+	argc--;
+	argv++;
+    } else {
+	if (wb_init() < 0) {
+	    fprintf(stderr, "Failed to initialize wb\n");
+	    exit(1);
+	}
     }
 
     if (argc == 3 && strcmp(argv[1], "--out") == 0 && sscanf(argv[2], "%d", &bank) == 1) {
