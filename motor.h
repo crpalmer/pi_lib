@@ -9,7 +9,7 @@ public:
     virtual void speed(double pct) = 0;
     virtual void direction(bool forward) = 0;
 
-    void change_motor(bool direction, double speed)
+    void change_motor(bool direction, double speed = 1.0)
     {
         this->speed(0);
         ms_sleep(50);
