@@ -21,7 +21,7 @@
    value.
  */
 
-#define N_SERVO_POS_PER_S	100
+#define N_SERVO_POS_PER_S	50
 #define N_TO_AVG_TRACK		1
 #define N_TO_AVG_GENERATED	100
 
