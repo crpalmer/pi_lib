@@ -25,6 +25,9 @@ audio_capture_buffer(audio_t *, unsigned char *buffer);
 bool
 audio_play_buffer(audio_t *, const unsigned char *buffer, size_t size);
 
+bool
+audio_print_controls(audio_t *, FILE *);
+
 void
 audio_destroy(audio_t *);
 

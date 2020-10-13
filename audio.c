@@ -132,6 +132,31 @@ audio_play_buffer(audio_t *c, const unsigned char *buffer, size_t size)
     return pcm_write(c->pcm, buffer, size) == 0;
 }
 
+bool
+audio_print_controls(audio_t *audio, FILE *f)
+{
+    struct mixer *mixer;
+    int n;
+
+    mixer = mixer_open(audio->dev.card);
+    if (! mixer) {
+	fprintf(stderr, "Failed to open mixer\n");
+	return false;
+    }
+
+    n = mixer_get_num_ctls(mixer);
+    for (int i = 0; i < n; i++) {
+        struct mixer_ctl *ctl = mixer_get_ctl(mixer, i);
+	if (ctl) {
+	    printf("%d. %s\n", i, mixer_ctl_get_name(ctl));
+	}
+    }
+
+    mixer_close(mixer);
+
+    return true;
+}
+
 void
 audio_destroy(audio_t *c)
 {

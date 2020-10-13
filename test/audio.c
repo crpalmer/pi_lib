@@ -47,11 +47,14 @@ main(int argc, char **argv)
 
 
     audio_config_init_default(&cfg);
-    audio_device_init_playback(&in_dev);
-    audio_device_init_capture(&out_dev);
 
+    audio_device_init_playback(&in_dev);
     out = audio_new(&cfg, &in_dev);
+    audio_print_controls(out, stdout);
+
+    audio_device_init_capture(&out_dev);
     in = audio_new(&cfg, &out_dev);
+    audio_print_controls(in, stdout);
 
     if (! out) {
 	perror("out");
