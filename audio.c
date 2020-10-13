@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 #include "mem.h"
 #include "tinyalsa/asoundlib.h"
 #include "audio.h"
@@ -10,7 +11,42 @@ struct audioS {
     size_t      buffer_size;
     audio_config_t cfg;
     audio_device_t dev;
+    struct mixer     *mixer;
+    struct mixer_ctl *out_volume, *in_volume;
+    struct mixer_ctl *out_switch, *in_switch;
 };
+
+static void
+find_mixer_controls(audio_t *audio)
+{
+    int n;
+
+    audio->out_volume = audio->in_volume = NULL;
+    audio->out_switch = audio->in_switch = NULL;
+
+    n = mixer_get_num_ctls(audio->mixer);
+    for (int i = 0; i < n; i++) {
+        struct mixer_ctl *ctl = mixer_get_ctl(audio->mixer, i);
+	if (ctl) {
+	    const char *name = mixer_ctl_get_name(ctl);
+	    if (! audio->out_volume && strstr(name, "Playback Volume") != NULL) {
+		audio->out_volume = ctl;
+	    }
+	    if (! audio->in_volume && strstr(name, "Capture Volume") != NULL) {
+		audio->out_volume = ctl;
+	    }
+	    if (! audio->out_switch && strstr(name, "Playback Switch") != NULL) {
+		audio->out_volume = ctl;
+	    }
+	    if (! audio->out_switch && strstr(name, "PCM Playback Route") != NULL) {
+		audio->out_volume = ctl;
+	    }
+	    if (! audio->in_switch && strstr(name, "Capture Switch") != NULL) {
+		audio->out_volume = ctl;
+	    }
+	}
+    }
+}
 
 audio_t *
 audio_new(audio_config_t *cfg, audio_device_t *device)
@@ -43,6 +79,9 @@ audio_new(audio_config_t *cfg, audio_device_t *device)
     c->cfg = *cfg;
     c->dev = *device;
     c->buffer_size = pcm_frames_to_bytes(pcm, pcm_get_buffer_size(pcm));
+    c-> mixer = mixer_open(c->dev.card);
+
+    find_mixer_controls(c);
 
     return c;
 }
@@ -54,39 +93,21 @@ audio_get_buffer_size(audio_t *c)
 }
 
 static bool
-mixer_set(struct mixer *mixer, const char *name, int value)
+set_switch(struct mixer_ctl *sw, int value)
 {
-    struct mixer_ctl *ctl;
-    unsigned i;
+    if (sw == NULL) return true;
 
-    ctl = mixer_get_ctl_by_name(mixer, name);
-    if (! ctl) {
-	fprintf(stderr, "Failed to find control: %s\n", name);
-	mixer_close(mixer);
-	return false;
-    }
-
-    for (i = 0; i < mixer_ctl_get_num_values(ctl); i++) {
-        mixer_ctl_set_value(ctl, i, value);
+    for (int i = 0; i < mixer_ctl_get_num_values(sw); i++) {
+        mixer_ctl_set_value(sw, i, value);
     }
 
     return true;
 }
 
 static bool
-do_set_volume(struct mixer *mixer, const char *name, unsigned volume)
+set_volume(struct mixer_ctl *ctl, unsigned volume)
 {
-    struct mixer_ctl *ctl;
-    unsigned i;
-
-    ctl = mixer_get_ctl_by_name(mixer, name);
-    if (! ctl) {
-	fprintf(stderr, "Failed to find control: %s\n", name);
-	mixer_close(mixer);
-	return false;
-    }
-
-    for (i = 0; i < mixer_ctl_get_num_values(ctl); i++) {
+    for (int i = 0; i < mixer_ctl_get_num_values(ctl); i++) {
         mixer_ctl_set_percent(ctl, i, volume);
     }
 
@@ -96,26 +117,13 @@ do_set_volume(struct mixer *mixer, const char *name, unsigned volume)
 bool
 audio_set_volume(audio_t *audio, unsigned volume)
 {
-    struct mixer *mixer;
-    bool res;
+    bool res = true;
+    bool playback = audio->dev.playback;
 
-    mixer = mixer_open(audio->dev.card);
-    if (! mixer) {
-	fprintf(stderr, "Failed to open mixer\n");
-	return false;
-    }
-
-    if (audio->dev.playback) {
-        res = do_set_volume(mixer, "PCM Playback Volume", volume) ||
-	      mixer_set(mixer, "PCM Playback Route", 1);
-    } else {
-        res = do_set_volume(mixer, "Mic Capture Volume", volume) ||
-	      mixer_set(mixer, "Mic Capture Switch", 1) ||
-	      mixer_set(mixer, "Speaker Playback Switch", 0) ||
-	      mixer_set(mixer, "Mic Playback Switch", 0);
-    }
-
-    mixer_close(mixer);
+    res &= set_volume(audio->out_volume, playback ? volume : 0);
+    res &= set_volume(audio->in_volume,  playback ? 0 : volume);
+    res &= set_switch(audio->out_switch, playback ? 1 : 0);
+    res &= set_switch(audio->in_switch,  playback ? 0 : 1);
 
     return res;
 }
@@ -135,24 +143,15 @@ audio_play_buffer(audio_t *c, const unsigned char *buffer, size_t size)
 bool
 audio_print_controls(audio_t *audio, FILE *f)
 {
-    struct mixer *mixer;
     int n;
 
-    mixer = mixer_open(audio->dev.card);
-    if (! mixer) {
-	fprintf(stderr, "Failed to open mixer\n");
-	return false;
-    }
-
-    n = mixer_get_num_ctls(mixer);
+    n = mixer_get_num_ctls(audio->mixer);
     for (int i = 0; i < n; i++) {
-        struct mixer_ctl *ctl = mixer_get_ctl(mixer, i);
+        struct mixer_ctl *ctl = mixer_get_ctl(audio->mixer, i);
 	if (ctl) {
 	    printf("%d. %s\n", i, mixer_ctl_get_name(ctl));
 	}
     }
-
-    mixer_close(mixer);
 
     return true;
 }
@@ -160,6 +159,7 @@ audio_print_controls(audio_t *audio, FILE *f)
 void
 audio_destroy(audio_t *c)
 {
+    mixer_close(c->mixer);
     pcm_close(c->pcm);
     free(c);
 }
