@@ -28,6 +28,18 @@ talking_skull_play(talking_skull_t *t, unsigned char *data, unsigned n_bytes);
 servo_operations_t *
 talking_skull_prepare(talking_skull_t *, unsigned char *data, unsigned n_bytes);
 
+bool
+servo_operations_save(servo_operations_t *, const char *fname);
+
+void
+servo_operations_save_f(servo_operations_t *, FILE *f);
+
+servo_operations_t *
+servo_operations_load(const char *fname);
+
+servo_operations_t *
+servo_operations_load_f(FILE *f);
+
 unsigned
 talking_skull_play_prepared(talking_skull_t *, servo_operations_t *);
 
@@ -36,6 +48,9 @@ talking_skull_wait_completion(talking_skull_t *t, unsigned handle);
 
 talking_skull_actor_t *
 talking_skull_actor_new(const char *fname, talking_skull_servo_update_t update, void *data);
+
+talking_skull_actor_t *
+talking_skull_actor_new_ops(const char *fname, talking_skull_servo_update_t update, void *data);
 
 talking_skull_actor_t *
 talking_skull_actor_new_vsa(const char *fname, talking_skull_servo_update_t update, void *data);

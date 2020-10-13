@@ -19,6 +19,7 @@ UTILS = \
 	utils/mcp23017 \
 	utils/servo \
 	utils/talking-skull-dump \
+	utils/talking-skull-prepare \
 	utils/wb
 
 AUDIO_OBJS = audio.o talker-auto-gain.o talking-skull.o track.o wav.o
@@ -95,6 +96,9 @@ utils/servo: utils/servo.o $(LIB)
 
 utils/talking-skull-dump: utils/talking-skull-dump.o $(LIB)
 	$(CC) utils/talking-skull-dump.o -o $@ $(LIBS)
+
+utils/talking-skull-prepare: utils/talking-skull-prepare.o $(LIB)
+	$(CC) utils/talking-skull-prepare.o -o $@ $(LIBS)
 
 utils/wb: utils/wb.o $(LIB)
 	$(CXX) utils/wb.o -o $@ $(LIBS)

@@ -15,4 +15,5 @@ utils/maestro
 utils/mcp23017
 utils/servo
 utils/talking-skull-dump
+utils/talking-skull-prepare
 utils/wb

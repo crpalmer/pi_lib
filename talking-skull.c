@@ -86,6 +86,71 @@ servo_operations_add(servo_operations_t *ops, unsigned usec, double pos)
     ops->n++;
 }
 
+void
+servo_operations_save_f(servo_operations_t *ops, FILE *f)
+{
+    for (int i = 0; i < ops->n; i++) {
+	fprintf(f, "%u %lf\n", ops->servo[i].usec, ops->servo[i].pos);
+    }
+}
+
+bool
+servo_operations_save(servo_operations_t *ops, const char *fname)
+{
+    FILE *f;
+
+    if ((f = fopen(fname, "w")) == NULL) {
+	perror(fname);
+	return false;
+    }
+
+    servo_operations_save_f(ops, f);
+
+    fclose(f);
+
+    return true;
+}
+    
+servo_operations_t *
+servo_operations_load_f(FILE *f)
+{
+    servo_operations_t *ops;
+    char line[1024];
+
+    ops = servo_operations_new();
+
+    while (fgets(line, sizeof(line), f) != NULL) {
+	unsigned usec;
+	double pos;
+
+	if (sscanf(line, "%u %lf", &usec, &pos) != 2) {
+	    fprintf(stderr, "invalid line: %s", line);
+	} else {
+	    servo_operations_add(ops, usec, pos);
+	}
+    }
+
+    return ops;
+}
+
+servo_operations_t *
+servo_operations_load(const char *fname)
+{
+    FILE *f;
+    servo_operations_t *ops;
+
+    if ((f = fopen(fname, "r")) == NULL) {
+	perror(fname);
+	return false;
+    }
+
+    ops = servo_operations_load_f(f);
+
+    fclose(f);
+
+    return ops;
+}
+
 static void
 servo_operations_play(servo_operations_t *ops, talking_skull_servo_update_t fn, void *fn_data)
 {
@@ -332,6 +397,23 @@ talking_skull_actor_new(const char *fname, talking_skull_servo_update_t update, 
     return talking_skull_actor_new_with_n_to_avg(fname, update, data, N_TO_AVG_TRACK);
 }
 
+talking_skull_actor_t *
+talking_skull_actor_new_ops(const char *fname, talking_skull_servo_update_t update, void *data)
+{
+    talking_skull_actor_t *a;
+
+    a = fatal_malloc(sizeof(*a));
+    a->servo = NULL;
+    a->talking_skull = talking_skull_new(NULL, 0, update, data);
+    a->ops = servo_operations_load(fname);
+    if (a->ops == NULL) {
+	perror(fname);
+	free(a);
+	return NULL;
+    }
+    return a;
+}
+    
 talking_skull_actor_t *
 talking_skull_actor_new_vsa(const char *fname, talking_skull_servo_update_t update, void *data)
 {
