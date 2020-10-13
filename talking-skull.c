@@ -280,9 +280,6 @@ talking_skull_new(audio_meta_t *m, bool is_track, talking_skull_servo_update_t f
     audio_meta_t local_m;
 
     if (m) local_m = *m;
-    if (is_track) {
-	local_m.num_channels = 1;
-    }
 
     return talking_skull_new_with_n_to_avg(m ? &local_m : NULL, is_track ? N_TO_AVG_TRACK : N_TO_AVG_GENERATED, fn, fn_data);
 }
