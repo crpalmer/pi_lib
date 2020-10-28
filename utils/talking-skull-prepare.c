@@ -29,7 +29,7 @@ main(int argc, char **argv)
     meta = wav_get_meta(w);
     data = wav_get_raw_data(w, &n_data);
 
-    talking_skull = talking_skull_new(&meta, true, NULL, NULL);
+    talking_skull = talking_skull_new(&meta, NULL, NULL);
     ops = talking_skull_prepare(talking_skull, data, n_data);
 
     servo_operations_save_f(ops, stdout);

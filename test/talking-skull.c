@@ -91,7 +91,7 @@ main(int argc, char **argv)
     }
 
     meta = wav_get_meta(w);
-    talking_skull = talking_skull_new(&meta, has_servo_track, update_servo, &s);
+    talking_skull = talking_skull_new_is_track(&meta, has_servo_track, update_servo, &s);
     if (has_servo_track) {
 	wav_extract_servo_track(w);
     }

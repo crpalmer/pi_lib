@@ -49,7 +49,7 @@ main(int argc, char **argv)
     meta = wav_get_meta(w);
     data = wav_get_raw_data(w, &n_data);
 
-    talking_skull = talking_skull_new(&meta, true, update, NULL);
+    talking_skull = talking_skull_new(&meta, update, NULL);
     talking_skull_play(talking_skull, data, n_data);
 sleep(30);
 

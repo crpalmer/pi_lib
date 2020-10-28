@@ -22,8 +22,9 @@
  */
 
 #define N_SERVO_POS_PER_S	50
-#define N_TO_AVG_TRACK		1
-#define N_TO_AVG_GENERATED	100
+#define N_TO_AVG_TRACK_OLD	1
+#define N_TO_AVG		1
+#define N_TO_AVG_GENERATED_OLD	100
 
 typedef struct {
     unsigned n_per_sample;
@@ -275,13 +276,19 @@ update_main(void *t_as_vp)
 
 
 talking_skull_t *
-talking_skull_new(audio_meta_t *m, bool is_track, talking_skull_servo_update_t fn, void *fn_data)
+talking_skull_new_is_track(audio_meta_t *m, bool is_track, talking_skull_servo_update_t fn, void *fn_data)
 {
     audio_meta_t local_m;
 
     if (m) local_m = *m;
 
-    return talking_skull_new_with_n_to_avg(m ? &local_m : NULL, is_track ? N_TO_AVG_TRACK : N_TO_AVG_GENERATED, fn, fn_data);
+    return talking_skull_new_with_n_to_avg(m ? &local_m : NULL, is_track ? N_TO_AVG_TRACK_OLD : N_TO_AVG_GENERATED_OLD, fn, fn_data);
+}
+
+talking_skull_t *
+talking_skull_new(audio_meta_t *m, talking_skull_servo_update_t fn, void *fn_data)
+{
+    return talking_skull_new_with_n_to_avg(m, N_TO_AVG, fn, fn_data);
 }
 
 talking_skull_t *
@@ -391,7 +398,7 @@ talking_skull_actor_new_with_n_to_avg(const char *fname, talking_skull_servo_upd
 talking_skull_actor_t *
 talking_skull_actor_new(const char *fname, talking_skull_servo_update_t update, void *data)
 {
-    return talking_skull_actor_new_with_n_to_avg(fname, update, data, N_TO_AVG_TRACK);
+    return talking_skull_actor_new(fname, update, data);
 }
 
 talking_skull_actor_t *
@@ -401,7 +408,7 @@ talking_skull_actor_new_ops(const char *fname, talking_skull_servo_update_t upda
 
     a = fatal_malloc(sizeof(*a));
     a->servo = NULL;
-    a->talking_skull = talking_skull_new(NULL, 0, update, data);
+    a->talking_skull = talking_skull_new(NULL, update, data);
     a->ops = servo_operations_load(fname);
     if (a->ops == NULL) {
 	perror(fname);
@@ -426,7 +433,7 @@ talking_skull_actor_new_vsa(const char *fname, talking_skull_servo_update_t upda
 
     a = fatal_malloc(sizeof(*a));
     a->servo = NULL;
-    a->talking_skull = talking_skull_new(NULL, 0, update, data);
+    a->talking_skull = talking_skull_new(NULL, update, data);
     a->ops = servo_operations_new();
 
     state_start_new_buffer(&a->talking_skull->state);
@@ -443,7 +450,7 @@ talking_skull_actor_new_vsa(const char *fname, talking_skull_servo_update_t upda
 talking_skull_actor_t *
 talking_skull_actor_new_from_audio(const char *fname, talking_skull_servo_update_t update, void *data)
 {
-    return talking_skull_actor_new_with_n_to_avg(fname, update, data, N_TO_AVG_GENERATED);
+    return talking_skull_actor_new(fname, update, data);
 }
 
 void
