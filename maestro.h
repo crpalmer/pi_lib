@@ -22,6 +22,7 @@ typedef enum {
     HITEC_HS81,
     HITEC_HS425,
     PARALLAX_STANDARD,
+    SERVO_DS3218,
 } maestro_range_t;
 
 maestro_t *

@@ -393,6 +393,9 @@ maestro_set_servo_range(maestro_t *m, servo_id_t id, maestro_range_t range)
     case PARALLAX_STANDARD:
 	maestro_set_servo_physical_range(m, id, 750, 2250);
 	break;
+    case SERVO_DS3218:
+	maestro_set_servo_physical_range(m, id, 500, 2000);
+	break;
     }
 }
 
