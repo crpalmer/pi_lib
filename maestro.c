@@ -299,6 +299,7 @@ int
 maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_range)
 {
     unsigned speed;
+    unsigned actual_ms;
 
     if (id >= m->n_servos) return 0;
 
@@ -311,13 +312,13 @@ maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_range)
 	total_us = m->c[id].max_pos_us - m->c[id].min_pos_us + 1;
 	total_units = total_us / 0.25;
 	speed = total_units / (ms_for_range / 10.0);
+	actual_ms = total_us * 40 / speed;
     }
 
     if (DEBUG) printf("speed %d => %d\n", ms_for_range, speed);
 
-    return send_cmd_ushort(m, id, COMMAND_SET_SPEED, speed);
-
-    return 0;
+    if (send_cmd_ushort(m, id, COMMAND_SET_SPEED, speed) < 0) return -1;
+    return actual_ms;
 }
 
 int
