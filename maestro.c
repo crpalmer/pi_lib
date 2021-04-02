@@ -4,6 +4,12 @@
 #include "maestro.h"
 #include "util.h"
 
+#ifdef _WIN32
+#define O_NOCTTY 0
+#else
+#include <termios.h>
+#endif
+
 #define DEBUG 0
 
 #define MAX_SERIAL_DEVICES	10
@@ -246,6 +252,17 @@ maestro_new(void)
 	if ((m->fd = open(serial_device, O_RDWR | O_NOCTTY)) < 0) {
 	    perror(serial_device);
 	} else {
+#ifdef _WIN32
+	  _setmode(m->fd, _O_BINARY);
+#else
+	  struct termios options;
+	  tcgetattr(m->fd, &options);
+	  options.c_iflag &= ~(INLCR | IGNCR | ICRNL | IXON | IXOFF);
+	  options.c_oflag &= ~(ONLCR | OCRNL);
+	  options.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+	  tcsetattr(m->fd, TCSANOW, &options);
+#endif
+ 
 	    break;
 	}
     }
