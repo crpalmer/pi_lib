@@ -86,6 +86,41 @@ struct maestroS {
 };
 
 static int
+open_serial_device(maestro_t *m)
+{
+    for (int i = 0; i < MAX_SERIAL_DEVICES; i++) {
+	char serial_device[128];
+
+	sprintf(serial_device, SERIAL_DEVICE_FMT, i);
+	if ((m->fd = open(serial_device, O_RDWR | O_NOCTTY)) < 0) {
+	    perror(serial_device);
+	} else {
+#ifdef _WIN32
+	  _setmode(m->fd, _O_BINARY);
+#else
+	  struct termios options;
+	  tcgetattr(m->fd, &options);
+	  options.c_iflag &= ~(INLCR | IGNCR | ICRNL | IXON | IXOFF);
+	  options.c_oflag &= ~(ONLCR | OCRNL);
+	  options.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+	  tcsetattr(m->fd, TCSANOW, &options);
+#endif
+ 
+	  return 1;
+	}
+    }
+
+    return 0;
+}
+
+static int
+reopen_serial_device(maestro_t *m)
+{
+    close(m->fd);
+    return open_serial_device(m);
+}
+
+static int
 get_raw_parameter_byte(maestro_t *m, int parameter, unsigned char *ret)
 {
     char result;
@@ -154,6 +189,7 @@ send_cmd_ushort(maestro_t *m, servo_id_t id, unsigned char cmd, unsigned short d
     bytes[3] = data/128;
 
     if (write(m->fd, bytes, 4) != 4) {
+	reopen_serial_device(m);
 	perror("write");
 	return 0;
     }
@@ -245,29 +281,7 @@ maestro_new(void)
 	restart_controller(m);
     }
 
-    for (i = 0; i < MAX_SERIAL_DEVICES; i++) {
-	char serial_device[128];
-
-	sprintf(serial_device, SERIAL_DEVICE_FMT, i);
-	if ((m->fd = open(serial_device, O_RDWR | O_NOCTTY)) < 0) {
-	    perror(serial_device);
-	} else {
-#ifdef _WIN32
-	  _setmode(m->fd, _O_BINARY);
-#else
-	  struct termios options;
-	  tcgetattr(m->fd, &options);
-	  options.c_iflag &= ~(INLCR | IGNCR | ICRNL | IXON | IXOFF);
-	  options.c_oflag &= ~(ONLCR | OCRNL);
-	  options.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
-	  tcsetattr(m->fd, TCSANOW, &options);
-#endif
- 
-	    break;
-	}
-    }
-
-    if (i >+ MAX_SERIAL_DEVICES) {
+    if (! open_serial_device(m)) {
 	maestro_destroy(m);
 	return NULL;
     }
