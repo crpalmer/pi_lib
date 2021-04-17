@@ -10,7 +10,7 @@
 #include <termios.h>
 #endif
 
-#define DEBUG 0
+#define DEBUG 1
 
 #define MAX_SERIAL_DEVICES	10
 #define SERIAL_DEVICE_FMT	"/dev/ttyACM%d"
@@ -32,6 +32,7 @@
 #define REQUEST_SET_PARAMETER 0x82
 #define REQUEST_GET_VARIABLES 0x83
 #define REQUEST_SET_SERVO_VARIABLE 0x84
+#define REQUEST_SET_TARGET 0x85
 #define REQUEST_CLEAR_ERRORS 0x86
 #define REQUEST_GET_SERVO_SETTINGS 0x87
 
@@ -79,7 +80,6 @@ typedef struct {
 
 struct maestroS {
     struct usb_device	  *dev;
-    struct usb_dev_handle *handle;
     int			   fd;
     int			   n_servos;
     servo_config_t	  *c;
@@ -89,11 +89,16 @@ static int
 get_raw_parameter_byte(maestro_t *m, int parameter, unsigned char *ret)
 {
     char result;
+    struct usb_dev_handle *handle;
 
-    if (usb_control_msg(m->handle, 0xc0, REQUEST_GET_PARAMETER, 0, parameter, &result, 1, -1) < 0) {
+    handle = usb_open(m->dev);
+
+    if (usb_control_msg(handle, 0xc0, REQUEST_GET_PARAMETER, 0, parameter, &result, 1, -1) < 0) {
 	fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
 	return 0;
     }
+
+    usb_close(handle);
 
     *ret = result;
 
@@ -104,11 +109,16 @@ static int
 get_raw_parameter_ushort(maestro_t *m, int parameter, unsigned short *ret)
 {
     char result[2];
+    struct usb_dev_handle *handle;
 
-    if (usb_control_msg(m->handle, 0xc0, REQUEST_GET_PARAMETER, 0, parameter, result, 2, -1) < 0) {
+    handle = usb_open(m->dev);
+
+    if (usb_control_msg(handle, 0xc0, REQUEST_GET_PARAMETER, 0, parameter, result, 2, -1) < 0) {
 	fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
 	return 0;
     }
+
+    usb_close(handle);
 
     *ret = ((unsigned char) result[0]) | (((unsigned char) result[1]) << 8);
 
@@ -119,11 +129,16 @@ static int
 set_raw_parameter_byte(maestro_t *m, int parameter, unsigned char value)
 {
     unsigned short index = (1<<8) | parameter;
+    struct usb_dev_handle *handle;
 
-    if (usb_control_msg(m->handle, 0x40, REQUEST_SET_PARAMETER, value, index, NULL, 0, -1) < 0) {
+    handle = usb_open(m->dev);
+
+    if (usb_control_msg(handle, 0x40, REQUEST_SET_PARAMETER, value, index, NULL, 0, -1) < 0) {
 	fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
 	return 0;
     }
+
+    usb_close(handle);
 
     return 1;
 }
@@ -133,8 +148,11 @@ static int
 set_raw_parameter_ushort(maestro_t *m, int parameter, unsigned short value)
 {
     unsigned short index = (2<<8) | parameter;
+    struct usb_dev_handle *handle;
 
-    if (usb_control_msg(m->handle, 0x40, REQUEST_SET_PARAMETER, value, index, NULL, 0, -1) < 0) {
+    handle = usb_open(m->dev);
+
+    if (usb_control_msg(handle, 0x40, REQUEST_SET_PARAMETER, value, index, NULL, 0, -1) < 0) {
 	fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
 	return 0;
     }
@@ -154,9 +172,24 @@ send_cmd_ushort(maestro_t *m, servo_id_t id, unsigned char cmd, unsigned short d
     bytes[3] = data/128;
 
     if (write(m->fd, bytes, 4) != 4) {
-	perror("write");
+        perror("write");
+        return 0;
+    }
+
+    return 1;
+}
+
+int
+send_usb_cmd_ushort(maestro_t *m, servo_id_t id, unsigned char cmd, unsigned short data)
+{
+    struct usb_dev_handle *handle;
+
+    handle = usb_open(m->dev);
+    if (usb_control_msg(handle, 0x40, cmd, data, id, NULL, 0, -1) < 0) {
+	fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
 	return 0;
     }
+    usb_close(handle);
 
     return 1;
 }
@@ -196,10 +229,16 @@ get_all_servos_config(maestro_t *m)
 static int
 restart_controller(maestro_t *m)
 {
-    if (usb_control_msg(m->handle, 0x40, REQUEST_REINITIALIZE, 0, 0, NULL, 0, -1) < 0) {
+    struct usb_dev_handle *handle;
+
+    handle = usb_open(m->dev);
+
+    if (usb_control_msg(handle, 0x40, REQUEST_REINITIALIZE, 0, 0, NULL, 0, -1) < 0) {
 	fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
 	return 0;
     }
+
+    usb_close(handle);
 
     ms_sleep(1500);
 
@@ -233,8 +272,6 @@ maestro_new(void)
 	free(m);
 	return NULL;
     }
-
-    m->handle = usb_open(dev);
 
     m->c = calloc(sizeof(*m->c), m->n_servos);
     get_all_servos_config(m);
@@ -284,7 +321,6 @@ void
 maestro_destroy(maestro_t *m)
 {
     free(m->c);
-    usb_close(m->handle);
     if (m->fd >= 0) close(m->fd);
     free(m);
 }
@@ -351,7 +387,7 @@ maestro_set_servo_pos(maestro_t *m, servo_id_t id, double pos)
 	return 1;
     } else {
 	m->c[id].current_real_pos = real_pos;
-        return send_cmd_ushort(m, id, COMMAND_SET_TARGET, real_pos);
+        return send_usb_cmd_ushort(m, id, REQUEST_SET_TARGET, real_pos);
     }
 }
 
