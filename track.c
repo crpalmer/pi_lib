@@ -26,6 +26,18 @@ track_new(const char *fname)
 }
 
 track_t *
+track_new_usb_out(const char *fname)
+{
+    audio_config_t cfg;
+    audio_device_t dev;
+
+    audio_config_init_default(&cfg);
+    audio_device_init(&dev, 1, 0, true);
+
+    return track_new_audio_dev(fname, &dev);
+}
+
+track_t *
 track_new_audio_dev(const char *fname, audio_device_t *dev)
 {
     track_t *t;
