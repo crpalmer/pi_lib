@@ -29,20 +29,26 @@ find_mixer_controls(audio_t *audio)
         struct mixer_ctl *ctl = mixer_get_ctl(audio->mixer, i);
 	if (ctl) {
 	    const char *name = mixer_ctl_get_name(ctl);
+	    if (! audio->out_volume && strstr(name, "PCM Playback Volume") != NULL) {
+		audio->out_volume = ctl;
+	    }
 	    if (! audio->out_volume && strstr(name, "Playback Volume") != NULL) {
 		audio->out_volume = ctl;
 	    }
-	    if (! audio->in_volume && strstr(name, "Capture Volume") != NULL) {
-		audio->out_volume = ctl;
+	    if (! audio->in_volume && strstr(name, "PCM Capture Volume") != NULL) {
+		audio->in_volume = ctl;
 	    }
-	    if (! audio->out_switch && strstr(name, "Playback Switch") != NULL) {
-		audio->out_volume = ctl;
+	    if (! audio->in_volume && strstr(name, "Capture Volume") != NULL) {
+		audio->in_volume = ctl;
 	    }
 	    if (! audio->out_switch && strstr(name, "PCM Playback Route") != NULL) {
-		audio->out_volume = ctl;
+		audio->out_switch = ctl;
+	    }
+	    if (! audio->out_switch && strstr(name, "Playback Switch") != NULL) {
+		audio->out_switch = ctl;
 	    }
 	    if (! audio->in_switch && strstr(name, "Capture Switch") != NULL) {
-		audio->out_volume = ctl;
+		audio->out_switch = ctl;
 	    }
 	}
     }
