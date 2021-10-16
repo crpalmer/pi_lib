@@ -4,11 +4,11 @@
 #include "mem.h"
 #include "util.h"
 
-#include "lights.h"
+#include "piface_lights.h"
 
 typedef enum { NONE, CHASE, ON, OFF, SELECTED, BLINK, EXIT } action_t;
 
-struct lightsS {
+struct piface_lightsS {
     piface_t    *piface;
 
     pthread_t    thread;
@@ -29,13 +29,13 @@ unsigned chase_seq[] = { 0, 1, 4, 2, 3, 4 };
 #define N_CHASE_SEQ (sizeof(chase_seq) / sizeof(chase_seq[0]))
 
 static void
-set(lights_t *lights, unsigned id, bool value)
+set(piface_lights_t *lights, unsigned id, bool value)
 {
     piface_set(lights->piface, id + LIGHT_0, value);
 }
 
 static void
-set_all(lights_t *lights, bool value)
+set_all(piface_lights_t *lights, bool value)
 {
     size_t i;
 
@@ -43,7 +43,7 @@ set_all(lights_t *lights, bool value)
 }
 
 static void
-do_chase_step(lights_t *lights)
+do_chase_step(piface_lights_t *lights)
 {
     set_all(lights, false);
     set(lights, chase_seq[lights->next_chase], true);
@@ -52,16 +52,16 @@ do_chase_step(lights_t *lights)
 }
 
 static void
-do_selected(lights_t *lights)
+do_selected(piface_lights_t *lights)
 {
     set_all(lights, false);
     set(lights, lights->selected, true);
 }
 
 static void *
-lights_work(void *lights_as_vp)
+piface_lights_work(void *lights_as_vp)
 {
-    lights_t *lights = (lights_t *) lights_as_vp;
+    piface_lights_t *lights = (piface_lights_t *) lights_as_vp;
 
     for (;;) {
 	pthread_mutex_lock(&lights->lock);
@@ -100,10 +100,10 @@ lights_work(void *lights_as_vp)
     }
 }
 
-lights_t *
-lights_new(piface_t *piface)
+piface_lights_t *
+piface_lights_new(piface_t *piface)
 {
-    lights_t *lights = fatal_malloc(sizeof(*lights));
+    piface_lights_t *lights = fatal_malloc(sizeof(*lights));
 
     lights->piface = piface;
 
@@ -115,7 +115,7 @@ lights_new(piface_t *piface)
     pthread_mutex_init(&lights->lock, NULL);
     pthread_cond_init(&lights->cond, NULL);
 
-    pthread_create(&lights->thread, NULL, lights_work, lights);
+    pthread_create(&lights->thread, NULL, piface_lights_work, lights);
 
     return lights;
 }
@@ -123,7 +123,7 @@ lights_new(piface_t *piface)
 #define SELECTED_NONE ((unsigned) -1)
 
 static void
-send_work_selected(lights_t *lights, action_t action, unsigned selected)
+send_work_selected(piface_lights_t *lights, action_t action, unsigned selected)
 {
     pthread_mutex_lock(&lights->lock);
     /* Once exit is picked, never override it! */
@@ -136,43 +136,43 @@ send_work_selected(lights_t *lights, action_t action, unsigned selected)
 }
 
 static void
-send_work(lights_t *lights, action_t action)
+send_work(piface_lights_t *lights, action_t action)
 {
     send_work_selected(lights, action, SELECTED_NONE);
 }
 
 void
-lights_chase(lights_t *lights)
+piface_lights_chase(piface_lights_t *lights)
 {
     send_work(lights, CHASE);
 }
 
 void
-lights_on(lights_t *lights)
+piface_lights_on(piface_lights_t *lights)
 {
     send_work(lights, ON);
 }
 
 void
-lights_off(lights_t *lights)
+piface_lights_off(piface_lights_t *lights)
 {
     send_work(lights, OFF);
 }
 
 void
-lights_select(lights_t *lights, unsigned selected)
+piface_lights_select(piface_lights_t *lights, unsigned selected)
 {
     send_work_selected(lights, SELECTED, selected);
 }
 
 void
-lights_blink(lights_t *lights)
+piface_lights_blink(piface_lights_t *lights)
 {
     send_work(lights, BLINK);
 }
 
 void
-lights_destroy(lights_t *lights)
+piface_lights_destroy(piface_lights_t *lights)
 {
     send_work(lights, EXIT);
     pthread_join(lights->thread, NULL);
