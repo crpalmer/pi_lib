@@ -23,7 +23,7 @@ UTILS = \
 	utils/wb
 
 AUDIO_OBJS = audio.o talker-auto-gain.o talking-skull.o track.o wav.o
-GPIO_OBJS = digital-counter.o gpio.o mcp23017.o piface.o piface_lights.o pca9685.o wb.o \
+GPIO_OBJS = digital-counter.o lights.o gpio.o mcp23017.o piface.o piface_lights.o pca9685.o wb.o \
 	    ween-board.o
 MOTOR_OBJS = grove.o l298n.o stepper.o
 NET_OBJS = net.o net-line-reader.o
