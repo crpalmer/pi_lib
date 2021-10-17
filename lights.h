@@ -14,6 +14,7 @@ void lights_off(lights_t *);
 void lights_select(lights_t *, unsigned selected);
 void lights_blink(lights_t *);
 void lights_blink_one(lights_t *l, unsigned pin);
+void lights_blink_random(lights_t *l);
 
 #ifdef __cplusplus
 };
@@ -26,6 +27,7 @@ class Action;
 
 class Lights {
 friend class BlinkAllAction;
+friend class BlinkRandomAction;
 friend class ChaseAction;
 
 public:
@@ -48,6 +50,8 @@ public:
 	set_all(1);
 	set_action(NULL);
     }
+
+    void blink_random();
 
 protected:
     void set_all(unsigned value);

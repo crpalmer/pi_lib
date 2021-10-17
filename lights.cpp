@@ -48,6 +48,31 @@ private:
     int      state;
 };
 
+class BlinkRandomAction : public Action {
+public:
+    BlinkRandomAction(Lights *lights) : lights(lights), picked(NULL)
+    {
+	n = 0;
+
+	l = new output_t*[lights->lights.size()];
+	for (output_t *&o : lights->lights) {
+	    l[n++] = o;
+	}
+    }
+
+    void step() {
+	if (picked) picked->set(0);
+	picked = l[random_number_in_range(0, n-1)];
+	picked->set(1);
+    }
+
+private:
+    Lights *lights;
+    output_t **l;
+    output_t *picked;
+    unsigned n;
+};
+
 class ChaseAction : public Action {
 public:
     ChaseAction(list<output_t *> lights) : lights(lights), last(NULL)
@@ -138,6 +163,12 @@ void
 Lights::blink_one(output_t *l)
 {
     set_action(new BlinkOneAction(l));
+}
+
+void
+Lights::blink_random()
+{
+    set_action(new BlinkRandomAction(this));
 }
 
 void
