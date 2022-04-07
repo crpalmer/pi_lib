@@ -14,10 +14,21 @@ extern "C" {
 #define NANOSEC_PER_USEC 1000
 #define MS_PER_SEC       1000
 
+#ifdef PI_PICO
+#include <pico/time.h>
+#include <pico/types.h>
+#endif
+
 static inline void
 nano_gettime(struct timespec *t)
 {
-     clock_gettime(CLOCK_MONOTONIC, t);
+#ifdef PI_PICO
+    absolute_time_t now = get_absolute_time();
+    t->tv_sec = to_us_since_boot(now) / 1000 / 1000;
+    t->tv_nsec = (to_us_since_boot(now) - t->tv_sec) * 1000;
+#else
+    clock_gettime(CLOCK_MONOTONIC, t);
+#endif
 }
 
 static inline void
@@ -80,7 +91,16 @@ nano_elapsed_ms_now(struct timespec *start)
 static inline void
 nano_sleep_until(struct timespec *t)
 {
+#ifdef PI_PICO
+    struct timespec now;
+    int ms;
+
+    nano_gettime(&now);
+    ms = nano_elapsed_ms(t, &now);
+    if (ms > 0) sleep_ms(ms);
+#else
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, t, NULL);
+#endif
 }
 
 #ifdef __cplusplus

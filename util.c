@@ -4,15 +4,23 @@
 #include <time.h>
 #include "util.h"
 
+#ifdef PI_PICO
+#include "pico/time.h"
+#endif
+
 void
 ms_sleep(unsigned ms)
 {
+#ifdef PI_PICO
+    sleep_ms(ms);
+#else
     struct timespec ts;
 
     ts.tv_sec = ms / 1000;
     ts.tv_nsec = (ms % 1000) * 1000 * 1000;
 
     nanosleep(&ts, NULL);
+#endif
 }
 
 void

@@ -13,7 +13,13 @@ public:
     unsigned get() override { return parent->get(bank, pin); }
     void set_pullup_up() override { parent->set_pullup(bank, pin, 1); }
     void clear_pullup() override { parent->set_pullup(bank, pin, 0); }
-    void set_pullup_down() override { throw "MCP23017 cannot set a pulldown resistor"; }
+    void set_pullup_down() override {
+#ifdef PI_PICO
+	fprintf(stderr, "ERROR: MCP23017 cannot set a pulldown resistor\n");
+#else
+	throw "MCP23017 cannot set a pulldown resistor";
+#endif
+    }
 
 private:
     MCP23017 *parent;
@@ -41,7 +47,11 @@ MCP23017::MCP23017(unsigned address)
 {
     bus = i2cOpen(1, address, 0);
     if (bus < 0) {
+#ifdef PI_PICO
+	fprintf(stderr, "ERROR: failed to open i2c device\n");
+#else
 	throw "failed to open i2c device";
+#endif
     }
     this->dir[0] = this->dir[1] = 0;
     this->pullup[0] = this->pullup[1] = 0;

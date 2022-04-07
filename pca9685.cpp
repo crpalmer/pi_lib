@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "pca9685.h"
-#include "pigpio.h"
+#include "externals/PIGPIO/pigpio.h"
 #include "util.h"
 
 #define MODE1_RESET_BIT		0x80
@@ -27,7 +27,11 @@ PCA9685::PCA9685(unsigned address, unsigned hz)
 {
     bus = i2cOpen(1, address, 0);
     if (bus < 0) {
+#ifdef PI_PICO
+	fprintf(stderr, "failed to open i2c device\n");
+#else
         throw "failed to open i2c device";
+#endif
     }
 
     reset();
