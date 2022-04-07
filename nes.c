@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef PI_PICO
 #include <linux/input.h>
 #include <linux/input-event-codes.h>
+#endif
 #include "nes.h"
 
 static void handle_key_event(struct input_event *e, nes_event_t *nes)
@@ -35,6 +37,9 @@ static void handle_abs_event(struct input_event *e, nes_event_t *nes)
 int
 nes_read(nes_event_t *nes, FILE *f)
 {
+#ifdef PI_PICO
+    return -1;
+#else
     struct input_event e;
 
     if (fread(&e, sizeof(e), 1, f) == 1) {
@@ -47,4 +52,50 @@ nes_read(nes_event_t *nes, FILE *f)
     } else {
 	return -1;
     }
+#endif
+}
+
+static enum nes_button
+handle_legacy_button(unsigned char *buf)
+{
+    switch(buf[7]) {
+    case 1: return NES_A;
+    case 2: return NES_B;
+    case 8: return NES_START;
+    case 9: return NES_SELECT;
+    }
+    return -1;
+}
+
+static int
+handle_legacy_arrow_dir(unsigned char *buf)
+{
+    if (buf[4] == 0) return 0;
+    else return buf[5] == 0x7f ? 1 : -1;
+}
+
+static enum nes_button
+handle_legacy_arrow(unsigned char *buf)
+{
+    return buf[7] == 0 ? NES_LEFT_RIGHT : NES_UP_DOWN;
+}
+
+int
+nes_read_legacy(nes_event_t *nes, FILE *f)
+{
+    unsigned char buf[8];
+
+    if (fread(buf, sizeof(buf), 1, f) != 1) return -1;
+printf("%02x %02x %02x %02x\n", buf[4], buf[5], buf[6], buf[7]);
+    switch(buf[6]) {
+    case 1:
+	nes->button = handle_legacy_button(buf);
+	nes->dir = buf[4];
+	break;
+    case 2:
+	nes->button = handle_legacy_arrow(buf);
+	nes->dir = handle_legacy_arrow_dir(buf);
+	break;
+    }
+    return 1;
 }

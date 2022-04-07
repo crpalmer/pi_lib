@@ -14,4 +14,6 @@ typedef struct {
 
 int nes_read(nes_event_t *e, FILE *f);
 
+int nes_read_legacy(nes_event_t *e, FILE *f);
+
 #endif

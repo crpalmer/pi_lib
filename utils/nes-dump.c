@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <linux/input.h>
 #include <linux/input-event-codes.h>
 #include "nes.h"
 
-#define F "/dev/input/by-id/usb-0079_Controller-event-joystick"
+#define F_event "/dev/input/by-id/usb-0079_Controller-event-joystick"
+#define F_legacy "/dev/input/by-id/usb-0079_Controller-joystick"
 
 const char *dir_to_string(int dir)
 {
@@ -16,14 +18,22 @@ main(int argc, char **argv)
 {
     FILE *f;
     nes_event_t e;
+    int (*do_read)(nes_event_t *, FILE *) = nes_read;
+    const char *fname = F_event;
 
-    if ((f = fopen(F, "r")) == 0) {
-	perror(F);
+    if (argc > 1 && strcmp(argv[1], "--legacy") == 0) {
+	do_read = nes_read_legacy;
+	fname = F_legacy;
+    }
+
+    printf("Using: %s\n", fname);
+    if ((f = fopen(fname, "r")) == 0) {
+	perror(fname);
 	exit(0);
     }
 
     for (;;) {
-	int status = nes_read(&e, f);
+	int status = do_read(&e, f);
 
 	if (status > 0) {
 	    switch(e.button) {
