@@ -17,6 +17,7 @@ UTILS = \
 	utils/digital-counter \
 	utils/maestro \
 	utils/mcp23017 \
+	utils/nes-dump \
 	utils/servo \
 	utils/talking-skull-dump \
 	utils/talking-skull-prepare \
@@ -40,7 +41,8 @@ OBJS = \
 	$(SERVER_OBJS) \
 	$(SERVO_OBJS) \
 	$(THREAD_OBJS) \
-	$(UTIL_OBJS)
+	$(UTIL_OBJS) \
+	nes.o \
 
 EXTERNALS = $E/tinyalsa/pcm.o $E/tinyalsa/mixer.o \
 	$E/mcp23s17.o $E/pifacedigital.o \
@@ -89,6 +91,9 @@ utils/maestro: utils/maestro.o $(LIB)
 
 utils/mcp23017: utils/mcp23017.o $(LIB)
 	$(CXX) utils/mcp23017.o -o $@ $(LIBS)
+
+utils/nes-dump: utils/nes-dump.o $(LIB)
+	$(CXX) utils/nes-dump.o -o $@ $(LIBS)
 
 # compile and generate dependency info
 utils/servo: utils/servo.o $(LIB)

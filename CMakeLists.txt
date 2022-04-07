@@ -18,6 +18,7 @@ add_library(pi
     l298n.cpp
     mcp23017.cpp
     mem.c
+    nes.c
     pca9685.cpp
     pigpio-emulation.c
     stepper.c

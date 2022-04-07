@@ -13,6 +13,7 @@ test/wb
 utils/digital-counter
 utils/maestro
 utils/mcp23017
+utils/nes-dump
 utils/servo
 utils/talking-skull-dump
 utils/talking-skull-prepare
