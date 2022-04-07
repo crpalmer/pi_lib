@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "nes.h"
+
 #ifndef PI_PICO
 #include <linux/input.h>
 #include <linux/input-event-codes.h>
-#endif
-#include "nes.h"
 
 static void handle_key_event(struct input_event *e, nes_event_t *nes)
 {
@@ -33,6 +33,8 @@ static void handle_abs_event(struct input_event *e, nes_event_t *nes)
     default: nes->dir = 0;
     }
 }
+
+#endif
 
 int
 nes_read(nes_event_t *nes, FILE *f)
