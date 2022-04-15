@@ -1,6 +1,11 @@
 #ifndef __NES_H__
 #define __NES_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdbool.h>
 #include <stdio.h>
 
 enum nes_button {
@@ -15,5 +20,9 @@ typedef struct {
 int nes_read(nes_event_t *e, FILE *f);
 
 int nes_read_legacy(nes_event_t *e, FILE *f);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

@@ -88,7 +88,6 @@ nes_read_legacy(nes_event_t *nes, FILE *f)
     unsigned char buf[8];
 
     if (fread(buf, sizeof(buf), 1, f) != 1) return -1;
-printf("%02x %02x %02x %02x\n", buf[4], buf[5], buf[6], buf[7]);
     switch(buf[6]) {
     case 1:
 	nes->button = handle_legacy_button(buf);
