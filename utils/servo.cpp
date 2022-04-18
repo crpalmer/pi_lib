@@ -1,29 +1,25 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "maestro.h"
+#include "pi.h"
+#include "externals/PIGPIO/pigpio.h"
+#include "servo.h"
 #include "util.h"
-#include "pi-usb.h"
-#include "call-every.h"
 
-static char buf[1024];
+//static char buf[1024];
 
 int
 main(int argc, char **argv)
 {
-    maestro_t *m;
+    int c;
 
-    pi_usb_init();
-    if ((m = maestro_new()) == NULL) {
-	fprintf(stderr, "couldn't find a recognized device.\n");
-	exit(1);
-    }
+    pi_init();
 
-    while (fgets(buf, sizeof(buf), stdin) != NULL && ! feof(stdin)) {
-	int which, where;
+    gpioInitialise();
+    Servo *servo = new Servo(2);
 
-	if (sscanf(buf, "%d %d", &which, &where) == 2) {
-	    maestro_set_servo_pos(m, which, where);
-	}
+    while ((c = getchar()) >= 0) {
+	double where = (c - '0') / 10.0;
+	servo->go(where);
     }
 
     return 0;

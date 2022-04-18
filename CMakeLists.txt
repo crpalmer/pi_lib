@@ -8,6 +8,7 @@ project(pi)
 
 pico_sdk_init()
 
+add_subdirectory(utils)
 add_definitions(-DPI_PICO -Iexternal/PIGPIO)
 
 add_library(pi
