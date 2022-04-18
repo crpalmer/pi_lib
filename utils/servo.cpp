@@ -19,6 +19,7 @@ main(int argc, char **argv)
 
     while ((c = getchar()) >= 0) {
 	double where = (c - '0') / 10.0;
+	printf("go %f\n", where);
 	servo->go(where);
     }
 
