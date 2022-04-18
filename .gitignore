@@ -2,14 +2,6 @@
 *.d
 .*.sw*
 lib.a
-test/audio
-test/maestro
-test/one-off
-test/piface
-test/stepper
-test/talking-skull
-test/track
-test/wb
 utils/digital-counter
 utils/maestro
 utils/mcp23017

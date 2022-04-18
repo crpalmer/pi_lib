@@ -3,16 +3,6 @@ D=$(HOME)/lib
 E=$D/externals
 CFLAGS=-Wall -Werror -g -I$E/include -I$D -I$E/PIGPIO
 
-TESTS = \
-	test/audio \
-	test/maestro \
-	test/one-off \
-	test/piface \
-	test/stepper \
-	test/talking-skull \
-	test/track \
-	test/wb
-
 UTILS = \
 	utils/digital-counter \
 	utils/maestro \
@@ -48,7 +38,7 @@ EXTERNALS = $E/tinyalsa/pcm.o $E/tinyalsa/mixer.o \
 	$E/mcp23s17.o $E/pifacedigital.o \
 	$E/PIGPIO/pigpio.o $E/PIGPIO/command.o \
 
-all: $(LIB) $(TESTS) $(UTILS)
+all: $(LIB) $(UTILS)
 
 $(LIB): $(OBJS) $(EXTERNALS)
 	@echo "Linking: $(LIB)"
@@ -58,30 +48,6 @@ $(LIB): $(OBJS) $(EXTERNALS)
 -include $(OBJS:.o=.d)
 
 LIBS = $(LIB) -lusb -lrt -lpthread
-
-test/audio: test/audio.o $(LIB)
-	$(CC) test/audio.o -o $@ $(LIBS)
-
-test/maestro: test/maestro.o $(LIB)
-	$(CC) test/maestro.o -o $@ $(LIBS)
-
-test/one-off: test/one-off.o $(LIB)
-	$(CXX) test/one-off.o -o $@ $(LIBS)
-
-test/piface: test/piface.o $(LIB)
-	$(CC) test/piface.o -o $@ $(LIBS)
-
-test/stepper: test/stepper.o $(LIB)
-	$(CC) test/stepper.o -o $@ $(LIBS)
-
-test/talking-skull: test/talking-skull.o $(LIB)
-	$(CC) test/talking-skull.o -o $@ $(LIBS)
-
-test/track: test/track.o $(LIB)
-	$(CC) test/track.o -o $@ $(LIBS)
-
-test/wb: test/wb.o $(LIB)
-	$(CC) test/wb.o -o $@ $(LIBS)
 
 utils/digital-counter: utils/digital-counter.o $(LIB)
 	$(CXX) utils/digital-counter.o -o $@ $(LIBS)
@@ -121,4 +87,4 @@ utils/wb: utils/wb.o $(LIB)
 	@g++ -MM $(CFLAGS) $*.cpp > $*.d
 
 clean:
-	-rm $(LIB) $(OBJS) $(OBJS:.o=.d) test/*.o test/*.d $(TESTS) $(UTILS)
+	-rm $(LIB) $(OBJS) $(OBJS:.o=.d) test/*.o test/*.d $(UTILS)
