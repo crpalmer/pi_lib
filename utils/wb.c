@@ -106,12 +106,6 @@ main(int argc, char **argv)
 	    } else {
 		goto usage;
 	    }
-	} else if (buf[0] == 'v') {
-	    if (sscanf(&buf[1], "%d %d %d", &bank, &pin, &value) == 3) {
-		wb_servo(bank, pin, value);
-	    } else {
-		goto usage;
-	    }
 	} else if (buf[0] == 'w' || buf[0] == 'W') {
 	    unsigned mask, values = buf[0] == 'w' ? WB_PIN_MASK_ALL : 0;
 	    if (sscanf(&buf[1], "%d", &pin) == 1) {
@@ -124,7 +118,7 @@ main(int argc, char **argv)
 	    watcher_enabled = buf[0] == 'T';
 	} else {
 usage:
-	    fprintf(stderr, "g [<pin 1-8>]\np <bank 1/2> <pin 1-8> [<freq>] <duty%%>\ns <bank 1/2> <pin 1-8> <value 0/1>\nv <bank 1/2> <pin 1-8> <servo pulse width in us>- <pin 1-8> set pull down\n+ <pin 1-8> set pull up\n= <pin 1-8> remove pulll up/down\nw [ <pin 1-8> ] wait for a pin to read true\nW [ <pin 1-8> ] wait for a pin to read false\nT enable watcher thread\nt disable watcher thread\n");
+	    fprintf(stderr, "g [<pin 1-8>]\np <bank 1/2> <pin 1-8> [<freq>] <duty%%>\ns <bank 1/2> <pin 1-8> <value 0/1>\n- <pin 1-8> set pull down\n+ <pin 1-8> set pull up\n= <pin 1-8> remove pulll up/down\nw [ <pin 1-8> ] wait for a pin to read true\nW [ <pin 1-8> ] wait for a pin to read false\nT enable watcher thread\nt disable watcher thread\n");
 	}
     }
 

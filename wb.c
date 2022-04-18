@@ -219,17 +219,6 @@ wb_pwm_freq(unsigned bank, unsigned pin, unsigned freq, float duty)
 }
 
 void
-wb_servo(unsigned bank, unsigned pin, unsigned pulse_width)
-{
-    int id = get_output_id(bank, pin);
-
-    if (gpio_table[id].mode != WB_PI_SERVO) {
-	gpio_table[id].mode = WB_PI_SERVO;
-    }
-    gpioServo(gpio_table[id].id, pulse_width);
-}
-
-void
 wb_set_pull_up(unsigned pin, wb_pull_up_mode_t mode)
 {
     int id = get_input_id(pin);

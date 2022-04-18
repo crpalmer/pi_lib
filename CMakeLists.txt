@@ -21,11 +21,11 @@ add_library(pi
     nes.c
     pca9685.cpp
     pi.c
+    pico_servo.c
     pigpio-emulation.c
     stepper.c
     string-utils.c
-    track.c
     util.c
 )
 
-target_link_libraries(pi pico_stdlib)
+target_link_libraries(pi pico_stdlib hardware_pwm)

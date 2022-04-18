@@ -39,8 +39,6 @@ void wb_pwm(unsigned bank, unsigned pin, float duty);
 
 void wb_pwm_freq(unsigned bank, unsigned pin, unsigned freq, float duty);
 
-void wb_servo(unsigned bank, unsigned pin, unsigned pulse_ms);
-
 void wb_set_pull_up(unsigned pin, wb_pull_up_mode_t mode);
 
 unsigned wb_wait_for_pins_full(unsigned pins, unsigned values, unsigned debounce_ms, unsigned max_ms);
