@@ -20,6 +20,7 @@ add_library(pi
     mem.c
     nes.c
     pca9685.cpp
+    pi.c
     pigpio-emulation.c
     stepper.c
     string-utils.c
