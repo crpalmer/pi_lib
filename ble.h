@@ -36,16 +36,17 @@ public:
     const char *set_baud(int baud);
 
     void accept_connection();
-    bool is_connected() { return true; }
+    bool is_connected();
     int getc() { return uart_getc(uart); }
     void putc(int c) { uart_putc(uart, c); }
 
 private:
     const char *send_cmd(const char *cmd, int timeout = -1);
+    const char *receive_response(int timeout = -1);
+    bool wait_for_okay(int timeout = -1);
 
 private:
     uart_inst_t *uart;
-    int baud;
     char buffer[1024];
 };
 

@@ -1,31 +1,15 @@
-/*****************************************************************************
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documnetation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of theex Software, and to permit persons to  whom the Software is
-# furished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS OR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-******************************************************************************/
-
 #include <stdlib.h>
 #include <climits>
 #include "ble.h"
-#include "ble-cmd.h"
 #include "time-utils.h"
 #include "util.h"
 
 #define UART_BAUD 115200
+
+const char *BLE_CMD_PREFIX = "AT+";
+
+const int CMD_baud[] = { 9600, 19200, 38400, 57600, 115200, 256000, 512000, 230400, 460800, 10000000, 31250, 2400, 4800 };
+const int n_CMD_baud = sizeof(CMD_baud) / sizeof(CMD_baud[0]);
 
 BLE::BLE(uart_inst_t *uart, int uart_tx_pin, int uart_rx_pin)
 {
@@ -41,15 +25,19 @@ BLE::BLE(uart_inst_t *uart, int uart_tx_pin, int uart_rx_pin)
     uart_set_hw_flow(this->uart, false, false);
     uart_set_format(this->uart, 8, 1, UART_PARITY_NONE);
     uart_set_fifo_enabled(this->uart, true);
+}
 
-    this->baud = -1;
+bool
+BLE::is_connected()
+{
+    return gpio_get(BLE_MODE_PIN);
 }
 
 void
 BLE::accept_connection()
 {
     printf("Waiting for the mode pin.\n");
-    while(! gpio_get(BLE_MODE_PIN)) {}
+    while(! is_connected()) {}
 
     /* drain any input garbage by sending an empty command and purging the input */
     uart_puts(uart, BLE_CMD_PREFIX);
@@ -57,24 +45,26 @@ BLE::accept_connection()
     ms_sleep(100);
 
     while (uart_is_readable(uart)) uart_getc(uart);
-
-    this->baud = get_baud();
-
-    printf("Baud rate is: %d\n", this->baud);
 }
 
 const char *
 BLE::send_cmd(const char *cmd, int timeout)
 {
-    int len = 0;
-    struct timespec start;
-
     uart_puts(uart, BLE_CMD_PREFIX);
     uart_puts(uart, cmd);
     uart_putc(uart, '\r');
     uart_putc(uart, '\n');
-    nano_gettime(&start);
 
+    return receive_response(timeout);
+}
+
+const char *
+BLE::receive_response(int timeout)
+{
+    int len = 0;
+    struct timespec start;
+
+    nano_gettime(&start);
     while (timeout < 0 || nano_elapsed_ms_now(&start) < timeout) {
 	if (timeout < 0 && ! uart_is_readable_within_us(uart, (timeout - nano_elapsed_ms_now(&start)) * 1000)) {
 	    return "timeout";
@@ -83,10 +73,8 @@ BLE::send_cmd(const char *cmd, int timeout)
 	    if (c == '\n' || c == '\r') {
 		if (len > 0) {
 		    buffer[len] = 0;
-printf("got: %s\n", buffer);
 		    return buffer;
 		}
-printf("ignored empty line\n");
 	    } else if (len < sizeof(buffer) - 1) {
 		buffer[len++] = c;
 	    }
@@ -96,15 +84,28 @@ printf("ignored empty line\n");
     return "timeout";
 }
 
+bool
+BLE::wait_for_okay(int timeout)
+{
+    do {
+	const char *response = receive_response(timeout);
+	if (strcmp(response, "OK") == 0) return true;
+	if (strcmp(response, "timeout") == 0) return false;
+    } while (1);
+}
+
 int
 BLE::get_baud()
 {
-    const char *result = send_cmd(Baud_Rate_Query);
+    int baud = -1;
+
+    const char *result = send_cmd("QT");
     if (result[0] == 'Q' && result[1] == 'T' && result[2] == '+') {
 	int index = atoi(&result[3]);
-	if (index >= 0 && index < n_CMD_baud) return CMD_baud[index];
+	if (index >= 0 && index < n_CMD_baud) baud = CMD_baud[index];
+	wait_for_okay();
     }
-    return -1;
+    return baud;
 }
 
 const char *
@@ -117,7 +118,6 @@ BLE::set_baud(int baud)
 	    sprintf(&cmd[3], "%02d", i);
 	    const char *result = send_cmd(cmd);
 	    if (strcmp(result, "OK") == 0) {
-		this->baud = baud;
 		return NULL;
 	    }
 	    return result;
