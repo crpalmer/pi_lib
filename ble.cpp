@@ -102,7 +102,7 @@ BLE::get_baud()
     const char *result = send_cmd("QT");
     if (result[0] == 'Q' && result[1] == 'T' && result[2] == '+') {
 	int index = atoi(&result[3]);
-	if (index >= 0 && index < n_CMD_baud) baud = CMD_baud[index];
+	if (index > 0 && index <= n_CMD_baud) baud = CMD_baud[index-1];
 	wait_for_okay();
     }
     return baud;
