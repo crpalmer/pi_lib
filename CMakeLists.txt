@@ -12,6 +12,7 @@ add_subdirectory(utils)
 add_definitions(-DPI_PICO -Iexternal/PIGPIO)
 
 add_library(pi
+    ble.cpp
     call-every.c
     file.c
     global-trace.c
