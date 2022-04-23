@@ -67,7 +67,7 @@ BLE::receive_response(int timeout)
     nano_gettime(&start);
     while (timeout < 0 || nano_elapsed_ms_now(&start) < timeout) {
 	if (timeout < 0 && ! uart_is_readable_within_us(uart, (timeout - nano_elapsed_ms_now(&start)) * 1000)) {
-	    return "timeout";
+	    break;
 	} else {
 	    char c = uart_getc(uart);
 	    if (c == '\n' || c == '\r') {
@@ -124,4 +124,25 @@ BLE::set_baud(int baud)
 	}
     }
     return "undefined baud";
+}
+
+void
+BLE::set_ble_name(const char *name)
+{
+    char cmd[10+strlen(name)];
+
+    sprintf(cmd, "BM%s", name);
+    send_cmd(cmd);
+}
+
+void
+BLE::get_ble_name(char *name)
+{
+    const char *result = send_cmd("TM");
+    if (result[0] == 'T' && result[1] == 'M' && result[2] == '+') {
+	strcpy(name, &result[3]);
+	wait_for_okay();
+    } else {
+	strcpy(name, result);
+    }
 }

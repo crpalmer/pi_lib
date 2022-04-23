@@ -37,8 +37,12 @@ public:
 
     void accept_connection();
     bool is_connected();
+
     int getc() { return uart_getc(uart); }
     void putc(int c) { uart_putc(uart, c); }
+
+    void set_ble_name(const char *name);
+    void get_ble_name(char *name_ret);
 
 private:
     const char *send_cmd(const char *cmd, int timeout = -1);
