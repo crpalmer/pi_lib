@@ -3,6 +3,8 @@
 #include "pi.h"
 #include "util.h"
 
+static char buffer[1024];
+
 int
 main()
 {
@@ -14,15 +16,18 @@ main()
 
 	ble->accept_connection();
 	printf("Connected @ %d\n", ble->get_baud());
-	ble->get_ble_name(name);
-	printf("Name is %s\n", name);
 	ble->set_ble_name("utils-ble");
 	ble->get_ble_name(name);
 	printf("Name is %s\n", name);
 	while (ble->is_connected()) {
-	    char c = ble->getc();
-	    ble->putc(c);
+	    if (ble->readline(buffer, sizeof(buffer), 1000)) {
+		ble->puts(buffer);
+		ble->putc('\n');
+	    } else {
+		printf("waiting for input...\n");
+	    }
 	}
+	printf("Disconnected.\n");
     }
     return 0;
 }

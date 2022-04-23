@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <climits>
 #include "ble.h"
+#include "mem.h"
 #include "time-utils.h"
 #include "util.h"
 
@@ -26,6 +27,11 @@ BLE::BLE(uart_inst_t *uart, int uart_tx_pin, int uart_rx_pin)
     uart_set_format(this->uart, 8, 1, UART_PARITY_NONE);
     uart_set_fifo_enabled(this->uart, true);
 
+    a_buffer = 1024;
+    buffer = (char *) fatal_malloc(a_buffer);
+    n_buffer = 0;
+
+    drain_garbage();
     enable_ble();
     disable_spp();
 }
@@ -40,7 +46,11 @@ void
 BLE::accept_connection()
 {
     while(! is_connected()) {}
+}
 
+void
+BLE::drain_garbage()
+{
     /* drain any input garbage by sending an empty command and purging the input */
     uart_puts(uart, BLE_CMD_PREFIX);
     uart_puts(uart, "\r\n");
@@ -63,27 +73,50 @@ BLE::send_cmd(const char *cmd, int timeout)
 const char *
 BLE::receive_response(int timeout)
 {
-    int len = 0;
+    if (readline_internal(timeout)) return buffer;
+    else return NULL;
+}
+
+bool
+BLE::readline_internal(int timeout)
+{
     struct timespec start;
 
     nano_gettime(&start);
-    while (timeout < 0 || nano_elapsed_ms_now(&start) < timeout) {
-	if (timeout < 0 && ! uart_is_readable_within_us(uart, (timeout - nano_elapsed_ms_now(&start)) * 1000)) {
+    while (timeout <= 0 || nano_elapsed_ms_now(&start) < timeout) {
+	if (timeout == 0 && ! uart_is_readable(uart)) {
+	    break;
+	} else if (timeout > 0 && ! uart_is_readable_within_us(uart, (timeout - nano_elapsed_ms_now(&start)) * 1000)) {
 	    break;
 	} else {
+	    if (n_buffer >= a_buffer-1) {
+		a_buffer *= 2;
+		buffer = (char *) fatal_realloc(buffer, a_buffer);
+	    }
+
 	    char c = uart_getc(uart);
-	    if (c == '\n' || c == '\r') {
-		if (len > 0) {
-		    buffer[len] = 0;
-		    return buffer;
-		}
-	    } else if (len < sizeof(buffer) - 1) {
-		buffer[len++] = c;
+	    if (c == '\r') {
+	    } else if (c == '\n') {
+	        buffer[n_buffer] = 0;
+		n_buffer = 0;
+		return true;
+	    } else {
+		buffer[n_buffer++] = c;
 	    }
 	}
     }
 
-    return "timeout";
+    return false;
+}
+
+bool
+BLE::readline(char *buf, int max_bytes, int timeout)
+{
+    if (readline_internal(timeout)) {
+	strncpy(buf, buffer, max_bytes);
+	return true;
+    }
+    return false;
 }
 
 bool

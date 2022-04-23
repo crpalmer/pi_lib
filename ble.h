@@ -40,9 +40,16 @@ public:
 
     int getc() { return uart_getc(uart); }
     void putc(int c) { uart_putc(uart, c); }
+    void puts(char *s) { uart_puts(uart, s); }
 
     void set_ble_name(const char *name);
     void get_ble_name(char *name_ret);
+
+    /* read a newline terminated line in atmost timeout ms.
+       if a partial line is received in that time, it is internally
+       buffered until the next call to this function completes the line.
+     */
+    bool readline(char *buffer, int max_bytes, int timeout = -1);
 
 private:
     const char *send_cmd(const char *cmd, int timeout = -1);
@@ -52,9 +59,15 @@ private:
     void enable_ble();
     void disable_spp();
 
+    bool readline_internal(int timeout = -1);
+
+    void drain_garbage();
+
 private:
     uart_inst_t *uart;
-    char buffer[1024];
+    char *buffer;
+    int   n_buffer;
+    int   a_buffer;
 };
 
 /**
