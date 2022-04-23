@@ -49,6 +49,9 @@ private:
     const char *receive_response(int timeout = -1);
     bool wait_for_okay(int timeout = -1);
 
+    void enable_ble();
+    void disable_spp();
+
 private:
     uart_inst_t *uart;
     char buffer[1024];

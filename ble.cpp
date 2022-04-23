@@ -25,6 +25,9 @@ BLE::BLE(uart_inst_t *uart, int uart_tx_pin, int uart_rx_pin)
     uart_set_hw_flow(this->uart, false, false);
     uart_set_format(this->uart, 8, 1, UART_PARITY_NONE);
     uart_set_fifo_enabled(this->uart, true);
+
+    enable_ble();
+    disable_spp();
 }
 
 bool
@@ -146,3 +149,16 @@ BLE::get_ble_name(char *name)
 	strcpy(name, result);
     }
 }
+
+void
+BLE::enable_ble()
+{
+    send_cmd("B401");
+}
+
+void
+BLE::disable_spp()
+{
+    send_cmd("B500");
+}
+
