@@ -39,7 +39,6 @@ BLE::is_connected()
 void
 BLE::accept_connection()
 {
-    printf("Waiting for the mode pin.\n");
     while(! is_connected()) {}
 
     /* drain any input garbage by sending an empty command and purging the input */
