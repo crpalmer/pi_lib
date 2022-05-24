@@ -5,6 +5,7 @@
 #include "time-utils.h"
 #include "util.h"
 
+#define BLE_MODE_PIN 15
 #define UART_BAUD 115200
 
 const char *BLE_CMD_PREFIX = "AT+";
