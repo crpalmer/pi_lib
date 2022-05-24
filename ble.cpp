@@ -32,9 +32,17 @@ BLE::BLE(uart_inst_t *uart, int uart_tx_pin, int uart_rx_pin)
     buffer = (char *) fatal_malloc(a_buffer);
     n_buffer = 0;
 
-    drain_garbage();
     enable_ble();
     disable_spp();
+    reset();
+}
+
+void
+BLE::reset()
+{
+    send_cmd("CZ");		// reset the chip
+    ms_sleep(1500);
+    drain_garbage();
 }
 
 bool
@@ -46,50 +54,48 @@ BLE::is_connected()
 void
 BLE::accept_connection()
 {
-    while(! is_connected()) {}
+    while(! is_connected()) { ms_sleep(100); }
+    drain_garbage();
 }
 
 void
 BLE::drain_garbage()
 {
-    /* drain any input garbage by sending an empty command and purging the input */
-    uart_puts(uart, BLE_CMD_PREFIX);
-    uart_puts(uart, "\r\n");
     ms_sleep(100);
-
-    while (uart_is_readable(uart)) uart_getc(uart);
+    while (uart_is_readable_within_us(uart, 100*1000)) uart_getc(uart);
 }
 
-const char *
-BLE::send_cmd(const char *cmd, int timeout)
+void
+BLE::send_cmd(const char *cmd)
 {
     uart_puts(uart, BLE_CMD_PREFIX);
     uart_puts(uart, cmd);
     uart_putc(uart, '\r');
     uart_putc(uart, '\n');
-
-    return receive_response(timeout);
 }
 
 const char *
 BLE::receive_response(int timeout)
 {
-    if (readline_internal(timeout)) return buffer;
+    if (readline_internal(timeout, true)) return buffer;
     else return NULL;
 }
 
 bool
-BLE::readline_internal(int timeout)
+BLE::readline_internal(int timeout, bool ignore_connected_state)
 {
     struct timespec start;
 
     nano_gettime(&start);
-    while (timeout <= 0 || nano_elapsed_ms_now(&start) < timeout) {
-	if (timeout == 0 && ! uart_is_readable(uart)) {
-	    break;
-	} else if (timeout > 0 && ! uart_is_readable_within_us(uart, (timeout - nano_elapsed_ms_now(&start)) * 1000)) {
-	    break;
-	} else {
+    while (ignore_connected_state || is_connected()) {
+	int remaining = timeout - nano_elapsed_ms_now(&start);
+	int ms;
+
+	if (timeout <= 0 || remaining > 500) ms = 500;
+	else if (remaining <= 0) break;
+	else ms = remaining;
+
+	if (uart_is_readable_within_us(uart, ms * 1000)) {
 	    if (n_buffer >= a_buffer-1) {
 		a_buffer *= 2;
 		buffer = (char *) fatal_realloc(buffer, a_buffer);
@@ -120,31 +126,22 @@ BLE::readline(char *buf, int max_bytes, int timeout)
     return false;
 }
 
-bool
-BLE::wait_for_okay(int timeout)
-{
-    do {
-	const char *response = receive_response(timeout);
-	if (strcmp(response, "OK") == 0) return true;
-	if (strcmp(response, "timeout") == 0) return false;
-    } while (1);
-}
-
 int
 BLE::get_baud()
 {
     int baud = -1;
 
-    const char *result = send_cmd("QT");
+    send_cmd("QT");
+    const char *result = receive_response();
+
     if (result[0] == 'Q' && result[1] == 'T' && result[2] == '+') {
 	int index = atoi(&result[3]);
 	if (index > 0 && index <= n_CMD_baud) baud = CMD_baud[index-1];
-	wait_for_okay();
     }
     return baud;
 }
 
-const char *
+void
 BLE::set_baud(int baud)
 {
     char cmd[10] = "CT+";
@@ -152,14 +149,10 @@ BLE::set_baud(int baud)
     for (int i = 0; i < n_CMD_baud; i++) {
 	if (CMD_baud[i] == baud) {
 	    sprintf(&cmd[3], "%02d", i);
-	    const char *result = send_cmd(cmd);
-	    if (strcmp(result, "OK") == 0) {
-		return NULL;
-	    }
-	    return result;
+	    send_cmd(cmd);
+	    break;
 	}
     }
-    return "undefined baud";
 }
 
 void
@@ -169,15 +162,17 @@ BLE::set_ble_name(const char *name)
 
     sprintf(cmd, "BM%s", name);
     send_cmd(cmd);
+    reset();
 }
 
 void
 BLE::get_ble_name(char *name)
 {
-    const char *result = send_cmd("TM");
+    send_cmd("TM");
+    const char *result = receive_response();
+
     if (result[0] == 'T' && result[1] == 'M' && result[2] == '+') {
 	strcpy(name, &result[3]);
-	wait_for_okay();
     } else {
 	strcpy(name, result);
     }
@@ -194,4 +189,3 @@ BLE::disable_spp()
 {
     send_cmd("B500");
 }
-

@@ -16,15 +16,13 @@ main()
 
 	ble->accept_connection();
 	printf("Connected @ %d\n", ble->get_baud());
-	ble->set_ble_name("utils-ble");
+	ble->set_ble_name("ble");
 	ble->get_ble_name(name);
 	printf("Name is %s\n", name);
 	while (ble->is_connected()) {
 	    if (ble->readline(buffer, sizeof(buffer), 1000)) {
 		ble->puts(buffer);
 		ble->putc('\n');
-	    } else {
-		printf("waiting for input...\n");
 	    }
 	}
 	printf("Disconnected.\n");

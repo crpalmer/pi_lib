@@ -14,7 +14,7 @@ public:
     uart_inst_t *get_uart() { return uart; }
 
     int get_baud();
-    const char *set_baud(int baud);
+    void set_baud(int baud);
 
     void accept_connection();
     bool is_connected();
@@ -33,14 +33,14 @@ public:
     bool readline(char *buffer, int max_bytes, int timeout = -1);
 
 private:
-    const char *send_cmd(const char *cmd, int timeout = -1);
-    const char *receive_response(int timeout = -1);
-    bool wait_for_okay(int timeout = -1);
+    void send_cmd(const char *cmd);
+    const char *receive_response(int timeout = 1000);
+    void reset();
 
     void enable_ble();
     void disable_spp();
 
-    bool readline_internal(int timeout = -1);
+    bool readline_internal(int timeout = -1, bool ignore_connected_state = false);
 
     void drain_garbage();
 
