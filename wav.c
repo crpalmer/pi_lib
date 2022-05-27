@@ -155,11 +155,13 @@ wav_get_meta(wav_t *w)
 }
 
 unsigned char *
-wav_get_raw_data(wav_t *w, unsigned *n_bytes)
+wav_get_raw_data(wav_t *w, size_t *n_bytes)
 {
     *n_bytes = w->n_audio;
     return w->audio;
 }
+
+#ifndef WAV_HACK_FOR_HOST_TOOLS
 
 void
 wav_configure_audio(wav_t *w, audio_config_t *a)
@@ -225,6 +227,8 @@ wav_play_with_talking_skull(wav_t *w, audio_t *audio, talking_skull_t *talking_s
 {
     return play_internal(w, audio, talking_skull, NULL);
 }
+
+#endif
 
 void
 wav_destroy(wav_t *w)

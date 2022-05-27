@@ -24,10 +24,23 @@ add_library(pi
     pca9685.cpp
     pi.c
     pico_servo.c
+    pico-audio.cpp
     pigpio-emulation.c
     stepper.c
     string-utils.c
     util.c
 )
 
-target_link_libraries(pi pico_stdlib hardware_pwm)
+pico_generate_pio_header(pi ${CMAKE_CURRENT_LIST_DIR}/pico-audio.pio)
+
+target_link_libraries(
+    pi
+    pico_stdlib
+    hardware_pwm
+#    hardware_spi
+#    hardware_i2c
+#    hardware_pwm
+#    hardware_adc
+    hardware_pio
+#    hardware_dma
+)
