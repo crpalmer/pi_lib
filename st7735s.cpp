@@ -43,9 +43,9 @@ static void write_word(unsigned short word)
 static void
 create_gpios()
 {
-    RST = new GPOutput(24);
-    DC = new GPOutput(25);
-    BL = new GPOutput(18);
+    RST = new GPOutput(27);
+    DC = new GPOutput(22);
+    BL = new GPOutput(17);
     st7735s_set_brightness(1);
 }
 
