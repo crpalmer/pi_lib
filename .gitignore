@@ -7,6 +7,7 @@ utils/maestro
 utils/mcp23017
 utils/nes-dump
 utils/servo
+utils/st7735s
 utils/talking-skull-dump
 utils/talking-skull-prepare
 utils/wb

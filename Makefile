@@ -8,10 +8,11 @@ UTILS = \
 	utils/maestro \
 	utils/mcp23017 \
 	utils/nes-dump \
-	utils/servo \
+	utils/st7735s \
 	utils/talking-skull-dump \
 	utils/talking-skull-prepare \
 	utils/wb
+#	utils/servo \
 
 AUDIO_OBJS = audio.o talker-auto-gain.o talking-skull.o track.o wav.o
 GPIO_OBJS = digital-counter.o lights.o gpio.o mcp23017.o piface.o piface_lights.o pca9685.o wb.o \
@@ -33,6 +34,7 @@ OBJS = \
 	$(THREAD_OBJS) \
 	$(UTIL_OBJS) \
 	nes.o \
+	st7735s.o \
 
 EXTERNALS = $E/tinyalsa/pcm.o $E/tinyalsa/mixer.o \
 	$E/mcp23s17.o $E/pifacedigital.o \
@@ -61,9 +63,11 @@ utils/mcp23017: utils/mcp23017.o $(LIB)
 utils/nes-dump: utils/nes-dump.o $(LIB)
 	$(CXX) utils/nes-dump.o -o $@ $(LIBS)
 
-# compile and generate dependency info
+utils/st7735s: utils/st7735s.o $(LIB)
+	$(CXX) utils/st7735s.o -o $@ $(LIBS)
+
 utils/servo: utils/servo.o $(LIB)
-	$(CC) utils/servo.o -o $@ $(LIBS)
+	$(CXX) utils/servo.o -o $@ $(LIBS)
 
 utils/talking-skull-dump: utils/talking-skull-dump.o $(LIB)
 	$(CC) utils/talking-skull-dump.o -o $@ $(LIBS)
