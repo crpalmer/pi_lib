@@ -7,6 +7,7 @@ extern "C" {
 
 void st7735s_init();
 void st7735s_paint(unsigned char *rgb_buffer);
+void st7735s_set_brightness(double pct);
 
 static inline int st7735s_get_width() { return 160; }
 static inline int st7735s_get_height() { return 128; }

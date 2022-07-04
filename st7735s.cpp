@@ -46,7 +46,7 @@ create_gpios()
     RST = new GPOutput(24);
     DC = new GPOutput(25);
     BL = new GPOutput(18);
-    BL->set(1);
+    st7735s_set_brightness(1);
 }
 
 static void reset()
@@ -170,7 +170,6 @@ void st7735s_init()
 	exit(1);
     }
 
-    BL->set(1);
     reset();
     init_reg();
     init_scan_direction();
@@ -182,19 +181,27 @@ void st7735s_init()
 static void
 set_window(unsigned char x, unsigned char y, unsigned char x_end, unsigned char y_end)
 {
+#define X_OFFSET 1
+#define Y_OFFSET 2
+
     write_reg(0x2a);
     write_byte(0);
-    write_byte(x + 0);
+    write_byte(x + X_OFFSET);
     write_byte(0);
-    write_byte(x_end + 0);
+    write_byte(x_end + X_OFFSET);
 
     write_reg(0x2b);
     write_byte(0);
-    write_byte(y + 0);
+    write_byte(y + Y_OFFSET);
     write_byte(0);
-    write_byte(y_end + 0);
+    write_byte(y_end + Y_OFFSET);
 
     write_reg(0x2c);
+}
+
+void st7735s_set_brightness(double brightness)
+{
+    BL->pwm(brightness);
 }
 
 void st7735s_paint(unsigned char *rgb_buffer)
@@ -204,8 +211,4 @@ void st7735s_paint(unsigned char *rgb_buffer)
     for (int row = 0; row < H(); row++) {
        spiWrite(SPI, (char *) &rgb_buffer[row * W() * BPP()], W() * BPP());
     }
-BL->set(0);
-ms_sleep(1000);
-BL->set(1);
-
 }

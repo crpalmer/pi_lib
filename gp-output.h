@@ -18,6 +18,10 @@ public:
         gpioWrite(gpio, value);
     }
 
+    void pwm(double pct) {
+	gpioPWM(gpio, pct * 255);
+    }
+
 private:
     unsigned gpio;
 };
