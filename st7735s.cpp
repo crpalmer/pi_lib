@@ -181,8 +181,8 @@ void st7735s_init()
 static void
 set_window(unsigned char x, unsigned char y, unsigned char x_end, unsigned char y_end)
 {
-#define X_OFFSET 1
-#define Y_OFFSET 2
+#define X_OFFSET 0
+#define Y_OFFSET 3
 
     write_reg(0x2a);
     write_byte(0);
