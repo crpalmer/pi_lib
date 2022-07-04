@@ -6,23 +6,15 @@
 
 #include "st7735s.h"
 
-#define W() st7735s_get_width()
-#define H() st7735s_get_height()
-#define BPP() st7735s_get_bytes_per_pixel()
-
 #define SPI 0
 
-static GPOutput *RST;
-static GPOutput *DC;
-static GPOutput *BL;
-
-static void write_reg(unsigned char reg)
+void ST7735S::write_reg(unsigned char reg)
 {
     DC->set(0);
     spiWrite(SPI, (char *) &reg, 1);
 }
 
-static void write_byte(unsigned char byte)
+void ST7735S::write_byte(unsigned char byte)
 {
     DC->set(1);
     spiWrite(SPI, (char *) &byte, 1);
@@ -40,16 +32,7 @@ static void write_word(unsigned short word)
 }
 #endif
 
-static void
-create_gpios()
-{
-    RST = new GPOutput(27);
-    DC = new GPOutput(22);
-    BL = new GPOutput(17);
-    st7735s_set_brightness(1);
-}
-
-static void reset()
+void ST7735S::reset()
 {
    RST->set(1);
    ms_sleep(100);
@@ -59,7 +42,7 @@ static void reset()
    ms_sleep(100);
 }
 
-static void init_reg()
+void ST7735S::init_reg()
 {
     //ST7735R Frame Rate
     write_reg(0xB1);
@@ -153,7 +136,7 @@ static void init_reg()
 
 }
 
-static void init_scan_direction()
+void ST7735S::init_scan_direction()
 {
     /* This set up to down, left to right */
     write_reg(0x36);
@@ -161,14 +144,18 @@ static void init_scan_direction()
     ms_sleep(200);
 }
 
-void st7735s_init()
+ST7735S::ST7735S()
 {
-    create_gpios();
+    RST = new GPOutput(27);
+    DC = new GPOutput(22);
+    BL = new GPOutput(17);
 
     if (spiOpen(SPI, 20*1000*1000, 0) < 0) {
 	fprintf(stderr, "Failed to open SPI!\n");
 	exit(1);
     }
+
+    set_brightness(0);
 
     reset();
     init_reg();
@@ -176,10 +163,11 @@ void st7735s_init()
     write_reg(0x11);   // sleep out ?
     ms_sleep(120);
     write_reg(0x29);   // turn on the lcd display
+
+    set_brightness(1);
 }
 
-static void
-set_window(unsigned char x, unsigned char y, unsigned char x_end, unsigned char y_end)
+void ST7735S::set_window(unsigned char x, unsigned char y, unsigned char x_end, unsigned char y_end)
 {
 #define X_OFFSET 0
 #define Y_OFFSET 3
@@ -199,16 +187,16 @@ set_window(unsigned char x, unsigned char y, unsigned char x_end, unsigned char 
     write_reg(0x2c);
 }
 
-void st7735s_set_brightness(double brightness)
+void ST7735S::set_brightness(double brightness)
 {
     BL->pwm(brightness);
 }
 
-void st7735s_paint(unsigned char *rgb_buffer)
+void ST7735S::paint(ST7735S_Canvas *c)
 {
-    set_window(0, 0, W(), H());
+    set_window(0, 0, c->w, c->h);
     DC->set(1);
-    for (int row = 0; row < H(); row++) {
-       spiWrite(SPI, (char *) &rgb_buffer[row * W() * BPP()], W() * BPP());
+    for (int row = 0; row < c->h; row++) {
+       spiWrite(SPI, (char *) &c->raw[row * c->w * c->bpp], c->w * c->bpp);
     }
 }
