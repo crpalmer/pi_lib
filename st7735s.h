@@ -39,13 +39,14 @@ public:
 	pixel[1] = ((g & 0xfc) << 5) | (b >> 3);
     }
 
-private:
+protected:
     unsigned char *get_location(int x, int y) {
 	assert(x >= 0 && x < w);
 	assert(y >= 0 && y < h);
 	return &raw[bpp*(y * w + x)];
     }
 
+private:
     unsigned char *raw;
     const int bpp = 2;
 

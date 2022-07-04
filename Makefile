@@ -4,6 +4,7 @@ E=$D/externals
 CFLAGS=-Wall -Werror -g -I$E/include -I$D -I$E/PIGPIO
 
 AUDIO_OBJS = audio.o talker-auto-gain.o talking-skull.o track.o wav.o
+DISPLAY_OBJS = st7735s.o canvas.o
 GPIO_OBJS = digital-counter.o lights.o gpio.o mcp23017.o piface.o piface_lights.o pca9685.o wb.o \
 	    ween-board.o
 MOTOR_OBJS = grove.o l298n.o stepper.o
@@ -15,6 +16,7 @@ UTIL_OBJS = util.o file.o stop.o string-utils.o mem.o global-trace.o pi.o
 
 OBJS = \
 	$(AUDIO_OBJS) \
+	$(DISPLAY_OBJS) \
 	$(GPIO_OBJS) \
 	$(MOTOR_OBJS) \
 	$(NET_OBJS) \
@@ -23,7 +25,6 @@ OBJS = \
 	$(THREAD_OBJS) \
 	$(UTIL_OBJS) \
 	nes.o \
-	st7735s.o \
 
 EXTERNALS = $E/tinyalsa/pcm.o $E/tinyalsa/mixer.o \
 	$E/mcp23s17.o $E/pifacedigital.o \

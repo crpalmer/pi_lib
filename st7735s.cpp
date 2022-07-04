@@ -169,7 +169,7 @@ ST7735S::ST7735S()
 
 void ST7735S::set_window(unsigned char x, unsigned char y, unsigned char x_end, unsigned char y_end)
 {
-#define X_OFFSET 0
+#define X_OFFSET 1
 #define Y_OFFSET 3
 
     write_reg(0x2a);
@@ -194,9 +194,9 @@ void ST7735S::set_brightness(double brightness)
 
 void ST7735S::paint(ST7735S_Canvas *c)
 {
-    set_window(0, 0, c->w, c->h);
+    set_window(0, 0, c->w-1, c->h-1);
     DC->set(1);
-    for (int row = 0; row < c->h; row++) {
-       spiWrite(SPI, (char *) &c->raw[row * c->w * c->bpp], c->w * c->bpp);
+    for (int row = c->h-1; row >= 0; row--) {
+       spiWrite(SPI, (char *) c->get_location(0, row), c->w * c->bpp);
     }
 }
