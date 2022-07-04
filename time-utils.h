@@ -56,6 +56,15 @@ nano_later_than(struct timespec *now, struct timespec *then)
 }
 
 static inline int
+nano_now_is_later_than(struct timespec *then)
+{
+    struct timespec now;
+
+    nano_gettime(&now);
+    return nano_later_than(&now, then);
+}
+
+static inline int
 nano_elapsed_ms(struct timespec *newer, struct timespec *later)
 {
     int ms = (newer->tv_sec - later->tv_sec) * MS_PER_SEC;
