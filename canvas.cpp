@@ -32,7 +32,6 @@ void Canvas::fill(Byte r, Byte g, Byte b)
 
 void Canvas::up_down_line(int x, int y, int len, int lw, RGB32 color)
 {
-printf("updown %d, %d, %d, %d\n", x, y, len, lw);
     for (int draw_x = x; draw_x < x + lw; draw_x++) {
 	for (int draw_y = y; draw_y < y + len; draw_y++) {
 	   set_pixel(draw_x, draw_y, color);
@@ -42,7 +41,6 @@ printf("updown %d, %d, %d, %d\n", x, y, len, lw);
 
 void Canvas::left_right_line(int x, int y, int len, int lw, RGB32 color)
 {
-printf("leftrt %d, %d, %d, %d\n", x, y, len, lw);
     for (int draw_x = x; draw_x < x + len; draw_x++) {
 	for (int draw_y = y; draw_y < y + lw; draw_y++) {
 	   set_pixel(draw_x, draw_y, color);
@@ -54,7 +52,6 @@ void Canvas::nine_segment(int digit, int x, int y, int w, int h, RGB32 c)
 {
     int lw;
 
-printf("DIGIT %d: %d %d %d %d\n", digit, x, y, w, h);
     if (w > h) lw = line_width(h);
     else lw = line_width(w);
 
