@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include "global-trace.h"
+#include "string-utils.h"
+
 #include "file.h"
 
 int
@@ -50,4 +52,27 @@ fatal_echo(const char *fname, const char *fmt, ...)
     va_end(va);
 
     fclose(f);
+}
+
+static const char *media_dirs[] = {
+     ".",
+     "/home/crpalmer/halloween-media",
+     "/home/crpalmer/halloween-media.master"
+};
+
+#define N_MEDIA_DIRS (sizeof(media_dirs) / sizeof(media_dirs[0]))
+
+FILE *
+media_fopen_read(const char *fname)
+{
+    FILE *f = NULL;
+
+    for (int i = 0; i < N_MEDIA_DIRS && ! f; i++) {
+        char *this_name = maprintf("%s/%s", media_dirs[i], fname);
+
+        f = fopen(this_name, "rb");
+        free(this_name);
+    }
+
+    return f;
 }

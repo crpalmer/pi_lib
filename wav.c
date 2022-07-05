@@ -5,6 +5,7 @@
 #include <string.h>
 #include <signal.h>
 #include <pthread.h>
+#include "file.h"
 #include "string-utils.h"
 #include "tinyalsa/asoundlib.h"
 #include "talking-skull.h"
@@ -50,14 +51,6 @@ void stream_close(int sig)
     signal(sig, SIG_IGN);
 }
 
-static const char *media_dirs[] = {
-     ".",
-     "/home/crpalmer/halloween-media",
-     "/home/crpalmer/halloween-media.master"
-};
-
-#define N_MEDIA_DIRS (sizeof(media_dirs) / sizeof(media_dirs[0]))
-
 wav_t *
 wav_new(const char *fname)
 {
@@ -67,16 +60,8 @@ wav_new(const char *fname)
     struct chunk_header chunk_header;
     struct chunk_fmt fmt;
     bool more_chunks = true;
-    int i;
 
-    for (i = 0, f = NULL; i < N_MEDIA_DIRS && !f; i++) {
-	char *this_name = maprintf("%s/%s", media_dirs[i], fname);
-
-	f = fopen(this_name, "rb");
-	free(this_name);
-    }
-
-    if (!f) {
+    if ((f = media_fopen_read(fname)) == NULL) {
 	perror(fname);
 	return NULL;
     }
