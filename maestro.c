@@ -88,26 +88,19 @@ struct maestroS {
 static int
 open_serial_device(maestro_t *m)
 {
-    for (int i = 0; i < MAX_SERIAL_DEVICES; i++) {
-	char serial_device[128];
-
-	sprintf(serial_device, SERIAL_DEVICE_FMT, i);
-	if ((m->fd = open(serial_device, O_RDWR | O_NOCTTY)) < 0) {
-	    perror(serial_device);
-	} else {
+    if ((m->fd = pi_usb_open_tty(POLOLU_VENDOR_ID, MAESTRO_PRODUCT_ID)) >= 0) {
 #ifdef _WIN32
-	  _setmode(m->fd, _O_BINARY);
+      _setmode(m->fd, _O_BINARY);
 #else
-	  struct termios options;
-	  tcgetattr(m->fd, &options);
-	  options.c_iflag &= ~(INLCR | IGNCR | ICRNL | IXON | IXOFF);
-	  options.c_oflag &= ~(ONLCR | OCRNL);
-	  options.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
-	  tcsetattr(m->fd, TCSANOW, &options);
+      struct termios options;
+      tcgetattr(m->fd, &options);
+      options.c_iflag &= ~(INLCR | IGNCR | ICRNL | IXON | IXOFF);
+      options.c_oflag &= ~(ONLCR | OCRNL);
+      options.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+      tcsetattr(m->fd, TCSANOW, &options);
 #endif
  
-	  return 1;
-	}
+      return 1;
     }
 
     return 0;

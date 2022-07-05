@@ -13,6 +13,9 @@ pi_usb_init(void);
 struct usb_device *
 pi_usb_device(unsigned vendor_id, unsigned product_id);
 
+int
+pi_usb_open_tty(unsigned vendor_id, unsigned product_id);
+
 #ifdef __cplusplus
 };
 #endif
