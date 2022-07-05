@@ -3,6 +3,7 @@
 #include "externals/PIGPIO/pigpio.h"
 #include "mem.h"
 #include "pi.h"
+#include "canvas_png.h"
 #include "st7735s.h"
 #include "util.h"
 
@@ -33,7 +34,7 @@ main(int argc, char **argv)
    //canvas->nine_segment_2(29);
    canvas->left_right_line(0, 0, 90, 20, WHITE);
    display->paint(canvas);
-#else
+#elif 0
     for (int s = 30; s >= 0; s--) {
 	ms_sleep(1000);
 	canvas->blank();
@@ -41,6 +42,15 @@ main(int argc, char **argv)
 	else canvas->nine_segment_1(s, 0xff0000);
 	display->paint(canvas);
     }
+#else
+    CanvasPNG *flash = new CanvasPNG("flash.png");
+    if (! flash->is_valid()) {
+	fprintf(stderr, "failed to load flash\n");
+	exit(0);
+    }
+    canvas->blank();
+    canvas->import(flash);
+    display->paint(canvas);
 #endif
 
 }

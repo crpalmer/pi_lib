@@ -12,6 +12,10 @@ public:
 	return (r << 16) | (g << 8) | b;
      }
 
+     int get_width() { return w; }
+
+     int get_height() { return h; }
+
      virtual RGB32 get_pixel(int x, int y) = 0;
 
      virtual void set_pixel(int x, int y, Byte r, Byte g, Byte b) = 0;
@@ -28,10 +32,6 @@ public:
 
      void left_right_line(int x, int y, int len, int lw, RGB32 color);
 
-     int get_width() { return w; }
-
-     int get_height() { return h; }
-
      void nine_segment(int digit, int x, int y, int w, int h, RGB32 color = WHITE);
 
      void nine_segment_1(int digit, RGB32 color = WHITE) {
@@ -43,6 +43,8 @@ public:
 	nine_segment(digits / 10, 0.05*w, 0.05*h, w*0.4, h*0.9, color);
 	nine_segment(digits % 10, 0.55*w, 0.05*h, w*0.4, h*0.9);
      }
+
+     void import(Canvas *other, int x = 0, int y = 0, int w = -1, int h = -1);
 
 protected:
      int w, h;

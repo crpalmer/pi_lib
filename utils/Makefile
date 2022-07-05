@@ -16,7 +16,7 @@ UTILS = \
 
 all: $(UTILS)
 
-LIBS = $(LIB) -lusb -lrt -lpthread
+LIBS = $(LIB) -lusb -lrt -lpthread -lpng16
 
 digital-counter: digital-counter.o $(LIB)
 	$(CXX) digital-counter.o -o $@ $(LIBS)
