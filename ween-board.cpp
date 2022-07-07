@@ -3,25 +3,17 @@
 
 class ween_board_input_t : public input_t {
 public:
-    ween_board_input_t(unsigned id) { this->id = id; this->debounce = 0; }
+    ween_board_input_t(unsigned id) : input_t() { this->id = id; }
     void set_pullup_up() override { wb_set_pull_up(id, WB_PULL_UP_UP); }
     void set_pullup_down() override { wb_set_pull_up(id, WB_PULL_UP_DOWN); }
     void clear_pullup() override { wb_set_pull_up(id, WB_PULL_UP_NONE); }
-    void set_debounce(unsigned ms) override { debounce = ms; }
 
-    unsigned get() override {
-	struct timespec start;
-
-	nano_gettime(&start);
-	while (wb_get(id)) {
-	    if (nano_elapsed_ms_now(&start) >= (int) debounce) return 1;
-	}
-	return 0;
+    unsigned get_fast() override {
+	return wb_get(id);
     }
 
 private:
     unsigned id;
-    unsigned debounce;
 };
 
 class ween_board_output_t : public output_t {

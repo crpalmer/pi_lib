@@ -4,13 +4,13 @@
 
 class MCP23017_input : public input_t {
 public:
-    MCP23017_input(MCP23017 *parent, unsigned bank, unsigned pin) {
+    MCP23017_input(MCP23017 *parent, unsigned bank, unsigned pin) : input_t() {
 	this->parent = parent;
 	this->bank   = bank;
 	this->pin    = pin;
     }
 
-    unsigned get() override { return parent->get(bank, pin); }
+    unsigned get_fast() override { return parent->get(bank, pin); }
     void set_pullup_up() override { parent->set_pullup(bank, pin, 1); }
     void clear_pullup() override { parent->set_pullup(bank, pin, 0); }
     void set_pullup_down() override {
