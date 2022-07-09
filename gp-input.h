@@ -9,7 +9,7 @@
 class GPInput : public input_t {
 public:
 
-    GPInput(unsigned gpio) {
+    GPInput(unsigned gpio) : input_t() {
 	this->gpio = gpio;
         gpioSetMode(gpio, PI_INPUT);
     }
