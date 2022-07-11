@@ -21,11 +21,14 @@ static int digits[10][9] = { // top, mid, bottom, left 1/2, mid 1/2 right 1/2
     1, 1, 0, 1, 0, 0, 0, 1, 1,	// 9
 };
 
-void Canvas::fill(Byte r, Byte g, Byte b)
+void Canvas::fill(Byte r, Byte g, Byte b, int x0, int y0, int xw, int yh)
 {
-    for (int x = 0; x < w; x++) {
-	for (int y = 0; y < h; y++) {
-	    set_pixel(x, y, r, g, b);
+    if (xw == 0 || x0 + xw > w) xw = w - x0;
+    if (yh == 0 || y0 + yh > h) yh = h - y0;
+
+    for (int x = 0; x < xw; x++) {
+	for (int y = 0; y < yh; y++) {
+	    set_pixel(x+x0, y+y0, r, g, b);
 	}
     }
 }

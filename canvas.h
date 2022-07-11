@@ -5,6 +5,10 @@ typedef unsigned char Byte;
 typedef unsigned int RGB32;
 
 #define WHITE (0xffffff)
+#define RED   (0xff0000)
+#define GREEN (0x00ff00)
+#define BLUE  (0x0000ff)
+#define BLACK (0x000000)
 
 class Canvas {
 public:
@@ -24,9 +28,10 @@ public:
 	set_pixel(x, y, (rgb>>16) & 0xff, (rgb>>8) & 0xff, rgb&0xff);
      }
 
-     virtual void fill(Byte r, Byte g, Byte b);
+     virtual void fill(Byte r, Byte g, Byte b, int x0 = 0, int y0 = 0, int xw = 0, int yh = 0);
 
-     void blank() { fill(0, 0, 0); }
+     void blank(int x0 = 0, int y0 = 0, int xw = 0, int yh = 0)
+     { fill(0, 0, 0, x0, y0, xw, yh); }
 
      void up_down_line(int x, int y, int len, int lw, RGB32 color);
 
