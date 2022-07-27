@@ -19,6 +19,7 @@ OBJS = \
 	$(DISPLAY_OBJS) \
 	$(GPIO_OBJS) \
 	$(MOTOR_OBJS) \
+	neopixel-pi.o \
 	$(NET_OBJS) \
 	$(SERVER_OBJS) \
 	$(SERVO_OBJS) \

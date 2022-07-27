@@ -1,0 +1,60 @@
+;
+; Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
+;
+; SPDX-License-Identifier: BSD-3-Clause
+;
+
+.program neopixel
+.side_set 1
+
+.define public T1 2
+.define public T2 5
+.define public T3 3
+
+; Sets the pin to 0 for T3 cycles
+; If the bit is:
+;   1 - set to 1 for T1 + T2 cycles
+;   0 - set to 1 for T1 cycles and set to 0 for T2 cycles
+; Which means that a value of:
+;   1 - T1 + T2 cycles high, T3 cycles low (as configured 70% high, 30% low)
+;   0 - T1 cycles high, T3 + T2 cycles low (as configured 20% high, 80% low)
+; and the each bit runs for T1 + T2 + T3 cycles.  To get a specific total timing
+; (e.g. 1.25us = 0.00000125s is a clock freq of 800kh which gives you high time of
+;  1 - 875ns high, 375ns low
+;  0 - 250ns high, 1us low
+
+;.define public T1 4
+;.define public T2 10
+;.define public T3 4
+
+.wrap_target
+bitloop:
+    out x, 1       side 0 [T3 - 1] ; Side-set still takes place when instruction stalls
+    jmp !x do_zero side 1 [T1 - 1] ; Branch on the bit we shifted out. Positive pulse
+do_one:
+    jmp  bitloop   side 1 [T2 - 1] ; Continue driving high, for a long pulse
+do_zero:
+    nop            side 0 [T2 - 1] ; Or drive low, for a short pulse
+.wrap
+
+% c-sdk {
+#include "hardware/clocks.h"
+
+static inline void neopixel_program_init(PIO pio, uint sm, uint offset, uint pin, float freq, uint bits)
+{
+    pio_gpio_init(pio, pin);
+    pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
+
+    pio_sm_config c = neopixel_program_get_default_config(offset);
+    sm_config_set_sideset_pins(&c, pin);
+    sm_config_set_out_shift(&c, false, true, bits);
+    sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
+
+    int cycles_per_bit = neopixel_T1 + neopixel_T2 + neopixel_T3;
+    float div = clock_get_hz(clk_sys) / (freq * cycles_per_bit * 1.0);
+    sm_config_set_clkdiv(&c, div);
+
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}

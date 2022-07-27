@@ -7,6 +7,7 @@ UTILS = \
 	digital-counter \
 	maestro \
 	mcp23017 \
+	neopixel-pi \
 	nes-dump \
 	st7735s \
 	talking-skull-dump \
@@ -26,6 +27,9 @@ maestro: maestro.o $(LIB)
 
 mcp23017: mcp23017.o $(LIB)
 	$(CXX) mcp23017.o -o $@ $(LIBS)
+
+neopixel-pi: neopixel-pi.o $(LIB)
+	$(CXX) neopixel-pi.o -o $@ $(LIBS)
 
 nes-dump: nes-dump.o $(LIB)
 	$(CXX) nes-dump.o -o $@ $(LIBS)

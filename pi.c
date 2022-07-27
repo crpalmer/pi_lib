@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "time-utils.h"
 
 #include "pi.h"
 
@@ -66,8 +67,46 @@ void
 pi_init(void)
 {
 #ifdef PI_PICO
-    stdio_init_all();
+    pi_init_no_reboot();
     call_every = call_every_new(1000, reboot_on_button_press, NULL);
     call_every_start(call_every);
 #endif
 }
+
+void
+pi_init_no_reboot(void)
+{
+#ifdef PI_PICO
+    stdio_init_all();
+#endif
+}
+
+#ifdef PI_PICO
+
+void
+pico_readline(char *buf, size_t buf_len)
+{
+    pico_readline_echo(buf, buf_len, false);
+}
+
+void
+pico_readline_echo(char *buf, size_t buf_len, bool echo)
+{
+    int n_buf = 0;
+
+    while (1) {
+	char c;
+
+	if ((c = getchar()) > 0) {
+	    if (echo) putchar(c);
+	    if (c == '\r' || c == '\n') {
+		buf[n_buf] = '\0';
+		return;
+	    } else if (n_buf < buf_len-1) {
+		buf[n_buf++] = c;
+	    }
+	}
+    }
+}
+
+#endif

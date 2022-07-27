@@ -24,3 +24,4 @@ add_definitions(-DPI_PICO)
 
 util_cpp(ble)
 util_cpp(servo)
+util_cpp(neopixel-pico)

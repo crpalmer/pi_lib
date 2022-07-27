@@ -20,6 +20,7 @@ add_library(pi
     l298n.cpp
     mcp23017.cpp
     mem.c
+    neopixel-pico.cpp
     nes.c
     pca9685.cpp
     pi.c
@@ -32,6 +33,7 @@ add_library(pi
 )
 
 pico_generate_pio_header(pi ${CMAKE_CURRENT_LIST_DIR}/pico-audio.pio)
+pico_generate_pio_header(pi ${CMAKE_CURRENT_LIST_DIR}/neopixel.pio)
 
 target_link_libraries(
     pi

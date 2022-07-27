@@ -5,6 +5,7 @@ lib.a
 utils/digital-counter
 utils/maestro
 utils/mcp23017
+utils/neopixel-pi
 utils/nes-dump
 utils/servo
 utils/st7735s
