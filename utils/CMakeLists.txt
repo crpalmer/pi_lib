@@ -23,7 +23,4 @@ endfunction()
 add_definitions(-DPI_PICO)
 
 util_cpp(ble)
-util_cpp(pico-audio pico-audio-wav.h)
 util_cpp(servo)
-
-add_custom_command(OUTPUT pico-audio-wav.h WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/utils COMMAND ../host-tools/wav-to-h pico-audio DEPENDS pico-audio.wav)
