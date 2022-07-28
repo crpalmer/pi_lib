@@ -41,6 +41,8 @@ main()
 	    }
 	} else if (STRNCMP(line, "echo ") == 0) {
 	    echo = atoi(&line[space]);
+	} else if (STRNCMP(line, "set_brightness ") == 0) {
+	    neo->set_brightness(atof(&line[space]));
 	} else if (STRNCMP(line, "set_led ") == 0) {
 	    int led, r, g, b;
 
@@ -62,6 +64,7 @@ main()
 	    printf("bootsel: reboot into bootloader mode\n");
 	    printf("dump\n");
 	    printf("echo <0/1>: set echo mode\n");
+	    printf("set_brightness <pct>\n");
 	    printf("set_led <led> <r> <g> <b>\n");
 	    printf("set_n_leds <n>\n");
 	    printf("show\n");

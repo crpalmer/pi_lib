@@ -62,3 +62,9 @@ void NeoPixelPI::reboot_bootsel()
     writeline("bootsel");
 }
 
+void NeoPixelPI::set_brightness(double brightness)
+{
+    sprintf(line, "set_brightness %f", brightness);
+    writeline();
+}
+

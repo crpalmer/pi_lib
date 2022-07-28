@@ -9,6 +9,7 @@ public:
     void set_n_leds(int n_leds);
     void set_led(int led, unsigned char r, unsigned char g, unsigned char b);
     void show();
+    void set_brightness(double brightness);
 
     void reboot_bootsel();
 

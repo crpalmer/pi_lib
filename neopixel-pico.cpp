@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <cmath>
 #include "hardware/pio.h"
 #include "mem.h"
 
@@ -11,6 +12,7 @@ NeoPixelPico::NeoPixelPico(int pin)
     n_leds = 0;
     leds = (neopixel_rgb_t *) fatal_malloc(1);
     mode = neopixel_mode_GRB;
+    brightness = 1;
 
     if ((sm = pio_claim_unused_sm(pio0, false)) >= 0) {
         pio = pio0;
@@ -67,37 +69,17 @@ void NeoPixelPico::set_led(int led, unsigned char r, unsigned char g, unsigned c
     }
 }
 
-#if 0
-void NeoPixelPico::show()
+void NeoPixelPico::set_brightness(double brightness)
 {
-    int used = 0;
-    unsigned value = 0;
-
-    for (int led = 0; led < n_leds; led++) {
-	for (int byte = 0; byte < 3; byte++) {
-	    value |= ((unsigned) pio_data(led, byte)) << (8*(3-used));
-	    used++;
-
-	    if (used == 4) {
-		pio_sm_put_blocking(pio, sm, value);
-		used = 0;
-		value = 0;
-	    }
-	}
-    }
-    if (used) pio_sm_put_blocking(pio, sm, value);
+    this->brightness = brightness;
 }
 
-#else
-
 void NeoPixelPico::show()
 {
     for (int led = 0; led < n_leds; led++) {
 	for (int byte = 0; byte < 3; byte++) {
-	    unsigned value = pio_data(led, byte) << 24;
+	    unsigned value = round((pio_data(led, byte) << 24) * brightness);
 	    pio_sm_put_blocking(pio, sm, value);
 	}
     }
 }
-
-#endif

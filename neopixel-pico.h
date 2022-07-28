@@ -19,6 +19,7 @@ public:
     void set_n_leds(int new_n_leds);
     void set_mode(neopixel_mode_t new_mode);
     void set_led(int led, unsigned char r, unsigned char g, unsigned char b);
+    void set_brightness(double pct);
 
     void show();
 
@@ -37,6 +38,7 @@ private:
     int n_leds;
     neopixel_rgb_t *leds;
     neopixel_mode_t mode;
+    double brightness;
 
     unsigned pio_data(int led, int byte);
 };
