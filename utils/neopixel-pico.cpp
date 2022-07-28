@@ -43,6 +43,15 @@ main()
 	    echo = atoi(&line[space]);
 	} else if (STRNCMP(line, "set_brightness ") == 0) {
 	    neo->set_brightness(atof(&line[space]));
+	} else if (STRNCMP(line, "set_all ") == 0) {
+	    int r, g, b;
+
+	    if (sscanf(&line[space], "%d %d %d", &r, &g, &b) == 3) {
+	        neo->set_all(r, g, b);
+		if (echo) printf("set_all to %d,%d,%d\n", r, g, b);
+	    } else if (echo) {
+		printf("set_all: usage <r> <g> <b>\n");
+	    }
 	} else if (STRNCMP(line, "set_led ") == 0) {
 	    int led, r, g, b;
 
@@ -64,6 +73,7 @@ main()
 	    printf("bootsel: reboot into bootloader mode\n");
 	    printf("dump\n");
 	    printf("echo <0/1>: set echo mode\n");
+	    printf("set_all <r> <g> <b>\n");
 	    printf("set_brightness <pct>\n");
 	    printf("set_led <led> <r> <g> <b>\n");
 	    printf("set_n_leds <n>\n");

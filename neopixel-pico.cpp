@@ -60,6 +60,13 @@ void NeoPixelPico::set_n_leds(int new_n_leds)
     }
 }
 
+void NeoPixelPico::set_all(unsigned char r, unsigned char g, unsigned char b)
+{
+    for (int led = 0; led < n_leds; led++) {
+	set_led(led, r, g, b);
+    }
+}
+
 void NeoPixelPico::set_led(int led, unsigned char r, unsigned char g, unsigned char b)
 {
     if (led < n_leds) {

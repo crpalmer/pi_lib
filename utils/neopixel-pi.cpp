@@ -63,14 +63,14 @@ usage:
 	r = atoi(argv[3]);
 	g = atoi(argv[4]);
 	b = atoi(argv[5]);
-	for (int led = 0; led < n_leds; led++) neo->set_led(led, r, g, b);
+	neo->set_all(r, g, b);
 	neo->show();
    } else if (strcmp(argv[2], "pulse") == 0 && argc == 6) {
 	unsigned char r, g, b;
 	r = atoi(argv[3]);
 	g = atoi(argv[4]);
 	b = atoi(argv[5]);
-	for (int led = 0; led < n_leds; led++) neo->set_led(led, r, g, b);
+	neo->set_all(r, g, b);
 	while (1) {
 	    for (int brightness = 100; brightness >= 0; brightness--) {
 	        neo->set_brightness(brightness / 100.0);

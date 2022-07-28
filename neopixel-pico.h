@@ -16,9 +16,12 @@ class NeoPixelPico {
 public:
     NeoPixelPico(int pin);
 
-    void set_n_leds(int new_n_leds);
     void set_mode(neopixel_mode_t new_mode);
+    void set_n_leds(int new_n_leds);
+
+    void set_all(unsigned char r, unsigned char g, unsigned char b);
     void set_led(int led, unsigned char r, unsigned char g, unsigned char b);
+
     void set_brightness(double pct);
 
     void show();

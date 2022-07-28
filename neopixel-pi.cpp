@@ -68,3 +68,8 @@ void NeoPixelPI::set_brightness(double brightness)
     writeline();
 }
 
+void NeoPixelPI::set_all(unsigned char r, unsigned char g, unsigned char b)
+{
+    sprintf(line, "set_all %d %d %d", r, g, b);
+    writeline();
+}
