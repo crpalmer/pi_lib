@@ -10,13 +10,7 @@ int n_leds;
 
 inline int led(int l)
 {
-#if 1
     return (l+n_leds) % n_leds;
-#else
-    int led = (l+(n_leds-1)) % (n_leds-1);
-    if (led > 0) led++;
-    return led;
-#endif
 }
 
 int
@@ -39,9 +33,6 @@ usage:
    n_leds = atoi(argv[1]);
    if (n_leds <= 0) goto usage;
 
-   neo->set_n_leds(n_leds);
-   neo->set_n_leds(n_leds);
-   neo->set_n_leds(n_leds);
    neo->set_n_leds(n_leds);
 
    if (strcmp(argv[2], "chase") == 0) {
