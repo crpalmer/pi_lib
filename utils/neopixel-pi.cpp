@@ -66,7 +66,7 @@ usage:
 	    for (int brightness = 100; brightness >= 0; brightness--) {
 	        neo->set_brightness(brightness / 100.0);
 	        neo->show();
-		ms_sleep(10*brightness / 100.0);
+		ms_sleep(30*brightness*brightness / 10000.0);
 	    }
 	}
    } else {
