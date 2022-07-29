@@ -1,6 +1,8 @@
 #ifndef __NEOPIXEL_PI_H__
 #define __NEOPIXEL_PI_H__
 
+#include "pico-slave.h"
+
 class NeoPixelPI {
 public:
     NeoPixelPI();
@@ -18,10 +20,7 @@ public:
     void reboot_bootsel();
 
 private:
-    void writeline(const char *l = NULL);
-    bool ensure_tty(void);
-
-    int tty;
+    PicoSlave *pico;
     char line[10*1024];
 };
 

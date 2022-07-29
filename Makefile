@@ -20,6 +20,7 @@ OBJS = \
 	$(GPIO_OBJS) \
 	$(MOTOR_OBJS) \
 	neopixel-pi.o \
+	pico-slave.o \
 	$(NET_OBJS) \
 	$(SERVER_OBJS) \
 	$(SERVO_OBJS) \
