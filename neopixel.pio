@@ -5,7 +5,7 @@
 ;
 
 .program neopixel
-.side_set 1
+.side_set 2
 
 .define public T1 2
 .define public T2 5
@@ -30,9 +30,9 @@
 .wrap_target
 bitloop:
     out x, 1       side 0 [T3 - 1] ; Side-set still takes place when instruction stalls
-    jmp !x do_zero side 1 [T1 - 1] ; Branch on the bit we shifted out. Positive pulse
+    jmp !x do_zero side 3 [T1 - 1] ; Branch on the bit we shifted out. Positive pulse
 do_one:
-    jmp  bitloop   side 1 [T2 - 1] ; Continue driving high, for a long pulse
+    jmp  bitloop   side 3 [T2 - 1] ; Continue driving high, for a long pulse
 do_zero:
     nop            side 0 [T2 - 1] ; Or drive low, for a short pulse
 .wrap
@@ -40,10 +40,15 @@ do_zero:
 % c-sdk {
 #include "hardware/clocks.h"
 
+/* neopixel_program_init will duplicate the output signal on pins
+ * pin and pin+1 to support neopixel strips with backup data signals.
+ */
+
 static inline void neopixel_program_init(PIO pio, uint sm, uint offset, uint pin, float freq, uint bits)
 {
     pio_gpio_init(pio, pin);
-    pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
+    pio_gpio_init(pio, pin+1);
+    pio_sm_set_consecutive_pindirs(pio, sm, pin, 2, true);
 
     pio_sm_config c = neopixel_program_get_default_config(offset);
     sm_config_set_sideset_pins(&c, pin);
