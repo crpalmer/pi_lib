@@ -38,15 +38,22 @@ usage:
    if (strcmp(argv[2], "chase") == 0) {
 	int cur = 0;
 
+	neo->set_all(0, 0, 0);
+
+#define CHASE_AT_COLOUR       255, 255, 255
+#define CHASE_ARRIVING_COLOUR  16,  16,  16
+#define CHASE_LEAVING_COLOUR   16,  16,  16
+#define CHASE_MS 20
+
 	while (1) {
-	    neo->set_led(cur, 255, 0, 0);
-	    neo->set_led(led(cur-1), 0, 20, 0);
+	    neo->set_led(led(cur),   CHASE_AT_COLOUR);
+	    neo->set_led(led(cur+1), CHASE_ARRIVING_COLOUR);
 	    neo->show();
-	    ms_sleep(50);
+	    ms_sleep(CHASE_MS);
+	    neo->set_led(led(cur-1), CHASE_LEAVING_COLOUR);
+	    neo->show();
+	    ms_sleep(CHASE_MS);
 	    neo->set_led(led(cur-1), 0, 0, 0);
-	    neo->set_led(led(cur+1), 0, 0, 20);
-	    neo->show();
-	    ms_sleep(50);
 	    cur = led(cur+1);
 	}
    } else if (strcmp(argv[2], "all") == 0 && argc == 6) {
