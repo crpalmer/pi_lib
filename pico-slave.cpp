@@ -14,6 +14,7 @@ void
 PicoSlave::writeline(const char *l)
 {
     while (! ensure_tty()) {
+	perror("Could not find the pico");
 	ms_sleep(1000);
     }
 
