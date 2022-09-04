@@ -41,6 +41,11 @@ int gpioSetMode(unsigned gpio, unsigned mode)
     return 0;
 }
 
+int gpioPWM(unsigned user_gpio, unsigned dutycycle)
+{
+    assert(0);
+}
+
 int gpioInitialize()
 {
     return gpioInitialise();

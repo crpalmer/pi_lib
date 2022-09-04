@@ -14,7 +14,7 @@ public:
         gpioSetMode(gpio, PI_INPUT);
     }
 
-    unsigned get() {
+    unsigned get_fast() {
 	return gpioRead(gpio) == 0;
     }
 
