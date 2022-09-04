@@ -102,6 +102,12 @@ pico_readline_echo(char *buf, size_t buf_len, bool echo)
 	    if (c == '\r' || c == '\n') {
 		buf[n_buf] = '\0';
 		return;
+	    } else if (c == 8) {
+		if (n_buf) {
+		    n_buf--;
+		    putchar(' ');
+		    putchar(8);
+		}
 	    } else if (n_buf < buf_len-1) {
 		buf[n_buf++] = c;
 	    }
