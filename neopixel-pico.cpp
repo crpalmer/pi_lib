@@ -85,8 +85,8 @@ void NeoPixelPico::show()
 {
     for (int led = 0; led < n_leds; led++) {
 	for (int byte = 0; byte < 3; byte++) {
-	    unsigned value = round((pio_data(led, byte) << 24) * brightness);
-	    pio_sm_put_blocking(pio, sm, value);
+	    unsigned value = pio_data(led, byte) * brightness + 0.5;
+	    pio_sm_put_blocking(pio, sm, value << 24);
 	}
     }
 }
