@@ -18,6 +18,7 @@ add_library(pi
     global-trace.c
     gpio.c
     l298n.cpp
+    light-sensor.cpp
     mcp23017.cpp
     mem.c
     neopixel-pico.cpp
@@ -38,6 +39,7 @@ pico_generate_pio_header(pi ${CMAKE_CURRENT_LIST_DIR}/neopixel.pio)
 target_link_libraries(
     pi
     pico_stdlib
+    hardware_adc
     hardware_pwm
 #    hardware_spi
 #    hardware_i2c

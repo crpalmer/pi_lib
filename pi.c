@@ -7,6 +7,7 @@
 #ifdef PI_PICO
 
 #include "call-every.h"
+#include "hardware/adc.h"
 #include "hardware/sync.h"
 #include "hardware/structs/ioqspi.h"
 #include "hardware/structs/sio.h"
@@ -78,6 +79,7 @@ pi_init_no_reboot(void)
 {
 #ifdef PI_PICO
     stdio_init_all();
+    adc_init();
 #endif
 }
 
