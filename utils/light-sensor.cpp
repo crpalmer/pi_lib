@@ -11,7 +11,7 @@ main(int argc, char **argv)
     LightSensor *l = new LightSensor(2);
 
     while (1) {
-	printf("%3.0f\n", l->get() * 100);
+	printf("%3.0f\n", l->get_lux());
 	ms_sleep(500);
     }
 }
