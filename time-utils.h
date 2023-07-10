@@ -25,7 +25,7 @@ nano_gettime(struct timespec *t)
 #ifdef PI_PICO
     absolute_time_t now = get_absolute_time();
     t->tv_sec = to_us_since_boot(now) / 1000 / 1000;
-    t->tv_nsec = (to_us_since_boot(now) - t->tv_sec) * 1000;
+    t->tv_nsec = (to_us_since_boot(now) % (1000*1000)) * 1000;
 #else
     clock_gettime(CLOCK_MONOTONIC, t);
 #endif
