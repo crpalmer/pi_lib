@@ -53,7 +53,11 @@ reboot_on_button_press(void *unused)
     if (get_bootsel_button()) {
 	if (pushed) {
 	     printf("Button long pressed, rebooting to bootsel mode\n");
-	     reset_usb_boot(1<<PICO_DEFAULT_LED_PIN, 0);
+	     reset_usb_boot(0
+#ifdef PICO_DEFAULT_LED_PIN
+                              | 1<<PICO_DEFAULT_LED_PIN
+#endif
+				, 0);
 	} else {
 	     pushed = 1;
 	}
