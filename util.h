@@ -18,6 +18,9 @@ random_number();
 unsigned
 random_number_in_range(unsigned low, unsigned high);
 
+double
+random_double_in_range(double low, double high);
+
 bool
 randomly_with_prob(double prob);
 
