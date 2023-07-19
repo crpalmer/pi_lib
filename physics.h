@@ -11,6 +11,8 @@ public:
     {
         this->a = a;
         this->max_v = max_v;
+	start_pos = target_pos = 0;
+        nano_gettime(&start_t);
         update_model();
     }
 
