@@ -9,9 +9,9 @@
 #endif
 
 void
-ms_sleep(unsigned ms)
+ms_sleep_os(unsigned ms)
 {
-#ifdef PI_PICO
+#if PI_PICO
     sleep_ms(ms);
 #else
     struct timespec ts;

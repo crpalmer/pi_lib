@@ -25,7 +25,17 @@ bool
 randomly_with_prob(double prob);
 
 void
-ms_sleep(unsigned ms);
+ms_sleep_os(unsigned ms);
+
+inline void
+ms_sleep(unsigned ms)
+{
+#ifdef USE_FREERTOS
+    vTaskDelay(ms);
+#else
+    ms_sleep_os(ms);
+#endif
+}
 
 #ifdef __cplusplus
 };
