@@ -11,13 +11,8 @@ extern "C" {
 #else
 #endif
 
-void pi_init_no_reboot();
-
-#ifdef USE_FREERTOS
-inline void pi_init() { pi_init_no_reboot(); }
-#else
 void pi_init(void);
-#endif
+void pi_init_no_reboot();
 
 #ifdef PI_PICO
 void pico_readline(char *buf, size_t buflen);
