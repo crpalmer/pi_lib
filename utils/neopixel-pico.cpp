@@ -70,6 +70,8 @@ fade_out(NeoPixelPico *neo, int r, int g, int b)
 int
 main()
 {
+    int n_leds = 0;
+
     pi_init_no_reboot();
 
     NeoPixelPico *neo = new NeoPixelPico(0);
@@ -96,6 +98,22 @@ main()
 	    }
 	} else if (STRNCMP(line, "echo ") == 0) {
 	    echo = atoi(&line[space]);
+	} else if (strcmp(line, "help") == 0) {
+	    printf("bootsel: reboot into bootloader mode\n");
+	    printf("dump\n");
+	    printf("echo <0/1>: set echo mode\n");
+	    printf("fade_in <r> <g> <b>\n");
+	    printf("fade_out <r> <g> <b>\n");
+	    printf("set_all <r> <g> <b>\n");
+	    printf("set_brightness <pct>\n");
+	    printf("set_led <led> <r> <g> <b>\n");
+	    printf("set_n_leds <n>\n");
+	    printf("show\n");
+	} else if (STRNCMP(line, "set_n_leds ") == 0) {
+	    n_leds = atoi(&line[space]);
+	    neo->set_n_leds(n_leds);
+	} else if (n_leds == 0) {
+	    printf("error: you must set_n_leds <n> first\n");
 	} else if (STRNCMP(line, "set_brightness ") == 0) {
 	    neo->set_brightness(atof(&line[space]));
 	} else if (STRNCMP(line, "fade_in ") == 0) {
@@ -121,21 +139,8 @@ main()
 	    } else if (echo) {
 		printf("set_led: usage <led> <r> <g> <b>\n");
 	    }
-	} else if (STRNCMP(line, "set_n_leds ") == 0) {
-	    neo->set_n_leds(atoi(&line[space]));
 	} else if (strcmp(line, "show") == 0) {
 	    show(neo);
-	} else if (strcmp(line, "help") == 0) {
-	    printf("bootsel: reboot into bootloader mode\n");
-	    printf("dump\n");
-	    printf("echo <0/1>: set echo mode\n");
-	    printf("fade_in <r> <g> <b>\n");
-	    printf("fade_out <r> <g> <b>\n");
-	    printf("set_all <r> <g> <b>\n");
-	    printf("set_brightness <pct>\n");
-	    printf("set_led <led> <r> <g> <b>\n");
-	    printf("set_n_leds <n>\n");
-	    printf("show\n");
 	} else {
 	    printf("unknown command: %s\n", line);
 	}
