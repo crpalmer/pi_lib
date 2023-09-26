@@ -14,7 +14,7 @@ typedef struct {
 
 class NeoPixelPico {
 public:
-    NeoPixelPico(int pin);
+    NeoPixelPico(int pin, bool use_gamma = false);
 
     void set_mode(neopixel_mode_t new_mode);
     void set_n_leds(int new_n_leds);
@@ -39,10 +39,12 @@ private:
     PIO pio;
     int sm;
     int n_leds;
+    bool use_gamma;
     neopixel_rgb_t *leds;
     neopixel_mode_t mode;
     double brightness;
 
+    unsigned pio_data_raw(int led, int byte);
     unsigned pio_data(int led, int byte);
 };
 
