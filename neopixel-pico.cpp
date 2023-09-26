@@ -67,6 +67,8 @@ unsigned NeoPixelPico::pio_data_raw(int led, int byte)
 unsigned NeoPixelPico::pio_data(int led, int byte)
 {
     unsigned v = pio_data_raw(led, byte);
+    v = v * brightness + 0.5;
+    if (v > 255) v = 255;
     if (use_gamma) v = gamma8[v];
     return v;
 }
@@ -111,7 +113,7 @@ void NeoPixelPico::show()
 {
     for (int led = 0; led < n_leds; led++) {
 	for (int byte = 0; byte < 3; byte++) {
-	    unsigned value = pio_data(led, byte) * brightness + 0.5;
+	    unsigned value = pio_data(led, byte);
 	    pio_sm_put_blocking(pio, sm, value << 24);
 	}
     }
