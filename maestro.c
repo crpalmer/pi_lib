@@ -119,7 +119,7 @@ get_raw_parameter_byte(maestro_t *m, int parameter, unsigned char *ret)
     char result;
 
     if (usb_control_msg(m->handle, 0xc0, REQUEST_GET_PARAMETER, 0, parameter, &result, 1, -1) < 0) {
-	fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
+	fprintf(stderr, "get_byte: usb_control_msg: %s\n", usb_strerror());
 	return 0;
     }
 
@@ -134,7 +134,7 @@ get_raw_parameter_ushort(maestro_t *m, int parameter, unsigned short *ret)
     char result[2];
 
     if (usb_control_msg(m->handle, 0xc0, REQUEST_GET_PARAMETER, 0, parameter, result, 2, -1) < 0) {
-	fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
+	fprintf(stderr, "get_ushort: usb_control_msg: %s\n", usb_strerror());
 	return 0;
     }
 
@@ -149,7 +149,7 @@ set_raw_parameter_byte(maestro_t *m, int parameter, unsigned char value)
     unsigned short index = (1<<8) | parameter;
 
     if (usb_control_msg(m->handle, 0x40, REQUEST_SET_PARAMETER, value, index, NULL, 0, -1) < 0) {
-	fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
+	fprintf(stderr, "set_byte: usb_control_msg: %s\n", usb_strerror());
 	return 0;
     }
 
@@ -163,7 +163,7 @@ set_raw_parameter_ushort(maestro_t *m, int parameter, unsigned short value)
     unsigned short index = (2<<8) | parameter;
 
     if (usb_control_msg(m->handle, 0x40, REQUEST_SET_PARAMETER, value, index, NULL, 0, -1) < 0) {
-	fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
+	fprintf(stderr, "set_ushort: usb_control_msg: %s\n", usb_strerror());
 	return 0;
     }
 
@@ -226,7 +226,7 @@ static int
 restart_controller(maestro_t *m)
 {
     if (usb_control_msg(m->handle, 0x40, REQUEST_REINITIALIZE, 0, 0, NULL, 0, -1) < 0) {
-	fprintf(stderr, "usb_control_msg: %s\n", usb_strerror());
+	fprintf(stderr, "restart: usb_control_msg: %s\n", usb_strerror());
 	return 0;
     }
 
@@ -268,10 +268,13 @@ maestro_new(void)
     m->c = calloc(sizeof(*m->c), m->n_servos);
     get_all_servos_config(m);
 
+retry_serial_mode:
     if (get_raw_parameter_byte(m, PARAMETER_SERIAL_MODE, &serial_mode) && serial_mode != SERIAL_MODE_USB) {
 	fprintf(stderr, "WARNING: serial mode %d is not usb mode, resetting it\n", serial_mode);
 	set_raw_parameter_byte(m, PARAMETER_SERIAL_MODE, SERIAL_MODE_USB);
 	restart_controller(m);
+	ms_sleep(1000);
+	goto retry_serial_mode;
     }
 
     if (! open_serial_device(m)) {
@@ -365,9 +368,20 @@ maestro_set_servo_pos(maestro_t *m, servo_id_t id, double pos)
 int
 maestro_set_servo_physical_range(maestro_t *m, servo_id_t id, unsigned min_us, unsigned max_us)
 {
-    if (! set_raw_parameter_byte(m, PARAMETER_SERVO_MIN(id), min_us/64*SERVO_POS_MULTIPLIER)) return 0;
-    if (! set_raw_parameter_byte(m, PARAMETER_SERVO_MAX(id), max_us/64*SERVO_POS_MULTIPLIER)) return 0;
+    int low = min_us/64 * SERVO_POS_MULTIPLIER;
+    int high = max_us/64 * SERVO_POS_MULTIPLIER;
+
+    if (! set_raw_parameter_byte(m, PARAMETER_SERVO_MIN(id), low)) {
+	fprintf(stderr, "Failed to set range low: %d\n", low);
+	return 0;
+    }
+    if (! set_raw_parameter_byte(m, PARAMETER_SERVO_MAX(id), high)) {
+	fprintf(stderr, "Failed to set range high: %d\n", high);
+	return 0;
+    }
+
     get_servo_config(m, id, &m->c[id]);
+
     return 1;
 }
 
