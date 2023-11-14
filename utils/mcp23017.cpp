@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 #include "pigpio.h"
 #include "mcp23017.h"
@@ -27,7 +28,13 @@ int
 main(int argc, char **argv)
 {
     gpioInitialise();
-    mcp = new MCP23017();
+    if (argc > 1) {
+	unsigned addr = atoi(argv[1]);
+	fprintf(stderr, "using addr: 0x%02x\n", addr);
+	mcp = new MCP23017(addr);
+    } else {
+	mcp = new MCP23017();
+    }
 
     while (fgets(buf, sizeof(buf), stdin) != NULL && ! feof(stdin)) {
 	unsigned bank, pin;
