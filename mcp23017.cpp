@@ -1,6 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 #include "mcp23017.h"
+
+#define TRACE_WRITES		0
 
 class MCP23017_input : public input_t {
 public:
@@ -57,10 +60,10 @@ MCP23017::MCP23017(unsigned address)
     this->pullup[0] = this->pullup[1] = 0;
     this->out[0] = this->out[1] = 0;
 
-    write_out(0);
-    write_out(1);
-    write_dir(0);
-    write_dir(1);
+    write_out(0, true);
+    write_out(1, true);
+    write_dir(0, true);
+    write_dir(1, true);
     write_pullup(0);
     write_pullup(1);
 }
@@ -85,22 +88,37 @@ void MCP23017::set(unsigned bank, unsigned pin, bool value)
     write_out(bank);
 }
 
-void MCP23017::write_dir(unsigned bank)
+void MCP23017::i2c_write(unsigned addr, unsigned value, bool validate)
 {
-    assert_bank(bank);
-    i2cWriteByteData(bus, dir_addr[bank], dir[bank]);
+#if TRACE_WRITES
+    fprintf(stderr, "write 0x%02x = 0x%02x\n", addr, value);
+#endif
+    i2cWriteByteData(bus, addr, value);
+    if (validate) {
+	unsigned new_value = i2cReadByteData(bus, addr);
+	if (value != new_value) {
+	    fprintf(stderr, "I was supposed to write: 0x%02x but value is 0x%02x\n", value, new_value);
+	    exit(1);
+	}
+    }
 }
 
-void MCP23017::write_pullup(unsigned bank)
+void MCP23017::write_dir(unsigned bank, bool validate)
 {
     assert_bank(bank);
-    i2cWriteByteData(bus, pullup_addr[bank], pullup[bank]);
+    i2c_write(dir_addr[bank], dir[bank], validate);
 }
 
-void MCP23017::write_out(unsigned bank)
+void MCP23017::write_pullup(unsigned bank, bool validate)
 {
     assert_bank(bank);
-    i2cWriteByteData(bus, out_val_addr[bank], out[bank]);
+    i2c_write(pullup_addr[bank], pullup[bank], validate);
+}
+
+void MCP23017::write_out(unsigned bank, bool validate)
+{
+    assert_bank(bank);
+    i2c_write(out_val_addr[bank], out[bank], validate);
 }
 
 input_t *MCP23017::get_input(unsigned bank, unsigned pin)

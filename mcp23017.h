@@ -6,6 +6,8 @@
 #include "io.h"
 #include "externals/PIGPIO/pigpio.h"
 
+#define VALIDATE_WRITES  false
+
 class MCP23017_input;
 class MCP23017_output;
 
@@ -28,9 +30,9 @@ protected:
     void set(unsigned bank, unsigned pin, bool value);
 
 private:
-    void write_dir(unsigned bank);
-    void write_pullup(unsigned bank);
-    void write_out(unsigned bank);
+    void write_dir(unsigned bank, bool validate = VALIDATE_WRITES);
+    void write_pullup(unsigned bank, bool validate = VALIDATE_WRITES);
+    void write_out(unsigned bank, bool validate = VALIDATE_WRITES);
 
     int bus;
     unsigned dir[2];
@@ -60,6 +62,8 @@ private:
         assert_bank(bank);
         assert_pin(pin);
     }
+
+    void i2c_write(unsigned addr, unsigned value, bool validate = VALIDATE_WRITES);
 };
 
 #endif
