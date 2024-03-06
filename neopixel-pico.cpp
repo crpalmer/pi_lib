@@ -45,6 +45,11 @@ NeoPixelPico::NeoPixelPico(int pin, bool use_gamma)
     neopixel_program_init(pio, sm, pio_add_program(pio, &neopixel_program), pin, 800*1000, 8);
 }
 
+void NeoPixelPico::set_mode(neopixel_mode_t new_mode)
+{
+    mode = new_mode;
+}
+
 unsigned NeoPixelPico::pio_data_raw(int led, int byte)
 {
     if (led >= n_leds) return 0;
