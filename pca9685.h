@@ -22,7 +22,7 @@ private:
     void set_pwm_freq(unsigned hz);
 
     unsigned hz;
-    int bus;
+    int i2c;
 };
 
 class PCA9685_output_t : public output_t {

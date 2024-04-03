@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include "i2c.h"
 #include "util.h"
 #include "grove.h"
 
@@ -8,13 +10,16 @@ const unsigned char direction_addr = 0xaa;
 
 GroveDC::GroveDC(unsigned addr)
 {
-    bus = i2cOpen(1, addr, 0);
-    if (bus < 0) throw "Could not communicate with i2c device";
+    i2c = i2c_open(1, addr);
+    if (i2c < 0) {
+	fprintf(stderr, "Could not communicate with i2c device\n");
+	exit(1);
+    }
     speeds[0] = 0;
     speeds[1] = 0;
     dirs[0] = 0x01;
     dirs[1] = 0x01;
-    i2cWriteWordData(bus, pwm_addr, 0x0002);
+    i2c_write_word(i2c, pwm_addr, 0x0002);
     set_speed();
     set_direction();
 }
@@ -38,24 +43,27 @@ void GroveDC::speed(unsigned id, unsigned speed)
 
 void GroveDC::set_speed()
 {
-    i2cWriteBlockData(bus, speed_addr, (char *) speeds, 2);
+    i2c_write(i2c, speed_addr, (char *) speeds, 2);
 }
 
 void GroveDC::set_direction()
 {
-    i2cWriteBlockData(bus, direction_addr, (char *) dirs, 2);
+    i2c_write(i2c, direction_addr, (char *) dirs, 2);
 }
 
 GroveStepper::GroveStepper(unsigned addr, unsigned phases) : phases(phases)
 {
-    bus = i2cOpen(1, addr, 0);
-    if (bus < 0) throw "Could not communicate with i2c device";
+    i2c = i2c_open(1, addr);
+    if (i2c < 0) {
+	fprintf(stderr, "Could not communicate with i2c device\n");
+	exit(1);
+    }
     cur_step = 0;
     dir = 1;
     set_step();
     assert(phases == 2 || phases == 4);
-    i2cWriteWordData(bus, pwm_addr, 0x0002);
-    i2cWriteWordData(bus, speed_addr, 0xffff);
+    i2c_write_word(i2c, pwm_addr, 0x0002);
+    i2c_write_word(i2c, speed_addr, 0xffff);
     ms_sleep(4);
 }
 
@@ -68,7 +76,7 @@ void GroveStepper::direction(int dir)
 void GroveStepper::set_direction(unsigned short dir)
 {
 printf("%d %d%d%d%d\n", cur_step, (dir & 0b1000) != 0, (dir & 0b0100) != 0, (dir & 0b0010) != 0, (dir & 0b0001) != 0);
-    i2cWriteWordData(bus, direction_addr, dir);
+    i2c_write_word(i2c, direction_addr, dir);
 }
 
 void GroveStepper::set_step()

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "i2c.h"
 #include "pca9685.h"
 #include "externals/PIGPIO/pigpio.h"
 #include "util.h"
@@ -25,8 +26,8 @@
 
 PCA9685::PCA9685(unsigned address, unsigned hz)
 {
-    bus = i2cOpen(1, address, 0);
-    if (bus < 0) {
+    i2c = i2c_open(1, address);
+    if (i2c < 0) {
 #ifdef PI_PICO
 	fprintf(stderr, "failed to open i2c device\n");
 #else
@@ -40,12 +41,12 @@ PCA9685::PCA9685(unsigned address, unsigned hz)
 
 PCA9685::~PCA9685()
 {
-    i2cClose(bus);
+    i2c_close(i2c);
 }
 
 void PCA9685::reset()
 {
-    i2cWriteByteData(bus, PCA9685_MODE1, 0x80);
+    i2c_write_byte(i2c, PCA9685_MODE1, 0x80);
     ms_sleep(10);
 }
 
@@ -58,12 +59,12 @@ void PCA9685::set_pwm_freq(unsigned hz)
 
     this->hz = hz;
 
-    mode = i2cReadByteData(bus, PCA9685_MODE1);
-    i2cWriteByteData(bus, PCA9685_MODE1, (mode & 0x7f) | MODE1_SLEEP_BIT);
-    i2cWriteByteData(bus, PCA9685_PRESCALE, prescale);
-    i2cWriteByteData(bus, PCA9685_MODE1, mode);
+    i2c_read_byte(i2c, PCA9685_MODE1, &mode);
+    i2c_write_byte(i2c, PCA9685_MODE1, (mode & 0x7f) | MODE1_SLEEP_BIT);
+    i2c_write_byte(i2c, PCA9685_PRESCALE, prescale);
+    i2c_write_byte(i2c, PCA9685_MODE1, mode);
     ms_sleep(5);
-    i2cWriteByteData(bus, PCA9685_MODE1, mode | MODE1_AUTO_INC_BIT);
+    i2c_write_byte(i2c, PCA9685_MODE1, mode | MODE1_AUTO_INC_BIT);
 }
 
 output_t *PCA9685::get_output(unsigned id)
@@ -80,9 +81,9 @@ void PCA9685::set(unsigned id, double freq)
     if (freq == 0) on_count = 4096;
     else if (freq >= 1) on_at = 4096;
     else on_count = (unsigned) (freq * 4096);
-	
-    i2cWriteByteData(bus, addr + 0, on_at & 0xff);
-    i2cWriteByteData(bus, addr + 1, on_at >> 8);
-    i2cWriteByteData(bus, addr + 2, on_count & 0xff);
-    i2cWriteByteData(bus, addr + 3, on_count >> 8);
+
+    i2c_write_byte(i2c, addr + 0, on_at & 0xff);
+    i2c_write_byte(i2c, addr + 1, on_at >> 8);
+    i2c_write_byte(i2c, addr + 2, on_count & 0xff);
+    i2c_write_byte(i2c, addr + 3, on_count >> 8);
 }

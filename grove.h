@@ -20,7 +20,7 @@ protected:
     void assert_id(unsigned id) { assert(id == 0 || id == 1); }
 
 private:
-    int bus;
+    int i2c;
     unsigned char dirs[2];
     unsigned char speeds[2];
 };
@@ -36,7 +36,7 @@ protected:
     void set_direction(unsigned short dir);
 
 private:
-    int bus;
+    int i2c;
     int cur_step;
     int dir;
     unsigned phases;

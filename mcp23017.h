@@ -30,11 +30,11 @@ protected:
     void set(unsigned bank, unsigned pin, bool value);
 
 private:
-    void write_dir(unsigned bank, bool validate = VALIDATE_WRITES);
-    void write_pullup(unsigned bank, bool validate = VALIDATE_WRITES);
-    void write_out(unsigned bank, bool validate = VALIDATE_WRITES);
+    void write_dir(unsigned bank);
+    void write_pullup(unsigned bank);
+    void write_out(unsigned bank);
 
-    int bus;
+    int i2c;
     unsigned dir[2];
     unsigned pullup[2];
     unsigned out[2];
@@ -62,8 +62,6 @@ private:
         assert_bank(bank);
         assert_pin(pin);
     }
-
-    void i2c_write(unsigned addr, unsigned value, bool validate = VALIDATE_WRITES);
 };
 
 #endif

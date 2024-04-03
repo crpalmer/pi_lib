@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "pigpio.h"
+#include "i2c.h"
 #include "mcp23017.h"
+#include "pi.h"
+#include "util.h"
 
 static char buf[100*1024];
 
@@ -24,11 +26,40 @@ static output_t *ensure_output(unsigned bank, unsigned pin)
     return outputs[bank][pin];
 }
 
+#ifdef PI_PICO
+
+char *readline(char *buf, size_t n)
+{
+    pico_readline_echo(buf, n, true);
+    printf("\n");
+    return buf;
+}
+
+#else
+
+char *readline(char *buf, size_t n)
+{
+    if (feof(stdin)) return NULL;
+    return fgets(buf, n, stdin);
+}
+
+#endif
+
 int
 main(int argc, char **argv)
 {
+    pi_init();
+
+    i2c_init_bus(0);
+    i2c_config_gpios(2, 3);
+
     gpioInitialise();
+
+#ifdef PI_PICO
+    if (0) {
+#else
     if (argc > 1) {
+#endif
 	unsigned addr = atoi(argv[1]);
 	fprintf(stderr, "using addr: 0x%02x\n", addr);
 	mcp = new MCP23017(addr);
@@ -36,7 +67,7 @@ main(int argc, char **argv)
 	mcp = new MCP23017();
     }
 
-    while (fgets(buf, sizeof(buf), stdin) != NULL && ! feof(stdin)) {
+    while (readline(buf, sizeof(buf)) != NULL) {
 	unsigned bank, pin;
 
 	if (sscanf(&buf[1], "%d %d", &bank, &pin) == 2) {

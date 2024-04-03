@@ -17,6 +17,8 @@ add_library(pi
     file.c
     global-trace.c
     gpio.c
+    grove.cpp
+    i2c.cpp
     l298n.cpp
     light-sensor.cpp
     mcp23017.cpp
@@ -42,7 +44,7 @@ target_link_libraries(
     hardware_adc
     hardware_pwm
 #    hardware_spi
-#    hardware_i2c
+    hardware_i2c
 #    hardware_pwm
 #    hardware_adc
     hardware_pio
