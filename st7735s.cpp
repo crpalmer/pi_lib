@@ -192,11 +192,15 @@ void ST7735S::set_brightness(double brightness)
     BL->pwm(brightness);
 }
 
-void ST7735S::paint(ST7735S_Canvas *c)
+void ST7735S::paint(Canvas *c)
 {
-    set_window(0, 0, c->w-1, c->h-1);
+    int w = c->get_width();
+    int h = c->get_height();
+    int bpp = c->get_bpp();
+
+    set_window(0, 0, w-1, h-1);
     DC->set(1);
-    for (int row = c->h-1; row >= 0; row--) {
-       spiWrite(SPI, (char *) c->get_location(0, row), c->w * c->bpp);
+    for (int row = h-1; row >= 0; row--) {
+       spiWrite(SPI, (char *) c->get_raw(0, row), w * bpp);
     }
 }

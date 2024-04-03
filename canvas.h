@@ -20,6 +20,8 @@ public:
 
      int get_height() { return h; }
 
+     int get_bpp() { return bpp; }
+
      virtual RGB32 get_pixel(int x, int y) = 0;
 
      virtual void set_pixel(int x, int y, Byte r, Byte g, Byte b) = 0;
@@ -51,8 +53,10 @@ public:
 
      void import(Canvas *other, int x = 0, int y = 0, int w = -1, int h = -1);
 
+     unsigned char *get_raw(int x, int y);
+
 protected:
-     int w, h;
+     int w, h, bpp;
 };
 
 #endif
