@@ -192,8 +192,9 @@ void ST7735S::set_brightness(double brightness)
     BL->pwm(brightness);
 }
 
-void ST7735S::paint(Canvas *c)
+void ST7735S::paint(Canvas *generic_c)
 {
+    ST7735S_Canvas *c = (ST7735S_Canvas *) generic_c;
     int w = c->get_width();
     int h = c->get_height();
     int bpp = c->get_bpp();
