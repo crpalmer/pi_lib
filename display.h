@@ -5,9 +5,9 @@
 
 class Display {
 public:
-    Canvas *create_canvas();
-    void set_brightness(double pct);
-    void paint(Canvas *canvas);
+    virtual Canvas *create_canvas();
+    virtual void set_brightness(double pct);
+    virtual void paint(Canvas *canvas);
 };
 
 #endif
