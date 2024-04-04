@@ -79,7 +79,7 @@ server_thread_main(void *server_as_vp)
 	pthread_t thread;
 	int fd;
 	struct sockaddr_in clientname;
-	size_t size = sizeof(clientname);
+	socklen_t size = sizeof(clientname);
 
 	fd = accept(sock, (struct sockaddr *) &clientname, &size);
 	if (fd < 0) {

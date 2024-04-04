@@ -137,13 +137,13 @@ audio_set_volume(audio_t *audio, unsigned volume)
 bool
 audio_capture_buffer(audio_t *c, unsigned char *buffer)
 {
-    return pcm_read(c->pcm, buffer, c->buffer_size) == 0;
+    return pcm_readi(c->pcm, buffer, c->buffer_size) == 0;
 }
 
 bool
 audio_play_buffer(audio_t *c, const unsigned char *buffer, size_t size)
 {
-    return pcm_write(c->pcm, buffer, size) == 0;
+    return pcm_writei(c->pcm, buffer, size) == 0;
 }
 
 bool

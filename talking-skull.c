@@ -398,7 +398,8 @@ talking_skull_actor_new_with_n_to_avg(const char *fname, talking_skull_servo_upd
 talking_skull_actor_t *
 talking_skull_actor_new(const char *fname, talking_skull_servo_update_t update, void *data)
 {
-    return talking_skull_actor_new(fname, update, data);
+    fprintf(stderr, "This constructor is no longer supported.\n");
+    exit(0);
 }
 
 talking_skull_actor_t *
