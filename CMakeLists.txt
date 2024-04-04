@@ -14,6 +14,7 @@ add_definitions(-DPI_PICO -Iexternal/PIGPIO)
 add_library(pi
     ble.cpp
     call-every.c
+    canvas.cpp
     file.c
     global-trace.c
     gpio.c
