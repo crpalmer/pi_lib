@@ -27,10 +27,14 @@ public:
      virtual void set_pixel(int x, int y, Byte r, Byte g, Byte b) = 0;
 
      void set_pixel(int x, int y, RGB32 rgb) {
-	set_pixel(x, y, (rgb>>16) & 0xff, (rgb>>8) & 0xff, rgb&0xff);
+	set_pixel(x, y, R(rgb), G(rgb), B(rgb));
      }
 
      virtual void fill(Byte r, Byte g, Byte b, int x0 = 0, int y0 = 0, int xw = 0, int yh = 0);
+
+     void fill(RGB32 rgb, int x0 = 0, int y0 = 0, int xw = 0, int yh = 0) {
+	fill(R(rgb), G(rgb), B(rgb), x0, y0, xw, yh);
+     }
 
      void blank(int x0 = 0, int y0 = 0, int xw = 0, int yh = 0)
      { fill(0, 0, 0, x0, y0, xw, yh); }
@@ -55,6 +59,9 @@ public:
 
 protected:
      int w, h, bpp;
+     int R(RGB32 c) { return (c >> 16) & 0xff; }
+     int G(RGB32 c) { return (c >> 8) & 0xff; }
+     int B(RGB32 c) { return (c >> 0) & 0xff; }
 };
 
 #endif
