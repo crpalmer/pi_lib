@@ -80,7 +80,7 @@ unsigned MCP23017::get(unsigned bank, unsigned pin)
     assert_input(bank, pin);
     unsigned char data;
     i2c_read_byte(i2c, in_val_addr[bank], &data);
-    return data & pin_value(pin) != 0;
+    return (data & pin_value(pin)) != 0;
 }
 
 void MCP23017::set(unsigned bank, unsigned pin, bool value)

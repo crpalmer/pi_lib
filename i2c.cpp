@@ -68,16 +68,19 @@ int i2c_write(int fd, unsigned char reg, const void *data, int n_bytes)
 #else
 
 /* TODO: Get rid of the pigpio layer and use open / ioctl / read / write */
+#include <string.h>
+#include "pigpio.h"
 
-void i2c_init(int speed)
+int i2c_init_bus(int bus, int speed)
 {
+    return 0;
 }
 
 void i2c_config_gpios(int sda, int scl)
 {
 }
 
-inline int i2c_open(int bus, unsigned addr)
+int i2c_open(int bus, int addr)
 {
     return i2cOpen(bus, addr, 0);
 }
@@ -87,14 +90,18 @@ void i2c_close(int fd)
     i2cClose(fd);
 }
 
-int i2c_read(int fd, int reg, unsigned char *data, int n_bytes)
+int i2c_read(int fd, unsigned char reg, void *data, int n_bytes)
 {
-    return i2cReadBlockData(fd, reg, data, n_bytes);
+    char buf[32];
+    int n = i2cReadBlockData(fd, reg, buf);
+    if (n > n_bytes) return PI_BAD_PARAM;
+    if (n > 0) memcpy(data, buf, n);
+    return n;
 }
 
-int i2c_write(int fd, int reg, unsigned char *data, int n_bytes)
+int i2c_write(int fd, unsigned char reg, const void *data, int n_bytes)
 {
-    return i2cWriteBlockData(fd, reg, data, n_bytes);
+    return i2cWriteBlockData(fd, reg, (char *) data, n_bytes);
 }
 
 

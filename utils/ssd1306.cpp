@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-#include <pico/bootrom.h>
 #include "i2c.h"
 #include "ssd1306.h"
 #include "pi.h"
@@ -13,6 +12,8 @@ static Canvas *canvas;
 static char buf[128];
 
 #ifdef PI_PICO
+
+#include <pico/bootrom.h>
 
 char *readline(char *buf, size_t n)
 {
