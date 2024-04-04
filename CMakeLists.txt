@@ -9,7 +9,7 @@ project(pi)
 pico_sdk_init()
 
 add_subdirectory(utils)
-add_definitions(-DPI_PICO -Iexternal/PIGPIO)
+add_definitions(-DPI_PICO)
 
 add_library(pi
     ble.cpp
@@ -17,7 +17,6 @@ add_library(pi
     canvas.cpp
     file.c
     global-trace.c
-    gpio.c
     grove.cpp
     i2c.cpp
     l298n.cpp

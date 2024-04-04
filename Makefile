@@ -1,6 +1,6 @@
 LIB=lib.a
 D=$(HOME)/lib
-CFLAGS=-Wall -Werror -g -I../tinyalsa/include -I$D
+CFLAGS=-Wall -Werror -g -I../tinyalsa/include
 
 AUDIO_OBJS = audio.o talker-auto-gain.o talking-skull.o track.o wav.o
 DISPLAY_OBJS = st7735s.o canvas.o canvas_png.o

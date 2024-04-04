@@ -6,7 +6,7 @@
 #include "file.h"
 #include "string-utils.h"
 #include "gpio.h"
-#include "pigpio.h"
+#include "pi-gpio.h"
 
 #define GPIO_DIR_PREFIX "/sys/class/gpio/gpio"
 #define EXPORT_FNAME "/sys/class/gpio/export"

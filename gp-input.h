@@ -4,7 +4,7 @@
 #include <assert.h>
 
 #include "io.h"
-#include "externals/PIGPIO/pigpio.h"
+#include "pi-gpio.h"
 
 class GPInput : public input_t {
 public:

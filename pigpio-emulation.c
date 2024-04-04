@@ -2,8 +2,8 @@
 #include <stdlib.h>
 
 #include <hardware/gpio.h>
-#include "externals/PIGPIO/pigpio.h"
 #include "pico_servo.h"
+#include "pi-gpio.h"
 
 #define NUM_GPIOS 40
 

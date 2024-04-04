@@ -69,7 +69,7 @@ int i2c_write(int fd, unsigned char reg, const void *data, int n_bytes)
 
 /* TODO: Get rid of the pigpio layer and use open / ioctl / read / write */
 #include <string.h>
-#include "pigpio.h"
+#include "pi-gpio.h"
 
 int i2c_init_bus(int bus, int speed)
 {

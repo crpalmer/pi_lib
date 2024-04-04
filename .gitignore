@@ -12,3 +12,4 @@ utils/st7735s
 utils/talking-skull-dump
 utils/talking-skull-prepare
 utils/wb
+build/
