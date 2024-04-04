@@ -31,6 +31,7 @@ add_library(pi
     pico_servo.c
     pico-audio.cpp
     pigpio-emulation.c
+    ssd1306.cpp
     stepper.c
     string-utils.c
     util.c
