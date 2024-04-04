@@ -2,7 +2,7 @@
 #define __GROVE_H__
 
 #include <assert.h>
-#include "externals/PIGPIO/pigpio.h"
+#include "pigpio.h"
 #include "motor.h"
 
 class grove_motor_t;

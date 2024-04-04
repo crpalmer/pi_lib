@@ -4,7 +4,7 @@
 #include <assert.h>
 
 #include "io.h"
-#include "externals/PIGPIO/pigpio.h"
+#include "pigpio.h"
 
 #define VALIDATE_WRITES  false
 

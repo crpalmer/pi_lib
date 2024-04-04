@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "i2c.h"
 #include "pca9685.h"
-#include "externals/PIGPIO/pigpio.h"
+#include "pigpio.h"
 #include "util.h"
 
 #define MODE1_RESET_BIT		0x80

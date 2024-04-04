@@ -17,7 +17,7 @@ UTILS = \
 
 all: $(UTILS)
 
-LIBS = $(LIB) -lusb -lrt -lpthread -lpng16 ../../tinyalsa/build/libtinyalsa.a
+LIBS = $(LIB) -lusb -lrt -lpthread -lpng16 ../../tinyalsa/build/libtinyalsa.a -lpigpio
 
 digital-counter: digital-counter.o $(LIB)
 	$(CXX) digital-counter.o -o $@ $(LIBS)

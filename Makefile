@@ -1,7 +1,6 @@
 LIB=lib.a
 D=$(HOME)/lib
-E=$D/externals
-CFLAGS=-Wall -Werror -g -I../tinyalsa/include -I$D -I$E/PIGPIO
+CFLAGS=-Wall -Werror -g -I../tinyalsa/include -I$D
 
 AUDIO_OBJS = audio.o talker-auto-gain.o talking-skull.o track.o wav.o
 DISPLAY_OBJS = st7735s.o canvas.o canvas_png.o
@@ -27,8 +26,6 @@ OBJS = \
 	$(THREAD_OBJS) \
 	$(UTIL_OBJS) \
 	nes.o \
-
-EXTERNALS = $E/PIGPIO/pigpio.o $E/PIGPIO/command.o
 
 all: $(LIB) $(UTILS)
 	cd utils && make

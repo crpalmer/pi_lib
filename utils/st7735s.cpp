@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "externals/PIGPIO/pigpio.h"
+#include "pigpio.h"
 #include "mem.h"
 #include "pi.h"
 //#include "canvas_png.h"

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "externals/PIGPIO/pigpio.h"
+#include "pigpio.h"
 #include "gp-output.h"
 #include "util.h"
 
