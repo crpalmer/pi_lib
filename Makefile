@@ -1,11 +1,11 @@
 LIB=lib.a
 D=$(HOME)/lib
 E=$D/externals
-CFLAGS=-Wall -Werror -g -I$E/include -I$D -I$E/PIGPIO
+CFLAGS=-Wall -Werror -g -I../tinyalsa/include -I$D -I$E/PIGPIO
 
 AUDIO_OBJS = audio.o talker-auto-gain.o talking-skull.o track.o wav.o
 DISPLAY_OBJS = st7735s.o canvas.o canvas_png.o
-GPIO_OBJS = digital-counter.o lights.o gpio.o mcp23017.o piface.o piface_lights.o pca9685.o wb.o \
+GPIO_OBJS = digital-counter.o lights.o gpio.o mcp23017.o pca9685.o wb.o \
 	    ween-board.o
 MOTOR_OBJS = grove.o l298n.o stepper.o
 NET_OBJS = net.o net-line-reader.o
@@ -28,9 +28,7 @@ OBJS = \
 	$(UTIL_OBJS) \
 	nes.o \
 
-EXTERNALS = $E/tinyalsa/pcm.o $E/tinyalsa/mixer.o \
-	$E/mcp23s17.o $E/pifacedigital.o \
-	$E/PIGPIO/pigpio.o $E/PIGPIO/command.o \
+EXTERNALS = $E/PIGPIO/pigpio.o $E/PIGPIO/command.o
 
 all: $(LIB) $(UTILS)
 	cd utils && make
