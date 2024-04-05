@@ -24,10 +24,16 @@ char *readline(char *buf, size_t n)
 
 #else
 
+#include <ctype.h>
+
 char *readline(char *buf, size_t n)
 {
     if (feof(stdin)) return NULL;
-    return fgets(buf, n, stdin);
+    if (fgets(buf, n, stdin) == NULL) return NULL;
+    int i;
+    for (i = strlen(buf); i > 0 && isspace(buf[i-1]); i--) {}
+    buf[i] = '\0';
+    return buf;
 }
 
 #endif
