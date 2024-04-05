@@ -3,11 +3,13 @@
 .*.sw*
 lib.a
 utils/digital-counter
+utils/life
 utils/maestro
 utils/mcp23017
 utils/neopixel-pi
 utils/nes-dump
 utils/servo
+utils/ssd1306
 utils/st7735s
 utils/talking-skull-dump
 utils/talking-skull-prepare
