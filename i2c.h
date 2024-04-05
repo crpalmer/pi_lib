@@ -1,6 +1,8 @@
 #ifndef __I2C_H__
 #define __I2C_H__
 
+#include <stdint.h>
+
 /* init_bus and config_gpios are no-ops on the PI (only for the pico) */
 int i2c_init_bus(int bus, int bus_speed = 100*1000);
 void i2c_config_gpios(int sda, int scl);

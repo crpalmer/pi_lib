@@ -5,10 +5,12 @@ CFLAGS=-Wall -Werror -g -I$E/include -I$D -I$E/PIGPIO
 
 UTILS = \
 	digital-counter \
+	life \
 	maestro \
 	mcp23017 \
 	neopixel-pi \
 	nes-dump \
+	ssd1306 \
 	st7735s \
 	talking-skull-dump \
 	talking-skull-prepare \
@@ -22,6 +24,9 @@ LIBS = $(LIB) -lusb -lrt -lpthread -lpng16 ../../tinyalsa/build/libtinyalsa.a -l
 digital-counter: digital-counter.o $(LIB)
 	$(CXX) digital-counter.o -o $@ $(LIBS)
 
+life: life.o $(LIB)
+	$(CXX) life.o -o $@ $(LIBS)
+
 maestro: maestro.o $(LIB)
 	$(CC) maestro.o -o $@ $(LIBS)
 
@@ -33,6 +38,9 @@ neopixel-pi: neopixel-pi.o $(LIB)
 
 nes-dump: nes-dump.o $(LIB)
 	$(CXX) nes-dump.o -o $@ $(LIBS)
+
+ssd1306: ssd1306.o $(LIB)
+	$(CXX) ssd1306.o -o $@ $(LIBS)
 
 st7735s: st7735s.o $(LIB)
 	$(CXX) st7735s.o -o $@ $(LIBS)

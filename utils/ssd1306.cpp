@@ -63,14 +63,18 @@ main()
 	    } else {
 		canvas->set_pixel(x, y, v);
 	    }
+#ifdef PI_PICO
 	} else if (strcmp(buf, "bootsel") == 0) {
             printf("Rebooting into bootloader mode...\n");
             reset_usb_boot(1<<PICO_DEFAULT_LED_PIN, 0);
+#endif
 	} else if (buf[0] == '?') {
 	    printf("paint - draw the current canvas\n");
 	    printf("fill [0|1] [ x y [ w h ] ]- fill the canvas with the value\n");
 	    printf("set x y [0|1] - set a pixel to the value\n");
+#ifdef PI_PICO
 	    printf("bootsel\n");
+#endif
 	} else if (buf[0] && buf[0] != '\n') {
 	    printf("invalid command\n");
 	}

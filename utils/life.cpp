@@ -2,10 +2,11 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-#include <pico/bootrom.h>
+#include <stdint.h>
 #include "i2c.h"
 #include "ssd1306.h"
 #include "pi.h"
+#include "pi-gpio.h"
 #include "util.h"
 
 static Display *display;
@@ -26,6 +27,8 @@ int
 main()
 {
     pi_init();
+
+    gpioInitialise();
 
     i2c_init_bus(1, 400*1000);
     i2c_config_gpios(2, 3);

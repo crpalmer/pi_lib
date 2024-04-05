@@ -212,8 +212,6 @@ void SSD1306::set_brightness(double pct)
 void SSD1306::paint(Canvas *canvas)
 {
     SSD1306_Canvas *c = (SSD1306_Canvas *) canvas;
-    int w = c->get_width();
-    int h = c->get_height();
 
     for (int page = 0; page < N_PAGES; page++) {
 	uint8_t *raw = c->get_raw_if_dirty(page);
