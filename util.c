@@ -26,13 +26,13 @@ ms_sleep(unsigned ms)
 void
 seed_random()
 {
-    srandom(time(NULL));
+    srand(time(NULL));
 }
 
 double
 random_number()
 {
-    return random() / (LONG_MAX + 1.0);
+    return rand() / (RAND_MAX + 1.0);
 }
 
 unsigned
