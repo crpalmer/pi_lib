@@ -19,7 +19,7 @@ UTILS = \
 
 all: $(UTILS)
 
-LIBS = $(LIB) -lusb -lrt -lpthread -lpng16 ../../tinyalsa/build/libtinyalsa.a -lpigpio
+LIBS = $(LIB) -lusb -lrt -lpthread -lpng16 ../../tinyalsa/build/libtinyalsa.a -lgpiod
 
 digital-counter: digital-counter.o $(LIB)
 	$(CXX) digital-counter.o -o $@ $(LIBS)
@@ -43,7 +43,7 @@ ssd1306: ssd1306.o $(LIB)
 	$(CXX) ssd1306.o -o $@ $(LIBS)
 
 st7735s: st7735s.o $(LIB)
-	$(CXX) st7735s.o -o $@ $(LIBS)
+	$(CXX) st7735s.o -o $@ $(LIBS) -lpigpio
 
 servo: servo.o $(LIB)
 	$(CXX) servo.o -o $@ $(LIBS)

@@ -13,8 +13,8 @@ main(int argc, char **argv)
     int c;
 
     pi_init();
+    pi_gpio_init();
 
-    gpioInitialise();
     Servo *servo = new Servo(2);
 
     while ((c = getchar()) >= 0) {

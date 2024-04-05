@@ -1,12 +1,8 @@
-#ifndef PI_PICO
+#ifndef __PI_GPIO_H__
+#define __PI_GPIO_H__
 
-#include <pigpio.h>
-
-#else
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <stdint.h>
+#include <assert.h>
 
 #define PI_PUD_OFF  0
 #define PI_PUD_DOWN 1
@@ -15,14 +11,38 @@ extern "C" {
 #define PI_INPUT  0
 #define PI_OUTPUT 1
 
-int gpioInitialise();
-int gpioInitialize();
-int gpioRead(unsigned gpio);
-int gpioWrite(unsigned gpio, unsigned value);
-int gpioSetPullUpDown(unsigned gpio, unsigned updown);
-int gpioSetMode(unsigned gpio, unsigned mode);
-int gpioPWM(unsigned user_gpio, unsigned dutycycle);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+void pi_gpio_init();
+int pi_gpio_get(unsigned gpio);
+int pi_gpio_set(unsigned gpio, uint8_t value);
+int pi_gpio_set_pullup(unsigned gpio, unsigned updown);
+int pi_gpio_set_direction(unsigned gpio, unsigned direction);
+
+#ifndef NO_PIGPIO_EMULATION
+
+/* Preserve the pigpio names for compatibility outside of this
+ * library, but build the library without them to keep the code
+ * clean.
+ */
+
+static inline int gpioInitialise() { pi_gpio_init(); return 0; }
+static inline int gpioInitialize() { pi_gpio_init(); return 0; }
+static inline int gpioRead(unsigned gpio) { return pi_gpio_get(gpio); }
+static inline int gpioWrite(unsigned gpio, uint8_t value) { return pi_gpio_set(gpio, value); }
+static inline int gpioSetPullUpDown(unsigned gpio, unsigned updown) { return pi_gpio_set_pullup(gpio, updown); }
+static inline int gpioSetMode(unsigned gpio, unsigned mode) { return pi_gpio_set_direction(gpio, mode); }
+static inline int gpioPWM(unsigned gpio, unsigned dutycycle) { assert(0); return -1; }
+
+/* TODO */
+
+// int spiWrite(int, char *, unsigned);
+// int spiOpen(int, int, int);
+
+#endif
+ 
 #ifdef __cplusplus
 };
 #endif

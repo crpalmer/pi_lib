@@ -10,9 +10,6 @@
 #define N_INPUTS 8
 #define N_OUTPUTS_PER_BANK 8
 
-#define WB_PI_SERVO (1<<29)
-#define WB_PI_PWM (1<<30)
-
 #define WB_OUTPUT(bank, pin) (((bank-1))*8 + (pin-1) + N_INPUTS)
 
 typedef struct {
@@ -104,16 +101,13 @@ wb_init_common(void)
 
     if (wb_is_init) return 0;
 
-    if ((i = gpioInitialise()) < 0) {
-	fprintf(stderr, "gpioInitialize returned %d\n", i);
-	return i;
-    }
+    pi_gpio_init();
 
     for (i = 0; i < N_GPIO_TABLE; i++) {
+	pi_gpio_set_direction(gpio_table[i].id, gpio_table[i].mode);
 	if (gpio_table[i].mode == PI_INPUT) {
-	    gpioSetPullUpDown(gpio_table[i].id, PI_PUD_DOWN);
+	    pi_gpio_set_pullup(gpio_table[i].id, PI_PUD_DOWN);
 	}
-	gpioSetMode(gpio_table[i].id, gpio_table[i].mode);
     }
 
     wb_is_init = true;
@@ -138,7 +132,7 @@ wb_init_v2()
 bool wb_get(unsigned pin)
 {
     int id = get_input_id(pin);
-    return gpioRead(gpio_table[id].id);
+    return pi_gpio_get(gpio_table[id].id);
 }
 
 unsigned
@@ -179,10 +173,10 @@ wb_set(unsigned bank, unsigned pin, unsigned value)
     int id = get_output_id(bank, pin);
 
     if (gpio_table[id].mode != PI_OUTPUT) {
-	gpioSetMode(gpio_table[id].id, PI_OUTPUT);
+	pi_gpio_set_direction(gpio_table[id].id, PI_OUTPUT);
 	gpio_table[id].mode = PI_OUTPUT;
     }
-    gpioWrite(gpio_table[id].id, value);
+    pi_gpio_set(gpio_table[id].id, value);
 }
 
 void
@@ -201,37 +195,19 @@ wb_set_outputs(unsigned mask, unsigned values)
 }
 
 void
-wb_pwm(unsigned bank, unsigned pin, float duty)
-{
-     wb_pwm_freq(bank, pin, 0, duty);
-}
-
-void
-wb_pwm_freq(unsigned bank, unsigned pin, unsigned freq, float duty)
-{
-    int id = get_output_id(bank, pin);
-
-    if (gpio_table[id].mode != WB_PI_PWM) {
-	gpio_table[id].mode = WB_PI_PWM;
-    }
-    if (freq) gpioSetPWMfrequency(gpio_table[id].id, freq);
-    gpioPWM(gpio_table[id].id, duty * gpioGetPWMrange(gpio_table[id].id));
-}
-
-void
 wb_set_pull_up(unsigned pin, wb_pull_up_mode_t mode)
 {
     int id = get_input_id(pin);
 
     switch(mode) {
     case WB_PULL_UP_NONE:
-	gpioSetPullUpDown(gpio_table[id].id, PI_PUD_OFF);
+	pi_gpio_set_pullup(gpio_table[id].id, PI_PUD_OFF);
 	break;
     case WB_PULL_UP_DOWN:
-	gpioSetPullUpDown(gpio_table[id].id, PI_PUD_DOWN);
+	pi_gpio_set_pullup(gpio_table[id].id, PI_PUD_DOWN);
 	break;
     case WB_PULL_UP_UP:
-	gpioSetPullUpDown(gpio_table[id].id, PI_PUD_UP);
+	pi_gpio_set_pullup(gpio_table[id].id, PI_PUD_UP);
 	break;
     }
 }

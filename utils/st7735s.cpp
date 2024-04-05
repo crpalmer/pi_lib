@@ -11,10 +11,7 @@ int
 main(int argc, char **argv)
 {
     pi_init();
-    if (gpioInitialise() < 0) {
-	fprintf(stderr, "Failed to init pigpio\n");
-	exit(1);
-    }
+    pi_gpio_init();
 
     Display *display = new ST7735S();
     Canvas *canvas = display->create_canvas();

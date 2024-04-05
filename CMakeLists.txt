@@ -27,11 +27,10 @@ add_library(pi
     nes.c
     pca9685.cpp
     pi.c
+    pi-gpio-pico.c
     pico_servo.c
     pico-audio.cpp
-    pigpio-emulation.c
     ssd1306.cpp
-    stepper.c
     string-utils.c
     util.c
 )

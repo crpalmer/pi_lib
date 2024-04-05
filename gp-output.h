@@ -11,15 +11,11 @@ public:
 
     GPOutput(unsigned gpio) {
 	this->gpio = gpio;
-        gpioSetMode(gpio, PI_OUTPUT);
+        pi_gpio_set_direction(gpio, PI_OUTPUT);
     }
 
     void set(bool value) {
-        gpioWrite(gpio, value);
-    }
-
-    void pwm(double pct) {
-	gpioPWM(gpio, pct * 255);
+        pi_gpio_set(gpio, value);
     }
 
 private:

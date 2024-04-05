@@ -1,6 +1,8 @@
 #ifndef __ST7735S__
 #define __ST7735S__
 
+#include <assert.h>
+
 #include "canvas.h"
 #include "display.h"
 #include "gp-output.h"

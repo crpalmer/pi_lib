@@ -1,11 +1,11 @@
 LIB=lib.a
 D=$(HOME)/lib
-CFLAGS=-Wall -Werror -g -I../tinyalsa/include
+CFLAGS=-Wall -Werror -g -I../tinyalsa/include -DNO_PIGPIO_EMULATION
 
 AUDIO_OBJS = audio.o talker-auto-gain.o talking-skull.o track.o wav.o
 DISPLAY_OBJS = ssd1306.o st7735s.o canvas.o canvas_png.o
-GPIO_OBJS = digital-counter.o lights.o i2c.o mcp23017.o pca9685.o wb.o \
-	    ween-board.o
+GPIO_OBJS = digital-counter.o lights.o i2c.o mcp23017.o pca9685.o \
+	    pi-gpio-pi.o wb.o ween-board.o
 MOTOR_OBJS = grove.o l298n.o
 NET_OBJS = net.o net-line-reader.o
 SERVER_OBJS = server.o

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <string.h>
 #include "time-utils.h"
 #include "wb.h"
 
@@ -52,7 +53,18 @@ watcher_main(void *unused)
 int
 main(int argc, char **argv)
 {
-    if (wb_init() < 0) {
+    int res;
+
+    if (argc > 1 && strcmp(argv[1], "-v2") == 0) {
+	res = wb_init_v2();
+    } else if (argc > 1) {
+	fprintf(stderr, "usage: [-v2]\n");
+	exit(0);
+    } else {
+	res = wb_init();
+    }
+
+    if (res < 0) {
 	fprintf(stderr, "Failed to initialize wb\n");
 	exit(1);
     }
@@ -96,16 +108,6 @@ main(int argc, char **argv)
 	    } else {
 		goto usage;
 	    }
-	} else if (buf[0] == 'p') {
-	    unsigned freq;
-	    float fvalue;
-	    if (sscanf(&buf[1], "%d %d %u %f", &bank, &pin, &freq, &fvalue) == 4) {
-		wb_pwm_freq(bank, pin, freq, fvalue/100.0);
-	    } else if (sscanf(&buf[1], "%d %d %f", &bank, &pin, &fvalue) == 3) {
-		wb_pwm(bank, pin, fvalue/100.0);
-	    } else {
-		goto usage;
-	    }
 	} else if (buf[0] == 'w' || buf[0] == 'W') {
 	    unsigned mask, values = buf[0] == 'w' ? WB_PIN_MASK_ALL : 0;
 	    if (sscanf(&buf[1], "%d", &pin) == 1) {
@@ -118,7 +120,7 @@ main(int argc, char **argv)
 	    watcher_enabled = buf[0] == 'T';
 	} else {
 usage:
-	    fprintf(stderr, "g [<pin 1-8>]\np <bank 1/2> <pin 1-8> [<freq>] <duty%%>\ns <bank 1/2> <pin 1-8> <value 0/1>\n- <pin 1-8> set pull down\n+ <pin 1-8> set pull up\n= <pin 1-8> remove pulll up/down\nw [ <pin 1-8> ] wait for a pin to read true\nW [ <pin 1-8> ] wait for a pin to read false\nT enable watcher thread\nt disable watcher thread\n");
+	    fprintf(stderr, "g [<pin 1-8>]\ns <bank 1/2> <pin 1-8> <value 0/1>\n- <pin 1-8> set pull down\n+ <pin 1-8> set pull up\n= <pin 1-8> remove pulll up/down\nw [ <pin 1-8> ] wait for a pin to read true\nW [ <pin 1-8> ] wait for a pin to read false\nT enable watcher thread\nt disable watcher thread\n");
 	}
     }
 

@@ -53,7 +53,7 @@ main(int argc, char **argv)
     i2c_init_bus(0);
     i2c_config_gpios(2, 3);
 
-    gpioInitialise();
+    pi_gpio_init();
 
 #ifdef PI_PICO
     if (0) {
