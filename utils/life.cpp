@@ -28,10 +28,10 @@ main()
 {
     pi_init();
 
-    gpioInitialise();
+    seed_random();
 
-    i2c_init_bus(1, 400*1000);
-    i2c_config_gpios(2, 3);
+    i2c_init_bus(0, 400*1000);
+    i2c_config_gpios(4, 5);
 
     printf("Creating SSD1306\n");
     display = new SSD1306(1);
@@ -42,23 +42,22 @@ main()
     int w = canvas[0]->get_width();
     int h = canvas[0]->get_height();
 
-    ms_sleep(1000);
-
     while (1) {
         int index = 0;
+	int n_alive = 0;
 
 	printf("Starting game\n");
 
-        canvas[index]->fill(0);
 	for (int x = 0; x < w; x++) {
 	    for (int y = 0; y < h; y++) {
 		if (random_number_in_range(1,4) == 1) {
 		    canvas[index]->set_pixel(x, y, 1);
+		    n_alive++;
 		}
 	    }
 	}
 
-	int n_alive;
+	printf("Initial population of %d cells.\n", n_alive);
 
 	do {
 	    Canvas *c_last = canvas[index];
