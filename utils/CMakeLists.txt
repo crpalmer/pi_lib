@@ -22,6 +22,7 @@ endfunction()
 
 add_definitions(-DPI_PICO)
 
+util_cpp(adc)
 util_cpp(ble)
 util_cpp(life)
 util_cpp(light-sensor)
