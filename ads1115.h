@@ -57,8 +57,11 @@ private:
     ads1115_sps_t sps = ADS1115_128SPS;
 
     uint16_t config_start_conversion(uint8_t reg) {
-	return 00000    // Disable comparator
-               | (sps << 5)   // samples / sec
+       return    (3 << 0)   // disable comparator
+               | (0 << 2)   // non latching comparator
+               | (0 << 3)   // alert pin is active low
+               | (0 << 4)   // traditional comparator
+               | (sps << 5) // samples / sec
 	       | (1 << 8)   // single shot mode
 	       | (max_volts_to_config_bits() << 9)   // voltage range
 	       | ((4 + reg) << 12)
