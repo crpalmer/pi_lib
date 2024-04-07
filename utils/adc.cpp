@@ -13,7 +13,7 @@ ADC *new_adc()
 {
     ADS1115 *adc = new ADS1115(1);
     //adc->set_max_volts(ADS1115_0_256V);
-    //adc->set_samples_per_sec(ADS1115_8SPS);
+    adc->set_samples_per_sec(ADS1115_860SPS);
     return adc;
 }
 
@@ -26,6 +26,8 @@ ADC *new_adc() { return new PicoADC(); }
 const int n_readings = 1;
 
 #endif
+
+#define THRESHOLD 1.00
 
 int main()
 {
@@ -47,13 +49,18 @@ int main()
         struct timespec start;
         nano_gettime(&start);
 
+	int n = 0;
+
 	for (int i = 0; i < n_readings; i++) {
 	    double v;
 
 	    v = adc->read_v(i);
-	    printf(" %d:%.2f", i, v);
+	    if (v  > THRESHOLD) {
+		printf(" %d:%.2f", i, v);
+		n++;
+	    }
 	}
-	printf(" [%.3f]\n", nano_elapsed_ms_now(&start));
-	ms_sleep(100);
+	if (n > 0) printf(" [%.3f]\n", nano_elapsed_ms_now(&start) / 1000.0);
+	ms_sleep(10);
     }
 }

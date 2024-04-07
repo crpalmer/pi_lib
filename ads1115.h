@@ -11,6 +11,17 @@ typedef enum {
     ADS1115_0_256V
 } ads1115_v_t;
 
+typedef enum {
+    ADS1115_8SPS = 0,
+    ADS1115_16SPS,
+    ADS1115_32SPS,
+    ADS1115_64SPS,
+    ADS1115_128SPS,
+    ADS1115_250SPS,
+    ADS1115_475SPS,
+    ADS1115_860SPS
+} ads1115_sps_t;
+
 class ADS1115 : public ADC {
 public:
     ADS1115(int bus = 0, int addr = 0x48) {
@@ -36,13 +47,18 @@ public:
 	v = max_volts;
     }
 
+    void set_samples_per_sec(ads1115_sps_t new_sps) {
+	sps = new_sps;
+    }
+
 private:
     int i2c;
     ads1115_v_t v = ADS1115_2_048V;
+    ads1115_sps_t sps = ADS1115_128SPS;
 
     uint16_t config_start_conversion(uint8_t reg) {
 	return 00000    // Disable comparator
-               | (4 << 5)   // 128 samples / sec
+               | (sps << 5)   // samples / sec
 	       | (1 << 8)   // single shot mode
 	       | (max_volts_to_config_bits() << 9)   // voltage range
 	       | ((4 + reg) << 12)
