@@ -1,6 +1,8 @@
 #ifndef __ADC_H__
 #define __ADC_H__
 
+#include <stdint.h>
+
 class ADC {
 public:
     virtual uint16_t read(int channel) = 0;

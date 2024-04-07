@@ -4,6 +4,7 @@ E=$D/externals
 CFLAGS=-Wall -Werror -g -I$E/include -I$D -I$E/PIGPIO
 
 UTILS = \
+	adc \
 	digital-counter \
 	life \
 	maestro \
@@ -20,6 +21,9 @@ UTILS = \
 all: $(UTILS)
 
 LIBS = $(LIB) -lusb -lrt -lpthread -lpng16 ../../tinyalsa/build/libtinyalsa.a -lgpiod
+
+adc: adc.o $(LIB)
+	$(CXX) adc.o -o $@ $(LIBS)
 
 digital-counter: digital-counter.o $(LIB)
 	$(CXX) digital-counter.o -o $@ $(LIBS)
