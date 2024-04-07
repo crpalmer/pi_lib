@@ -13,6 +13,7 @@ ADC *new_adc()
 {
     ADS1115 *adc = new ADS1115(1);
     //adc->set_max_volts(ADS1115_0_256V);
+    //adc->set_samples_per_sec(ADS1115_8SPS);
     return adc;
 }
 
@@ -26,36 +27,33 @@ const int n_readings = 1;
 
 #endif
 
-#define THRESHOLD 1.0
-
 int main()
 {
     pi_init();
-    struct timespec start;
 
     ms_sleep(2000);
+
+    printf("Initializing the i2c bus.\n");
 
     i2c_init_bus(1);
     i2c_config_gpios(2, 3);
 
+    printf("Initializing the ADC.\n");
     ADC *adc = new_adc();
 
-    nano_gettime(&start);
+    printf("Reading %d channels.\n", n_readings);
 
     while (1) {
-	int n = 0;
+        struct timespec start;
+        nano_gettime(&start);
+
 	for (int i = 0; i < n_readings; i++) {
 	    double v;
 
-	    if ((v = adc->read_v(i)) >= THRESHOLD) {
-		if (n == 0) printf("%5.3f", nano_elapsed_ms_now(&start) / 1000.0);
-		printf(" %d:%.2f", i, v);
-		n++;
-	    }
+	    v = adc->read_v(i);
+	    printf(" %d:%.2f", i, v);
 	}
-	if (n) {
-	    printf("\n");
-	    ms_sleep(100);
-	}
+	printf(" [%.3f]\n", nano_elapsed_ms_now(&start));
+	ms_sleep(100);
     }
 }
