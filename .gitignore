@@ -2,6 +2,7 @@
 *.d
 .*.sw*
 lib.a
+utils/adc
 utils/digital-counter
 utils/life
 utils/maestro
