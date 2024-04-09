@@ -12,6 +12,7 @@ UTILS = \
 	mcp23017 \
 	neopixel-pi \
 	nes-dump \
+	rotary-encoder \
 	ssd1306 \
 	st7735s \
 	talking-skull-dump \
@@ -46,6 +47,9 @@ neopixel-pi: neopixel-pi.o $(LIB)
 
 nes-dump: nes-dump.o $(LIB)
 	$(CXX) nes-dump.o -o $@ $(LIBS)
+
+rotary-encoder: rotary-encoder.o $(LIB)
+	$(CXX) rotary-encoder.o -o $@ $(LIBS)
 
 ssd1306: ssd1306.o $(LIB)
 	$(CXX) ssd1306.o -o $@ $(LIBS)

@@ -10,6 +10,7 @@ utils/maestro
 utils/mcp23017
 utils/neopixel-pi
 utils/nes-dump
+utils/rotary-encoder
 utils/servo
 utils/ssd1306
 utils/st7735s
