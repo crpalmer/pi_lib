@@ -4,6 +4,7 @@
 lib.a
 utils/adc
 utils/digital-counter
+utils/gp-input
 utils/life
 utils/maestro
 utils/mcp23017

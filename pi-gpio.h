@@ -11,6 +11,8 @@
 #define PI_INPUT  0
 #define PI_OUTPUT 1
 
+#define PI_GPIO_EVENT_RISING  1
+#define PI_GPIO_EVENT_FALLING 2
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -20,6 +22,9 @@ int pi_gpio_get(unsigned gpio);
 int pi_gpio_set(unsigned gpio, uint8_t value);
 int pi_gpio_set_pullup(unsigned gpio, unsigned updown);
 int pi_gpio_set_direction(unsigned gpio, unsigned direction);
+
+typedef void (*pi_gpio_irq_handler_t)(void *arg, unsigned gpio, unsigned events);
+int pi_gpio_set_irq_handler(unsigned gpio, pi_gpio_irq_handler_t irq_handler, void *irq_handler_arg);
 
 #ifndef NO_PIGPIO_EMULATION
 

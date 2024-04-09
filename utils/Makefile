@@ -6,6 +6,7 @@ CFLAGS=-Wall -Werror -g -I$E/include -I$D -I$E/PIGPIO
 UTILS = \
 	adc \
 	digital-counter \
+	gp-input \
 	life \
 	maestro \
 	mcp23017 \
@@ -27,6 +28,9 @@ adc: adc.o $(LIB)
 
 digital-counter: digital-counter.o $(LIB)
 	$(CXX) digital-counter.o -o $@ $(LIBS)
+
+gp-input: gp-input.o $(LIB)
+	$(CXX) gp-input.o -o $@ $(LIBS)
 
 life: life.o $(LIB)
 	$(CXX) life.o -o $@ $(LIBS)
