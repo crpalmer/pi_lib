@@ -30,6 +30,7 @@ add_library(pi
     pi-gpio-pico.c
     pico_servo.c
     pico-audio.cpp
+    pico-notes.cpp
     ssd1306.cpp
     string-utils.c
     util.c
