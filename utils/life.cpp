@@ -7,6 +7,7 @@
 #include "ssd1306.h"
 #include "pi.h"
 #include "pi-gpio.h"
+#include "time-utils.h"
 #include "util.h"
 
 static Display *display;

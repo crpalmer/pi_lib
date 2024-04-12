@@ -2,10 +2,6 @@
 #define __SERVO_H__
 #endif
 
-#ifdef PI_PICO
-#include "pico_servo.h"
-#endif
-
 #define SERVO_STANDARD_MIN 1050
 #define SERVO_STANDARD_MAX 1950
 

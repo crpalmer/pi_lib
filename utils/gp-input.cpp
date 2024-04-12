@@ -12,30 +12,9 @@ static GPInput *inputs[MAX_INPUTS];
 int n_inputs;
 
 
-#ifdef PI_PICO
+#ifdef PLATFORM_pico
 
 #include <pico/bootrom.h>
-
-char *readline(char *buf, size_t n)
-{
-    pico_readline_echo(buf, n, true);
-    printf("\n");
-    return buf;
-}
-
-#else
-
-#include <ctype.h>
-
-char *readline(char *buf, size_t n)
-{
-    if (feof(stdin)) return NULL;
-    if (fgets(buf, n, stdin) == NULL) return NULL;
-    int i;
-    for (i = strlen(buf); i > 0 && isspace(buf[i-1]); i--) {}
-    buf[i] = '\0';
-    return buf;
-}
 
 #endif
 
@@ -61,7 +40,7 @@ main()
     pi_init();
     pi_gpio_init();
 
-    while (readline(buf, sizeof(buf)) != NULL) {
+    while (pi_readline(buf, sizeof(buf)) != NULL) {
 	unsigned gpio;
 
 	if (sscanf(buf, "%u", &gpio) == 1) {
@@ -72,14 +51,14 @@ main()
 	    } else {
 	       n_inputs++;
 	    }
-#ifdef PI_PICO
+#ifdef PLATFORM_pico
 	} else if (strcmp(buf, "bootsel") == 0) {
             printf("Rebooting into bootloader mode...\n");
-            reset_usb_boot(1<<PICO_DEFAULT_LED_PIN, 0);
+            reset_usb_boot(0, 0);
 #endif
 	} else if (buf[0] == '?') {
 	    printf("gpio# - enable a watcher\n");
-#ifdef PI_PICO
+#ifdef PLATFORM_pico
 	    printf("bootsel\n");
 #endif
 	} else if (buf[0] && buf[0] != '\n') {

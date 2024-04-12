@@ -1,6 +1,8 @@
 #ifndef __NOTES_H__
 #define __NOTES_H__
 
+#include <pico/time.h>
+
 typedef struct {
    unsigned frequency;
    unsigned ms;

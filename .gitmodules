@@ -1,5 +1,6 @@
 [submodule "tinyalsa"]
 	path = tinyalsa
 	url = git@github.com:crpalmer/tinyalsa.git
+	branch = master
 [submodule "tinyalsa/"]
 	branch = master

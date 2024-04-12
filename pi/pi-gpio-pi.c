@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include <linux/gpio.h>
 #include "pi-gpio.h"
-#include "util.h"
+#include "time-utils.h"
 
 #define NUM_GPIOS 40
 

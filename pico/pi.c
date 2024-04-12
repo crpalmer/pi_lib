@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <pico/stdlib.h>
 #include "time-utils.h"
 
 #include "pi.h"
-
-#ifdef PI_PICO
 
 #include "call-every.h"
 #include "hardware/adc.h"
@@ -53,11 +52,7 @@ reboot_on_button_press(void *unused)
     if (get_bootsel_button()) {
 	if (pushed) {
 	     printf("Button long pressed, rebooting to bootsel mode\n");
-	     reset_usb_boot(0
-#ifdef PICO_DEFAULT_LED_PIN
-                              | 1<<PICO_DEFAULT_LED_PIN
-#endif
-				, 0);
+	     reset_usb_boot(0, 0);
 	} else {
 	     pushed = 1;
 	}
@@ -66,37 +61,23 @@ reboot_on_button_press(void *unused)
     }
 }
 
-#endif
-
 void
 pi_init(void)
 {
-#ifdef PI_PICO
     pi_init_no_reboot();
     call_every = call_every_new(1000, reboot_on_button_press, NULL);
     call_every_start(call_every);
-#endif
 }
 
 void
 pi_init_no_reboot(void)
 {
-#ifdef PI_PICO
     stdio_init_all();
     adc_init();
-#endif
 }
 
-#ifdef PI_PICO
-
-void
-pico_readline(char *buf, size_t buf_len)
-{
-    pico_readline_echo(buf, buf_len, false);
-}
-
-void
-pico_readline_echo(char *buf, size_t buf_len, bool echo)
+char *
+pi_readline(char *buf, size_t buf_len)
 {
     int n_buf = 0;
 
@@ -104,10 +85,10 @@ pico_readline_echo(char *buf, size_t buf_len, bool echo)
 	char c;
 
 	if ((c = getchar()) > 0) {
-	    if (echo) putchar(c);
+	    putchar(c);
 	    if (c == '\r' || c == '\n') {
 		buf[n_buf] = '\0';
-		return;
+		return buf;
 	    } else if (c == 8) {
 		if (n_buf) {
 		    n_buf--;
@@ -120,5 +101,3 @@ pico_readline_echo(char *buf, size_t buf_len, bool echo)
 	}
     }
 }
-
-#endif

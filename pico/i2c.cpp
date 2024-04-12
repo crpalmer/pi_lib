@@ -2,9 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "i2c.h"
-
-#ifdef PI_PICO
-
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
 
@@ -67,63 +64,3 @@ int i2c_write(int fd, unsigned char reg, const void *data, int n_bytes)
     }
     return i2c_write_blocking(i2c_inst(i2c->bus), i2c->addr, msg, n_bytes+1, false);
 }
-
-#else
-
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <linux/i2c-dev.h>
-
-
-int i2c_init_bus(int bus, int speed)
-{
-    if (speed != 100*1000) {
-	fprintf(stderr, "Warning: Ignoring bus speed request.\n");
-    }
-
-    return 0;
-}
-
-void i2c_config_gpios(int sda, int scl)
-{
-}
-
-int i2c_open(int bus, int addr)
-{
-    char fname[128];
-    int fd, err;
-
-    sprintf(fname, "/dev/i2c-%d", bus);
-    if ((fd = open(fname, O_RDWR)) < 0) {
-	perror(fname);
-	return fd;
-    }
-
-    if ((err = ioctl(fd, I2C_SLAVE, addr)) < 0) {
-        perror("ioctl");
-        return err;
-    }
-
-    return fd;
-}
-
-void i2c_close(int fd)
-{
-    close(fd);
-}
-
-int i2c_read(int fd, unsigned char reg, void *data, int n_bytes)
-{
-    return read(fd, data, n_bytes);
-}
-
-int i2c_write(int fd, unsigned char reg, const void *data, int n_bytes)
-{
-    uint8_t buf[n_bytes+1];
-    buf[0] = reg;
-    memcpy(&buf[1], data, n_bytes);
-    return write(fd, buf, n_bytes+1);
-}
-
-#endif

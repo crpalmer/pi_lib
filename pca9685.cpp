@@ -28,11 +28,7 @@ PCA9685::PCA9685(unsigned address, unsigned hz)
 {
     i2c = i2c_open(1, address);
     if (i2c < 0) {
-#ifdef PI_PICO
 	fprintf(stderr, "failed to open i2c device\n");
-#else
-        throw "failed to open i2c device";
-#endif
     }
 
     reset();

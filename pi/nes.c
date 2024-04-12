@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include "nes.h"
 
-#ifndef PI_PICO
 #include <linux/input.h>
 #include <linux/input-event-codes.h>
 
@@ -34,14 +33,9 @@ static void handle_abs_event(struct input_event *e, nes_event_t *nes)
     }
 }
 
-#endif
-
 int
 nes_read(nes_event_t *nes, FILE *f)
 {
-#ifdef PI_PICO
-    return -1;
-#else
     struct input_event e;
 
     if (fread(&e, sizeof(e), 1, f) == 1) {
@@ -54,7 +48,6 @@ nes_read(nes_event_t *nes, FILE *f)
     } else {
 	return -1;
     }
-#endif
 }
 
 static enum nes_button

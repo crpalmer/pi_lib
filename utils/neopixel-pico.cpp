@@ -10,8 +10,6 @@
 
 static char line[100*1024];
 
-static bool echo = true;
-
 #define STRNCMP(a, b) strncmp(a, b, strlen(b))
 
 #define FADE_INC	1
@@ -32,9 +30,9 @@ show(NeoPixelPico *neo)
 {
     struct timespec start;
 
-    if (echo) nano_gettime(&start);
+    nano_gettime(&start);
     neo->show();
-    if (echo) printf("show took %d ms\n", nano_elapsed_ms_now(&start));
+    printf("show took %d ms\n", nano_elapsed_ms_now(&start));
 }
 
 static void
@@ -83,25 +81,22 @@ main()
 	    ms_sleep(1);
 	}
 
-	pico_readline_echo(line, sizeof(line), echo);
+	pi_readline(line, sizeof(line));
 
 	int space = 0;
 	while (line[space] && line[space] != ' ') space++;
 
 	if (strcmp(line, "bootsel") == 0) {
 	    printf("Rebooting into bootloader mode...\n");
-	    reset_usb_boot(1<<PICO_DEFAULT_LED_PIN, 0);
+	    reset_usb_boot(0, 0);
 	} else if (strcmp(line, "dump") == 0) {
 	    for (int i = 0; i < neo->get_n_leds(); i++) {
 		neopixel_rgb_t rgb = neo->get_led(i);
 		printf("%3d %02x %02x %02x\n", i, rgb.r, rgb.g, rgb.b);
 	    }
-	} else if (STRNCMP(line, "echo ") == 0) {
-	    echo = atoi(&line[space]);
 	} else if (strcmp(line, "help") == 0) {
 	    printf("bootsel: reboot into bootloader mode\n");
 	    printf("dump\n");
-	    printf("echo <0/1>: set echo mode\n");
 	    printf("fade_in <r> <g> <b>\n");
 	    printf("fade_out <r> <g> <b>\n");
 	    printf("set_all <r> <g> <b>\n");
@@ -128,15 +123,15 @@ main()
 	    if (get_rgb("set_all: usage", &line[space], &r, &g, &b)) {
 	        neo->set_all(r, g, b);
 		show(neo);
-		if (echo) printf("set_all to %d,%d,%d\n", r, g, b);
+		printf("set_all to %d,%d,%d\n", r, g, b);
 	    }
 	} else if (STRNCMP(line, "set_led ") == 0) {
 	    int led, r, g, b;
 
 	    if (sscanf(&line[space], "%d %d %d %d", &led, &r, &g, &b) == 4) {
 	        neo->set_led(led, r, g, b);
-		if (echo) printf("set_led %d to %d,%d,%d\n", led, r, g, b);
-	    } else if (echo) {
+		printf("set_led %d to %d,%d,%d\n", led, r, g, b);
+	    } else {
 		printf("set_led: usage <led> <r> <g> <b>\n");
 	    }
 	} else if (strcmp(line, "show") == 0) {

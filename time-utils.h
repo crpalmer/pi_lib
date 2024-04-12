@@ -1,12 +1,12 @@
-#ifndef __TIME_UTILS_H__
-#define __TIME_UTILS_H__
+#ifndef __TIME_UTILS_COMMON_H__
+#define __TIME_UTILS_COMMON_H__
+
+#include <time.h>
+#include <assert.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <time.h>
-#include <assert.h>
 
 #define TIMESPEC_FMT "%d.%09d"
 #define NANOSEC_PER_MS   1000000
@@ -14,22 +14,65 @@ extern "C" {
 #define NANOSEC_PER_USEC 1000
 #define MS_PER_SEC       1000
 
-#ifdef PI_PICO
-#include <pico/time.h>
-#include <pico/types.h>
-#endif
+static inline int nano_elapsed_ms(struct timespec *newer, struct timespec *later);
+
+#ifdef PLATFORM_pico
+
+#include "pico/time.h"
+#include "pico/types.h"
 
 static inline void
 nano_gettime(struct timespec *t)
 {
-#ifdef PI_PICO
     absolute_time_t now = get_absolute_time();
     t->tv_sec = to_us_since_boot(now) / 1000 / 1000;
     t->tv_nsec = (to_us_since_boot(now) % (1000*1000)) * 1000;
-#else
-    clock_gettime(CLOCK_MONOTONIC, t);
-#endif
 }
+
+static inline void
+nano_sleep_until(struct timespec *t)
+{
+    struct timespec now;
+    int ms;
+
+    nano_gettime(&now);
+    ms = nano_elapsed_ms(t, &now);
+    if (ms > 0) sleep_ms(ms);
+}
+
+static inline void
+ms_sleep(unsigned ms)
+{
+    sleep_ms(ms);
+}
+
+#endif
+#ifdef PLATFORM_pi
+
+static inline void
+nano_gettime(struct timespec *t)
+{
+    clock_gettime(CLOCK_MONOTONIC, t);
+}
+
+static inline void
+nano_sleep_until(struct timespec *t)
+{
+    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, t, NULL);
+}
+
+static inline void
+ms_sleep(unsigned ms)
+{
+    struct timespec ts;
+
+    ts.tv_sec = ms / 1000;
+    ts.tv_nsec = (ms % 1000) * 1000 * 1000;
+
+    nanosleep(&ts, NULL);
+}
+
+#endif
 
 static inline void
 nano_add_usec(struct timespec *t, unsigned usec)
@@ -95,21 +138,6 @@ nano_elapsed_ms_now(struct timespec *start)
 
     nano_gettime(&now);
     return nano_elapsed_ms(&now, start);
-}
-
-static inline void
-nano_sleep_until(struct timespec *t)
-{
-#ifdef PI_PICO
-    struct timespec now;
-    int ms;
-
-    nano_gettime(&now);
-    ms = nano_elapsed_ms(t, &now);
-    if (ms > 0) sleep_ms(ms);
-#else
-    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, t, NULL);
-#endif
 }
 
 #ifdef __cplusplus

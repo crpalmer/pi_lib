@@ -17,26 +17,10 @@ struct call_everyS {
     call_every_func_t  func;
     void              *data;
     call_every_state_t state;
-#ifdef PI_PICO
-    repeating_timer_t  timer;
-#else
     pthread_t          thread;
     pthread_mutex_t    lock;
     pthread_cond_t     cond;
-#endif
 };
-
-#ifdef PI_PICO
-
-static bool
-callback(repeating_timer_t *t)
-{
-    call_every_t *e = (call_every_t *) t->user_data;
-    e->func(e->data);
-    return true;
-}
-
-#else
 
 static void *
 thread_main(void *e_as_vp)
@@ -69,8 +53,6 @@ thread_main(void *e_as_vp)
     return NULL;
 }
 
-#endif
-
 call_every_t *
 call_every_new(unsigned ms, call_every_func_t func, void *data)
 {
@@ -83,14 +65,10 @@ call_every_new(unsigned ms, call_every_func_t func, void *data)
     e->func = func;
     e->data = data;
 
-#ifndef PI_PICO
-    e->state = PAUSE;
-
     pthread_mutex_init(&e->lock, NULL);
     pthread_cond_init(&e->cond, NULL);
 
     pthread_create(&e->thread, NULL, thread_main, e);
-#endif
 
     return e;
 }
@@ -98,20 +76,12 @@ call_every_new(unsigned ms, call_every_func_t func, void *data)
 static void
 set_state(call_every_t *e, call_every_state_t state)
 {
-#ifdef PI_PICO
-    if (state == RUN) {
-	alarm_pool_add_repeating_timer_ms(alarm_pool_get_default(), e->ms, callback, e, &e->timer);
-    } else {
-	cancel_repeating_timer(&e->timer);
-    }
-#else
     assert(e);
 
     pthread_mutex_lock(&e->lock);
     e->state = state;
     pthread_cond_signal(&e->cond);
     pthread_mutex_unlock(&e->lock);
-#endif
 }
 
 void
@@ -130,10 +100,8 @@ void
 call_every_destroy(call_every_t *e)
 {
     set_state(e, STOP);
-#ifndef PI_PICO
     pthread_join(e->thread, NULL);
     pthread_mutex_destroy(&e->lock);
     pthread_cond_destroy(&e->cond);
-#endif
     free(e);
 }

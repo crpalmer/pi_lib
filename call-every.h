@@ -5,10 +5,6 @@
 extern "C" {
 #endif
 
-#ifdef PI_PICO
-#include <pico/time.h>
-#endif
-
 typedef struct call_everyS call_every_t;
 typedef void (*call_every_func_t)(void *data);
 

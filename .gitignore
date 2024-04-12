@@ -18,3 +18,4 @@ utils/talking-skull-dump
 utils/talking-skull-prepare
 utils/wb
 build/
+build.*/

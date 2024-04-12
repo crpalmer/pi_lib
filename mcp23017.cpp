@@ -18,11 +18,7 @@ public:
     void set_pullup_up() override { parent->set_pullup(bank, pin, 1); }
     void clear_pullup() override { parent->set_pullup(bank, pin, 0); }
     void set_pullup_down() override {
-#ifdef PI_PICO
 	fprintf(stderr, "ERROR: MCP23017 cannot set a pulldown resistor\n");
-#else
-	throw "MCP23017 cannot set a pulldown resistor";
-#endif
     }
 
 private:
@@ -51,11 +47,7 @@ MCP23017::MCP23017(unsigned address)
 {
     i2c = i2c_open(1, address);
     if (i2c < 0) {
-#ifdef PI_PICO
-	fprintf(stderr, "ERROR: failed to open i2c device\n");
-#else
-	throw "failed to open i2c device";
-#endif
+	fprintf(stderr, "failed to open i2c device\n");
     }
     this->dir[0] = this->dir[1] = 0;
     this->pullup[0] = this->pullup[1] = 0;

@@ -1,7 +1,7 @@
 #ifndef __MOTOR_H__
 #define __MOTOR_H__
 
-#include "util.h"
+#include "time-utils.h"
 
 class motor_t {
 public:

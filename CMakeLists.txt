@@ -1,53 +1,48 @@
 cmake_minimum_required(VERSION 3.12)
 
-# Pull in SDK (must be before project)
-
-include(pico_sdk_import.cmake)
+include(platform.cmake)
 
 project(pi)
 
-pico_sdk_init()
+platform_add_internal_definitions()
 
+add_subdirectory(${PLATFORM})
+add_subdirectory(net)
 add_subdirectory(utils)
-add_definitions(-DPI_PICO)
 
-add_library(pi
-    ble.cpp
-    call-every.c
-    canvas.cpp
-    file.c
-    global-trace.c
-    grove.cpp
-    i2c.cpp
-    l298n.cpp
-    light-sensor.cpp
-    mcp23017.cpp
-    mem.c
-    neopixel-pico.cpp
-    nes.c
-    pca9685.cpp
-    pi.c
-    pi-gpio-pico.c
-    pico_servo.c
-    pico-audio.cpp
-    pico-notes.cpp
-    ssd1306.cpp
-    string-utils.c
-    util.c
+if("${PLATFORM}" STREQUAL "pi")
+  add_subdirectory(tinyalsa)
+endif()
+
+add_library(pi STATIC
+  canvas.cpp
+  file.c
+  global-trace.c
+  grove.cpp
+  l298n.cpp
+  mcp23017.cpp
+  mem.c
+  pca9685.cpp
+  ssd1306.cpp
+  string-utils.c
+  util.c
 )
 
-pico_generate_pio_header(pi ${CMAKE_CURRENT_LIST_DIR}/pico-audio.pio)
-pico_generate_pio_header(pi ${CMAKE_CURRENT_LIST_DIR}/neopixel.pio)
+if("${PLATFORM}" STREQUAL "pico")
+    target_include_directories(pi PUBLIC "." "pico")
+    set(PLATFORM_LIBS
+	platform_pico
+    )
+else()
+    target_include_directories(pi PUBLIC "." "pi")
+    set(PLATFORM_LIBS
+      platform_pi
+      usb rt pthread png16 gpiod pigpio
+    )
+endif()
 
 target_link_libraries(
     pi
-    pico_stdlib
-    hardware_adc
-    hardware_pwm
-#    hardware_spi
-    hardware_i2c
-#    hardware_pwm
-#    hardware_adc
-    hardware_pio
-#    hardware_dma
+    ${PLATFORM_LIBS}
+    net
 )

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "light-sensor.h"
 #include "pi.h"
-#include "util.h"
+#include "time-utils.h"
 
 int
 main(int argc, char **argv)

@@ -26,25 +26,6 @@ static output_t *ensure_output(unsigned bank, unsigned pin)
     return outputs[bank][pin];
 }
 
-#ifdef PI_PICO
-
-char *readline(char *buf, size_t n)
-{
-    pico_readline_echo(buf, n, true);
-    printf("\n");
-    return buf;
-}
-
-#else
-
-char *readline(char *buf, size_t n)
-{
-    if (feof(stdin)) return NULL;
-    return fgets(buf, n, stdin);
-}
-
-#endif
-
 int
 main(int argc, char **argv)
 {
@@ -55,7 +36,7 @@ main(int argc, char **argv)
 
     pi_gpio_init();
 
-#ifdef PI_PICO
+#ifdef PLATFORM_pico
     if (0) {
 #else
     if (argc > 1) {
@@ -67,7 +48,7 @@ main(int argc, char **argv)
 	mcp = new MCP23017();
     }
 
-    while (readline(buf, sizeof(buf)) != NULL) {
+    while (pi_readline(buf, sizeof(buf)) != NULL) {
 	unsigned bank, pin;
 
 	if (sscanf(&buf[1], "%d %d", &bank, &pin) == 2) {

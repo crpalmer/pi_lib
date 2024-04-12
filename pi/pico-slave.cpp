@@ -2,7 +2,7 @@
 #include <string.h>
 #include "neopixel-pi.h"
 #include "pi-usb.h"
-#include "util.h"
+#include "time-utils.h"
 
 #define VENDOR_ID 0x2e8a
 

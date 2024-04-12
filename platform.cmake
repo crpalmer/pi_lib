@@ -1,0 +1,26 @@
+if("${PLATFORM}" STREQUAL "pico")
+  set(PICO_BOARD pico_w)
+
+  include(${CMAKE_SOURCE_DIR}/pico_sdk_import.cmake)
+  pico_sdk_init()
+elseif("${PLATFORM}" STREQUAL "pi")
+else()
+  message(FATAL_ERROR "You must specify a PLATFORM variable: 'pi' or 'pico'")
+endif()
+add_definitions(-DPLATFORM_${PLATFORM})
+
+function(platform_executable targetName)
+  if("${PLATFORM}" STREQUAL "pico")
+    pico_enable_stdio_usb(${targetName} 1)
+    pico_enable_stdio_uart(${targetName} 0)
+    # create map/bin/hex file etc.
+    pico_add_extra_outputs(${targetName})
+  elseif("${PLATFORM}" STREQUAL "pi")
+  else()
+    message(FATAL_ERROR "You must specify a PLATFORM variable: 'pi' or 'pico'")
+  endif()
+endfunction()
+
+function(platform_add_internal_definitions)
+  add_definitions(-DNO_PIGPIO_EMULATION -DWall -Werror)
+endfunction()

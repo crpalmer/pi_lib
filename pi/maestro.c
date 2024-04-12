@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include "pi-usb.h"
 #include "maestro.h"
+#include "time-utils.h"
 #include "util.h"
 
 #ifdef _WIN32

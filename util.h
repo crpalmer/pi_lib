@@ -24,9 +24,6 @@ random_double_in_range(double low, double high);
 bool
 randomly_with_prob(double prob);
 
-void
-ms_sleep(unsigned ms);
-
 #ifdef __cplusplus
 };
 #endif
