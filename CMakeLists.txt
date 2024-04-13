@@ -8,7 +8,10 @@ platform_add_internal_definitions()
 
 add_subdirectory(${PLATFORM})
 add_subdirectory(net)
-add_subdirectory(utils)
+
+if(${PI_IS_TOP_LEVEL})
+  add_subdirectory(utils)
+endif()
 
 if("${PLATFORM}" STREQUAL "pi")
   add_subdirectory(tinyalsa)
@@ -29,17 +32,17 @@ add_library(pi STATIC
 )
 
 if("${PLATFORM}" STREQUAL "pico")
-    target_include_directories(pi PUBLIC "." "pico")
     set(PLATFORM_LIBS
 	platform_pico
     )
 else()
-    target_include_directories(pi PUBLIC "." "pi")
     set(PLATFORM_LIBS
       platform_pi
       usb rt pthread png16 gpiod pigpio
     )
 endif()
+
+target_include_directories(pi PUBLIC "." "${PLATFORM}" net)
 
 target_link_libraries(
     pi

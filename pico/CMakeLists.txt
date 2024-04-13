@@ -22,7 +22,7 @@ pico_generate_pio_header(platform_pico ${CMAKE_CURRENT_LIST_DIR}/pico-audio.pio)
 pico_generate_pio_header(platform_pico ${CMAKE_CURRENT_LIST_DIR}/neopixel.pio)
 
 target_link_libraries(
-    platform_pico
+    platform_pico PUBLIC
     pico_stdlib
     hardware_adc
     hardware_i2c
