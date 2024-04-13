@@ -3,7 +3,7 @@
 #include "pi-gpio.h"
 #include "mem.h"
 #include "pi.h"
-//#include "canvas_png.h"
+//#include "canvas-png.h"
 #include "st7735s.h"
 #include "util.h"
 

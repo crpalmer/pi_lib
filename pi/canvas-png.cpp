@@ -5,7 +5,7 @@
 #include "file.h"
 #include "mem.h"
 
-#include "canvas_png.h"
+#include "canvas-png.h"
 
 CanvasPNG::CanvasPNG(const char *fname)
 {

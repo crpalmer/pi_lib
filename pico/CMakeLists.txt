@@ -11,7 +11,7 @@ add_library(platform_pico OBJECT
   pi-gpio-pico.c
   pico-audio.cpp
   pico-notes.cpp
-  pico_servo.c
+  pico-servo.c
 )
 
 platform_add_internal_definitions()

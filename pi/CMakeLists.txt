@@ -3,7 +3,7 @@ project(platform_pi)
 add_library(platform_pi OBJECT
   audio.c
   call-every.c
-  canvas_png.cpp
+  canvas-png.cpp
   digital-counter.cpp
   i2c.cpp
   lights.cpp
