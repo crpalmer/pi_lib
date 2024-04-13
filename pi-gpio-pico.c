@@ -16,7 +16,7 @@ typedef struct {
 
 typedef struct {
     unsigned gpio;
-    enum { G_FREE = 0, G_IN, G_OUT, G_PWM } state;
+    enum { G_FREE = 0, G_IN, G_OUT, G_PWM, G_SERVO } state;
     irq_handler_state_t irq_handler;
 } gpio_t;
 
@@ -115,3 +115,16 @@ int pi_gpio_set_irq_handler(unsigned gpio, pi_gpio_irq_handler_t irq_handler, vo
 
     return 0;
 }
+
+int pi_gpio_servo(unsigned gpio, unsigned ms)
+{
+    if (gpios[gpio].state == G_FREE) {
+	servo_attach(gpio);
+	gpios[gpio].state = G_SERVO;
+    } else if (gpios[gpio].state != G_SERVO) {
+	return -1; 
+    }
+
+    return servo_microseconds(gpio, ms);
+}
+

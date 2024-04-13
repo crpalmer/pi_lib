@@ -27,10 +27,6 @@ public:
 	this->pin = pin;
 	this->mn  = mn;
 	this->mx  = mx;
-#ifdef PI_PICO
-	servo_attach(pin);
-	servo_set_bounds(SERVO_EXTENDED_MIN, SERVO_EXTENDED_MAX);
-#endif
     }
 
     void go(double pos)
@@ -38,12 +34,7 @@ public:
 	if (pos < 0) pos = 0;
 	if (pos > 1) pos = 1;
 
-#ifdef PI_PICO
-	pos = convert_to_extended_range(pos);
-	servo_move_to(pin, pos * 180);
-#else
-	gpioServo(pin, pos * (mx - mn) + mn);
-#endif
+	pi_gpio_servo(pin, pos * (mx - mn) + mn);
     }
 
 private:

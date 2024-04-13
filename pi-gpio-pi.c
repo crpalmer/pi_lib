@@ -11,7 +11,7 @@
 typedef struct {
     unsigned gpio;
     struct gpiod_line *line;
-    enum { G_FREE = 0, G_IN, G_OUT} state;
+    enum { G_FREE = 0, G_IN, G_OUT, G_SERVO} state;
     unsigned bias;
     struct {
         pthread_t t;
