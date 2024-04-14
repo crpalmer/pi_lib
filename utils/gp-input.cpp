@@ -11,13 +11,6 @@ static char buf[10*1024];
 static GPInput *inputs[MAX_INPUTS];
 int n_inputs;
 
-
-#ifdef PLATFORM_pico
-
-#include <pico/bootrom.h>
-
-#endif
-
 class Notifier : public GPInputNotifier {
 public:
     Notifier(int id, unsigned gpio) {
@@ -51,16 +44,11 @@ main()
 	    } else {
 	       n_inputs++;
 	    }
-#ifdef PLATFORM_pico
 	} else if (strcmp(buf, "bootsel") == 0) {
-            printf("Rebooting into bootloader mode...\n");
-            reset_usb_boot(0, 0);
-#endif
+            pi_reboot_bootloader();
 	} else if (buf[0] == '?') {
 	    printf("gpio# - enable a watcher\n");
-#ifdef PLATFORM_pico
 	    printf("bootsel\n");
-#endif
 	} else if (buf[0] && buf[0] != '\n') {
 	    printf("invalid command\n");
 	}

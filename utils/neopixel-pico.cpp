@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pico/bootrom.h>
 #include <tusb.h>
 #include "neopixel-pico.h"
 #include "pi.h"
@@ -87,8 +86,7 @@ main()
 	while (line[space] && line[space] != ' ') space++;
 
 	if (strcmp(line, "bootsel") == 0) {
-	    printf("Rebooting into bootloader mode...\n");
-	    reset_usb_boot(0, 0);
+	    pi_reboot_bootloader();
 	} else if (strcmp(line, "dump") == 0) {
 	    for (int i = 0; i < neo->get_n_leds(); i++) {
 		neopixel_rgb_t rgb = neo->get_led(i);

@@ -15,6 +15,13 @@ pi_init_no_reboot(void)
 {
 }
 
+void
+pi_reboot_bootloader(void)
+{
+    fprintf(stderr, "pi: no bootloader available\n");
+    exit(0);
+}
+
 char *
 pi_readline(char *buf, size_t buf_len)
 {

@@ -51,14 +51,21 @@ reboot_on_button_press(void *unused)
 {
     if (get_bootsel_button()) {
 	if (pushed) {
-	     printf("Button long pressed, rebooting to bootsel mode\n");
-	     reset_usb_boot(0, 0);
+	     fprintf(stderr, "Button long pressed, ");
+	     pi_reboot_bootloader();
 	} else {
 	     pushed = 1;
 	}
     } else {
 	pushed = 0;
     }
+}
+
+void
+pi_reboot_bootloader()
+{
+    fprintf(stderr, "rebooting to bootsel mode\n");
+    reset_usb_boot(0, 0);
 }
 
 void

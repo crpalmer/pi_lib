@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <ctype.h>
 #include "pi.h"
 #include "rotary-encoder.h"
 #include "util.h"
@@ -10,17 +11,6 @@ static char buf[10*1024];
 static RotaryEncoder *re;
 static int min_value = -INT_MAX;
 static int max_value = +INT_MAX;
-
-
-#ifdef PLATFORM_pico
-
-#include <pico/bootrom.h>
-
-#else
-
-#include <ctype.h>
-
-#endif
 
 class Notifier : public RotaryEncoderNotifier {
 public:
@@ -54,9 +44,7 @@ main()
 	    printf("g - get the current value\n");
 	    printf("r min max - set the range\n");
 	    printf("s value - set the value\n");
-#ifdef PLATFORM_pico
 	    printf("bootsel\n");
-#endif
 	} else if (buf[0] == 'g') {
 	    printf("%d %d\n", re->get(), re->get_switch());
 	} else if (buf[0] == 's') {
@@ -68,11 +56,8 @@ main()
 	    } else {
 		printf("Missing values: min max\n");
 	    }
-#ifdef PLATFORM_pico
 	} else if (strcmp(buf, "bootsel") == 0) {
-            printf("Rebooting into bootloader mode...\n");
-            reset_usb_boot(0, 0);
-#endif
+            pi_reboot_bootloader();
 	} else if (buf[0] && buf[0] != '\n') {
 	    printf("invalid command\n");
 	}

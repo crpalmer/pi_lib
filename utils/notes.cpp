@@ -70,12 +70,6 @@ static note_t harry_potter[] = {
 
 static char buf[128];
 
-#ifdef PLATFORM_pico
-
-#include <pico/bootrom.h>
-
-#endif
-
 int
 main()
 {
@@ -93,17 +87,12 @@ main()
 	    int scaling = atoi(&buf[2]);
 	    if (scaling == 0) scaling = 300;
 	    notes->play(harry_potter, sizeof(harry_potter) / sizeof(harry_potter[0]), scaling);
-#ifdef PLATFORM_pico
         } else if (strcmp(buf, "bootsel") == 0) {
-            printf("Rebooting into bootloader mode...\n");
-            reset_usb_boot(0, 0);
-#endif
+            pi_reboot_bootloader();
 	} else if (buf[0] == '?') {
 	    printf("bd [ scaling_ms ] - play happy birthday\n");
 	    printf("hp [ scaling_ms ] - play harry potter\n");
-#ifdef PLATFORM_pico
 	    printf("bootsel\n");
-#endif
 	} else if (buf[0] && buf[0] != '\n') {
 	    printf("invalid command\n");
 	}
