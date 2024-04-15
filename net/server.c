@@ -4,12 +4,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-#include <pthread.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include "mem.h"
 #include "net.h"
 #include "net-line-reader.h"
+#include "pi-threads.h"
 
 #include "server.h"
 
@@ -43,7 +41,7 @@ printf("response: %s\n", response);
     return success;
 }
 
-void *
+void
 connection_main(void *c_as_vp)
 {
     connection_t *c = (connection_t *) c_as_vp;
@@ -56,11 +54,9 @@ connection_main(void *c_as_vp)
     net_line_reader_destroy(reader);
     close(fd);
     free(c);
-
-    return NULL;
 }
 
-void *
+void
 server_thread_main(void *server_as_vp)
 {
     server_args_t *server = (server_args_t *) server_as_vp;
@@ -76,7 +72,6 @@ server_thread_main(void *server_as_vp)
 
     while (1) {
 	connection_t *c;
-	pthread_t thread;
 	int fd;
 	struct sockaddr_in clientname;
 	socklen_t size = sizeof(clientname);
@@ -99,7 +94,6 @@ server_thread_main(void *server_as_vp)
 	memcpy(c->addr, &clientname, size);
 	c->size = size;
 
-	pthread_create(&thread, NULL, connection_main, c);
-	pthread_detach(thread);
+	pi_thread_create_anonymous(connection_main, c);
     }
 }

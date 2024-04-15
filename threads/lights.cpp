@@ -1,9 +1,9 @@
 #include <stdio.h>
-#include <pthread.h>
 #include <malloc.h>
 #include <list>
 #include <assert.h>
 #include "mem.h"
+#include "pi-threads.h"
 #include "util.h"
 #include "wb.h"
 
@@ -113,23 +113,22 @@ Lights::set_all(unsigned value)
     }
 }
 
-void *
+void
 Lights::work(void *this_as_vp)
 {
     Lights *l = (Lights *) this_as_vp;
 
-    pthread_mutex_lock(&l->lock);
+    pi_mutex_lock(l->lock);
     while (true) {
 	if (l->action == NULL) {
-	    pthread_cond_wait(&l->cond, &l->lock);
+	    pi_cond_wait(l->cond, l->lock);
 	} else {
 	    l->action->step();
-	    pthread_mutex_unlock(&l->lock);
+	    pi_mutex_unlock(l->lock);
 	    ms_sleep(l->blink_ms);
-	    pthread_mutex_lock(&l->lock);
+	    pi_mutex_lock(l->lock);
 	}
     }
-    return NULL;
 }
 
 Lights::Lights()
@@ -137,20 +136,20 @@ Lights::Lights()
     action = NULL;
 
     blink_ms = 200;
-    pthread_mutex_init(&lock, NULL);
-    pthread_cond_init(&cond, NULL);
+    lock = pi_mutex_new();
+    cond = pi_cond_new();
 
-    pthread_create(&thread, NULL, work, this);
+    pi_thread_create_anonymous(work, this);
 }
     
 void
 Lights::set_action(Action *new_action)
 {
-    pthread_mutex_lock(&lock);
+    pi_mutex_lock(lock);
     if (action) delete action;
     action = new_action;
-    pthread_cond_signal(&cond);
-    pthread_mutex_unlock(&lock);
+    pi_cond_signal(cond);
+    pi_mutex_unlock(lock);
 }
 
 void

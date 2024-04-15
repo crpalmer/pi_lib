@@ -19,6 +19,7 @@ void lights_blink_random(lights_t *l);
 #ifdef __cplusplus
 };
 
+#include "pi-threads.h"
 #include "io.h"
 
 #include <list>
@@ -58,12 +59,11 @@ protected:
     int blink_ms;
 
 private:
-    static void *work(void *this_as_vp);
+    static void work(void *this_as_vp);
     void set_action(Action *action);
 
-    pthread_t        thread;
-    pthread_mutex_t  lock;
-    pthread_cond_t   cond;
+    pi_mutex_t      *lock;
+    pi_cond_t       *cond;
     std::list<output_t *>  lights;
     unsigned	     blink_pin;
     Action	    *action;

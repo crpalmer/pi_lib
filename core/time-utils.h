@@ -14,7 +14,7 @@ extern "C" {
 #define NANOSEC_PER_USEC 1000
 #define MS_PER_SEC       1000
 
-static inline int nano_elapsed_ms(struct timespec *newer, struct timespec *later);
+static inline int nano_elapsed_ms(const struct timespec *newer, const struct timespec *later);
 
 #ifdef PLATFORM_pico
 
@@ -40,11 +40,7 @@ nano_sleep_until(struct timespec *t)
     if (ms > 0) sleep_ms(ms);
 }
 
-static inline void
-ms_sleep(unsigned ms)
-{
-    sleep_ms(ms);
-}
+void ms_sleep(unsigned ms);
 
 #endif
 #ifdef PLATFORM_pi
@@ -93,13 +89,13 @@ nano_add_ms(struct timespec *t, unsigned ms)
 }
 
 static inline int
-nano_later_than(struct timespec *now, struct timespec *then)
+nano_later_than(const struct timespec *now, const struct timespec *then)
 {
     return now->tv_sec > then->tv_sec || (now->tv_sec == then->tv_sec && now->tv_nsec >= then->tv_nsec);
 }
 
 static inline int
-nano_now_is_later_than(struct timespec *then)
+nano_now_is_later_than(const struct timespec *then)
 {
     struct timespec now;
 
@@ -108,7 +104,7 @@ nano_now_is_later_than(struct timespec *then)
 }
 
 static inline int
-nano_elapsed_ms(struct timespec *newer, struct timespec *later)
+nano_elapsed_ms(const struct timespec *newer, const struct timespec *later)
 {
     int ms = (newer->tv_sec - later->tv_sec) * MS_PER_SEC;
     int nsec;
@@ -132,7 +128,7 @@ nano_elapsed_ms(struct timespec *newer, struct timespec *later)
 }
 
 static inline int
-nano_elapsed_ms_now(struct timespec *start)
+nano_elapsed_ms_now(const struct timespec *start)
 {
     struct timespec now;
 

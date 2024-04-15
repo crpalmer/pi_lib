@@ -108,3 +108,24 @@ pi_readline(char *buf, size_t buf_len)
 	}
     }
 }
+
+static void
+normal_sleep(unsigned ms)
+{
+    sleep_ms(ms);
+}
+
+static sleep_fn_t sleep_fn = normal_sleep;
+
+void
+ms_sleep(unsigned ms)
+{
+    (*sleep_fn)(ms);
+}
+
+void
+pico_set_sleep_fn(sleep_fn_t new_sleep_fn)
+{
+    sleep_fn = new_sleep_fn;
+}
+

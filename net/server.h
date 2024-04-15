@@ -5,10 +5,7 @@
 extern "C" {
 #endif
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include "net.h"
 
 typedef struct {
     unsigned short port;
@@ -18,7 +15,7 @@ typedef struct {
 
 #define SERVER_OK "ok"
 
-void *
+void
 server_thread_main(void *);
 
 #ifdef __cplusplus
