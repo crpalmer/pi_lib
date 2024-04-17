@@ -10,8 +10,6 @@ add_library(platform OBJECT
   pico-servo.c
 )
 
-platform_add_internal_definitions()
-
 target_include_directories(platform PRIVATE ..)
 
 pico_generate_pio_header(platform ${CMAKE_CURRENT_LIST_DIR}/pico-audio.pio)
@@ -23,4 +21,5 @@ target_link_libraries(platform PUBLIC
     hardware_i2c
     hardware_pio
     hardware_pwm
+    hardware_rtc
 )

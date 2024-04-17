@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pico/stdlib.h>
+#include <sys/time.h>
 #include "time-utils.h"
 
 #include "pi.h"
@@ -10,6 +11,7 @@
 #include "hardware/sync.h"
 #include "hardware/structs/ioqspi.h"
 #include "hardware/structs/sio.h"
+#include "hardware/rtc.h"
 #include <pico/bootrom.h>
 
 bool __no_inline_not_in_flash_func(get_bootsel_button)() {
@@ -81,6 +83,8 @@ pi_init_no_reboot(void)
 {
     stdio_init_all();
     adc_init();
+    setenv("TZ", "EST+5EDT,M3.2.0/2,M11.1.0/2", 1);
+    tzset();
 }
 
 char *
@@ -129,3 +133,23 @@ pico_set_sleep_fn(sleep_fn_t new_sleep_fn)
     sleep_fn = new_sleep_fn;
 }
 
+void
+pico_set_rtc(time_t secs)
+{
+    struct tm tm;
+    datetime_t dt;
+
+    gmtime_r(&secs, &tm);
+    dt.year  = tm.tm_year;
+    dt.month = tm.tm_mon + 1;
+    dt.day   = tm.tm_mday;
+    dt.dotw  = tm.tm_wday;
+    dt.hour  = tm.tm_hour;
+    dt.min   = tm.tm_min;
+    dt.sec   = tm.tm_sec;
+
+    rtc_set_datetime(&dt);
+
+    struct timeval tv = {.tv_sec = secs, };
+    settimeofday(&tv, NULL);
+}
