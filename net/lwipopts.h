@@ -3,10 +3,27 @@
 
 #define NO_SYS                      0
 #define LWIP_SOCKET                 1
-#define LWIP_TIMEVAL_PRIVATE	    0
-#undef LWIP_PROVIDE_ERRNO
 
+#undef LWIP_PROVIDE_ERRNO
 #include <errno.h>
+
+/* from: https://github.com/raspberrypi/pico-examples/pull/434/files#diff-242da9ad377d6b6c3df0a6d697c9e0fc363aeccc010a631d060689e3bddffa3f */
+
+#define TCPIP_THREAD_STACKSIZE 1024
+#define DEFAULT_THREAD_STACKSIZE 1024
+#define DEFAULT_RAW_RECVMBOX_SIZE 8
+#define DEFAULT_UDP_RECVMBOX_SIZE 8
+#define DEFAULT_TCP_RECVMBOX_SIZE 8
+#define TCPIP_MBOX_SIZE 8
+#define LWIP_TIMEVAL_PRIVATE 0
+
+// not necessary, can be done either way
+#define LWIP_TCPIP_CORE_LOCKING_INPUT 1
+
+#define LWIP_SO_SNDTIMEO 1
+#define LWIP_SO_RCVTIMEO 1
+
+/* from pico-examples: */
 
 #if PICO_CYW43_ARCH_POLL
 #define MEM_LIBC_MALLOC             1

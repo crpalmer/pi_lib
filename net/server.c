@@ -66,7 +66,7 @@ server_thread_main(void *server_as_vp)
 
     sock = net_listen(server->port);
     if (sock < 0) {
-	perror("net_listent");
+	perror("net_listen");
 	exit(1);
     }
 
@@ -94,6 +94,6 @@ server_thread_main(void *server_as_vp)
 	memcpy(c->addr, &clientname, size);
 	c->size = size;
 
-	pi_thread_create_anonymous(connection_main, c);
+	pi_thread_create("connection", connection_main, c);
     }
 }

@@ -39,9 +39,9 @@ void readline_task(void *arg_unused) {
 }
 
 int main() {
-    pi_threads_init();
-    pi_thread_create_anonymous(hello, NULL);
-    pi_thread_create_anonymous(world, NULL);
-    pi_thread_create_anonymous(readline_task, NULL);
+    pi_init_with_threads();
+    pi_thread_create("hello", hello, NULL);
+    pi_thread_create("world", world, NULL);
+    pi_thread_create("readline", readline_task, NULL);
     pi_threads_start_and_wait();
 }
