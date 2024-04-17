@@ -21,7 +21,7 @@ sntp_main(void *unused)
 
 	printf("Setting RTC to %lu seconds.\n", (unsigned long) now.tv_sec);
 	pico_set_rtc((time_t) now.tv_sec);
-	ms_sleep(1*1000);
+	ms_sleep(60*60*1000);
    }
 }
 
@@ -40,7 +40,7 @@ wifi_main(void *unused)
 	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
 	printf("local time: %s [%lu]\n", buffer, (unsigned long) t);
 
-	ms_sleep(1*1000);
+	ms_sleep(60*1000);
     }
 }
 
