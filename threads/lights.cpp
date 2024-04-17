@@ -139,7 +139,7 @@ Lights::Lights()
     lock = pi_mutex_new();
     cond = pi_cond_new();
 
-    pi_thread_create_anonymous(work, this);
+    pi_thread_create("light-work", work, this);
 }
     
 void

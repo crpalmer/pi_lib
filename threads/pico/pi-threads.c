@@ -32,37 +32,38 @@ rtos_sleep(unsigned ms)
     vTaskDelay(ms);
 }
 
-void pi_threads_init(void)
+void pi_init_with_threads(void)
 {
     pi_init_no_reboot();
-    pico_set_sleep_fn(rtos_sleep);
 }
 
 void pi_threads_start_and_wait()
 {
+    pico_set_sleep_fn(rtos_sleep);
     vTaskStartScheduler();
 }
-int
-create_task(void (*main)(void *), void *arg, TaskHandle_t *task)
+
+typedef struct {
+    void (*thread_main)(void *);
+    void *args;
+} args_t;
+
+static void thread_main_wrapper(void *args_as_vp)
 {
-    return xTaskCreate(main, "pi-thread", 2*1024, arg, 1, task);
+    args_t *args = args_as_vp;
+
+    args->thread_main(args->args);
+    free(args);
+    vTaskDelete(NULL);
 }
 
-pi_thread_t *
-pi_thread_create(void (*main)(void *), void *arg)
+void
+pi_thread_create(const char *name, void (*main)(void *), void *arg)
 {
-    pi_thread_t *t = fatal_malloc(sizeof(*t));
-
-    if (! create_task(main, arg, &t->task)) {
-	free(t);
-	return NULL;
-    }
-    return t;
-}
-
-void pi_thread_create_anonymous(void (*main)(void *), void *arg)
-{
-    create_task(main, arg, NULL);
+    args_t *args = fatal_malloc(sizeof(*args));
+    args->thread_main = main;
+    args->args = arg;
+    xTaskCreate(thread_main_wrapper, name ? name : "pi-thread", 2048, args, 1, NULL);
 }
 
 pi_mutex_t *pi_mutex_new()
@@ -74,14 +75,6 @@ pi_mutex_t *pi_mutex_new()
 	return NULL;
     }
     return m;
-}
-
-static void pi_thread_wait()
-{
-}
-
-static void pi_thread_resume(pi_thread_t *t)
-{
 }
 
 void pi_mutex_lock(pi_mutex_t *m)
@@ -171,6 +164,18 @@ void pi_cond_signal(pi_cond_t *c)
     pi_mutex_unlock(c->lock);
 }
 
+void pi_cond_broadcast(pi_cond_t *c)
+{
+    pi_mutex_lock(c->lock);
+    while (c->wait_list) {
+	wait_list_t *w = c->wait_list;
+	c->wait_list = w->next;
+	if (! c->wait_list) c->wait_list_tail = &c->wait_list;
+	xSemaphoreGive(w->wait);
+    }
+    pi_mutex_unlock(c->lock);
+}
+
 void pi_cond_destroy(pi_cond_t *c)
 {
     pi_mutex_destroy(c->lock);
@@ -191,4 +196,12 @@ pi_threads_dump_state()
     vTaskList(state);
     printf("Task Name     State    Prio    Stack    #\n");
     printf("------------- -----    ----    -----   ---\n%s", state);
+}
+
+void
+pi_thread_asserted(const char *expr, const char *filename, int line)
+{
+    printf("ASSERTION FAILED: %s @ %s : %d\n", expr, filename, line);
+    fflush(stderr);
+    pi_reboot_bootloader();
 }
