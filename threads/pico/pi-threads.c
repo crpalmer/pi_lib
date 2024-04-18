@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include "mem.h"
+#include "consoles.h"
 #include "time-utils.h"
 #include "pi.h"
 #include "pi-threads.h"
+#include "set-consoles-lock.h"
 
 #include "semphr.h"
 
@@ -40,6 +42,7 @@ void pi_init_with_threads(void)
 void pi_threads_start_and_wait()
 {
     pico_set_sleep_fn(rtos_sleep);
+    set_consoles_lock();
     vTaskStartScheduler();
 }
 

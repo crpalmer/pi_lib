@@ -5,7 +5,7 @@
 
 class StdoutWriter : public Writer {
 public:
-    int writeline(const char *s) override { return puts(s); }
+    int write_str(const char *s) override { return fwrite(s, 1, strlen(s), stdout); }
 };
 
 #endif

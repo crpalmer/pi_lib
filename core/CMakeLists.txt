@@ -2,6 +2,8 @@ add_subdirectory("${PLATFORM}")
 
 add_library(pi-core STATIC
   canvas.cpp
+  console.cpp
+  consoles-impl.cpp
   file.c
   global-trace.c
   grove.cpp

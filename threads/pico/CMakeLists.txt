@@ -3,6 +3,7 @@ include($ENV{FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kerne
 add_library(pi-threads-platform STATIC
   hooks.c
   pi-threads.c
+  set-consoles-lock.cpp
 )
 
 target_link_libraries(pi-threads-platform PUBLIC

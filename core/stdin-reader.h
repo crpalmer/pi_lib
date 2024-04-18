@@ -13,7 +13,7 @@ public:
 	buf = (char *) fatal_malloc(a_buf);
     }
 
-    virtual const char *readline() {
+    const char *readline() override {
 	return pi_readline(buf, a_buf);
     }
 
