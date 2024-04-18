@@ -18,38 +18,31 @@ typedef struct {
     size_t size;
 } connection_t;
 
-static bool
-command(void *c_as_vp, int fd, const char *line)
-{
-    connection_t *c = (connection_t *) c_as_vp;
-    server_args_t *server = c->server;
-    char *response = server->command(server->state, line, c->addr, c->size);
-    bool success;
-
-printf("response: %s\n", response);
-
-    if (! strlen(response) || response[strlen(response)] != '\n') {
-	char *response2 = malloc(strlen(response) + 2);
-	sprintf(response2, "%s\n", response);
-	free(response);
-	response = response2;
-    }
-
-    success = write(fd, response, strlen(response)) == strlen(response);
-    free(response);
-
-    return success;
-}
-
 void
 connection_main(void *c_as_vp)
 {
     connection_t *c = (connection_t *) c_as_vp;
     int fd = c->fd;
     net_line_reader_t *reader;
+    const char *cmd;
 
-    reader = net_line_reader_new(fd, command, c_as_vp);
-    while (net_line_reader_read(reader) >= 0) {
+    reader = net_line_reader_new(fd);
+    while ((cmd = net_line_reader_read(reader)) != NULL) {
+	server_args_t *server = c->server;
+	char *response = server->command(server->state, cmd, c->addr, c->size);
+	bool success;
+
+printf("response: %s\n", response);
+
+	if (! strlen(response) || response[strlen(response)] != '\n') {
+	    char *response2 = malloc(strlen(response) + 2);
+	    sprintf(response2, "%s\n", response);
+	    free(response);
+	    response = response2;
+	}
+
+	success = write(fd, response, strlen(response)) == strlen(response);
+	free(response);
     }
     net_line_reader_destroy(reader);
     close(fd);

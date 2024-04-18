@@ -7,6 +7,9 @@
 #undef LWIP_PROVIDE_ERRNO
 #include <errno.h>
 
+#define SO_REUSE		  1
+#define DEFAULT_ACCEPTMBOX_SIZE   8
+
 /* from: https://github.com/raspberrypi/pico-examples/pull/434/files#diff-242da9ad377d6b6c3df0a6d697c9e0fc363aeccc010a631d060689e3bddffa3f */
 
 #define TCPIP_THREAD_STACKSIZE 1024

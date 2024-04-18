@@ -18,6 +18,7 @@ typedef struct pi_condS pi_cond_t;
 void pi_init_with_threads(void);
 void pi_threads_start_and_wait();
 void pi_threads_dump_state();
+char *pi_threads_get_state();
 
 void pi_thread_create(const char *name, void (*thread_main)(void *arg), void *thread_arg);
 

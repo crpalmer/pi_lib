@@ -3,6 +3,7 @@
 #include <memory.h>
 #include <unistd.h>
 #include "mem.h"
+#include "net.h"
 #include "net-line-reader.h"
 #include "global-trace.h"
 
@@ -12,12 +13,10 @@ struct net_line_readerS {
     int   fd;
     char *buf;
     int   a_buf, n_buf;
-    net_line_reader_callback_t cb;
-    void *data;
 };
 
 net_line_reader_t *
-net_line_reader_new(int fd, net_line_reader_callback_t cb, void *data)
+net_line_reader_new(int fd)
 {
     net_line_reader_t *r = fatal_malloc(sizeof(*r));
 
@@ -25,13 +24,11 @@ net_line_reader_new(int fd, net_line_reader_callback_t cb, void *data)
     r->a_buf = 1024;
     r->n_buf = 0;
     r->buf = malloc(r->a_buf);
-    r->cb = cb;
-    r->data = data;
 
     return r;
 }
 
-int
+const char *
 net_line_reader_read(net_line_reader_t *r)
 {
     int n_bytes;
@@ -41,17 +38,15 @@ net_line_reader_read(net_line_reader_t *r)
 	r->buf = fatal_realloc(r->buf, r->a_buf);
     }
 
-    n_bytes = read(r->fd, &r->buf[r->n_buf], r->a_buf - r->n_buf);
-
-    if (n_bytes == 0) return -1;
-    if (n_bytes < 0) return n_bytes;
+    if ((n_bytes = recv(r->fd, &r->buf[r->n_buf], r->a_buf - r->n_buf, 0)) <= 0) {
+	return NULL;
+    }
 
     while (n_bytes-- > 0) {
 	if (r->buf[r->n_buf] == '\n' || r->buf[r->n_buf] == '\r') {
 	    if (r->n_buf > 0) {
 		r->buf[r->n_buf] = '\0';
-		if (global_trace) fprintf(stderr, "%s: %d line %s\n", __func__, r->fd, r->buf);
-		if (! r->cb(r->data, r->fd, r->buf)) return -1;
+		return r->buf;
 	    }
 	    memmove(r->buf, &r->buf[r->n_buf + 1], n_bytes);
 	    r->n_buf = 0;
@@ -60,7 +55,7 @@ net_line_reader_read(net_line_reader_t *r)
 	}
     }
 
-    return 0;
+    return NULL;
 }
 
 void

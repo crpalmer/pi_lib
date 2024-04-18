@@ -188,16 +188,24 @@ void pi_cond_destroy(pi_cond_t *c)
     free(c);
 }
 
+char *
+pi_threads_get_state()
+{
+    char *state;
+    state = malloc(10*1048);
+    vTaskList(state);
+    return state;
+}
+
 void
 pi_threads_dump_state()
 {
-    char *state;
-    state = malloc(10*1000);
-    vTaskList(state);
+    char *state = pi_threads_get_state();
+
     printf("Task Name     State    Prio    Stack    #\n");
     printf("------------- -----    ----    -----   ---\n%s", state);
+    free(state);
 }
-
 void
 pi_thread_asserted(const char *expr, const char *filename, int line)
 {

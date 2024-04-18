@@ -3,7 +3,16 @@
 
 #include <time.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int
 net_sntp_time(const char *host, struct timespec *now);
+
+#ifdef __cplusplus
+};
+#endif
+
 
 #endif
