@@ -7,16 +7,12 @@
 extern "C" {
 #endif
 
-#ifdef PLATFORM_pico
-#include "FreeRTOS.h"
-#include "task.h"
-#endif
-
-typedef struct pi_mutexS pi_mutex_t;
-typedef struct pi_condS pi_cond_t;
+typedef void pi_mutex_t;
+typedef void pi_cond_t;
 
 void pi_init_with_threads(void);
 void pi_threads_start_and_wait();
+
 void pi_threads_dump_state();
 char *pi_threads_get_state();
 
@@ -37,6 +33,9 @@ void pi_cond_destroy(pi_cond_t *cond);
 
 #ifdef __cplusplus
 };
+
 #endif
+
+#include "pi-threads-platform.h"
 
 #endif

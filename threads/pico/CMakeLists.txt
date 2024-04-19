@@ -2,9 +2,11 @@ include($ENV{FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kerne
 
 add_library(pi-threads-platform STATIC
   hooks.c
-  pi-threads.c
+  pi-threads.cpp
   set-consoles-lock.cpp
 )
+
+target_include_directories(pi-threads-platform PUBLIC . )
 
 target_link_libraries(pi-threads-platform PUBLIC
   pi-core
