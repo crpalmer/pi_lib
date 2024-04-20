@@ -12,7 +12,7 @@
 class PiThread {
 public:
     PiThread(const char *name = "");
-    ~PiThread();
+    virtual ~PiThread();
 
     virtual void main() = 0;
     static void thread_entry(void *vp) {
