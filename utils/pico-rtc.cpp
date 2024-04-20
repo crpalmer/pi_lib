@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "pi.h"
-#include "threads-console.h"
 #include "net.h"
+#include "net-console.h"
+#include "net-listener.h"
 #include "pi-threads.h"
 #include "stdin-reader.h"
 #include "stdout-writer.h"
@@ -37,10 +38,10 @@ static void report_time()
     consoles_printf("Local time: %s\n", buf);
 }
 
-class RTCConsole : public ThreadsConsole {
+class ConsoleThread : public NetConsole {
 public:
-    RTCConsole(Reader *r, Writer *w) : ThreadsConsole(r, w) { }
-    RTCConsole(int fd) : ThreadsConsole(fd) { }
+    ConsoleThread(Reader *r, Writer *w) : NetConsole(r, w) { }
+    ConsoleThread(int fd) : NetConsole(fd) { }
 
     void process_cmd(const char *cmd) override {
 	if (is_command(cmd, "run-sntp")) {
@@ -48,76 +49,56 @@ public:
 	} else if (is_command(cmd, "get-time")) {
 	    report_time();
 	} else {
-	    ThreadsConsole::process_cmd(cmd);
+	    NetConsole::process_cmd(cmd);
 	}
     }
 
     void usage() override {
-	ThreadsConsole::usage();
-	consoles_write_str("run-sntp - Start an sntp query\nget-time - get the current local time\n");
+	NetConsole::usage();
+	write_str("run-sntp - Start an sntp query\nget-time - get the current local time\n");
+    }
+};
+
+class SNTPThread : PiThread {
+public:
+   SNTPThread() : PiThread("sntp") { }
+
+    void main() {
+        while (1) {
+	    run_sntp();
+	    ms_sleep(60*60*1000);
+       }
+    }
+};
+
+class ReportingThread : PiThread {
+public:
+    ReportingThread() : PiThread("time-reporting") {}
+
+    void main() {
+	while (1) {
+	    report_time();
+	    ms_sleep(60*1000);
+	}
+    }
+};
+
+class NetThread : NetListener {
+public:
+    NetThread(uint16_t port) : NetListener(port) { }
+
+    void accepted(int fd) {
+	new ConsoleThread(fd);
     }
 };
 
 static void
-sntp_main(void *unused)
-{
-    while (1) {
-	run_sntp();
-	ms_sleep(60*60*1000);
-   }
-}
-
-static void
-console_main(void *console_as_vp)
-{
-    RTCConsole *console = (RTCConsole *) console_as_vp;
-
-    consoles_add(console);
-    console->run();
-}
-
-static void
-net_main(void *unused)
-{
-    consoles_write_str("net: Starting.\n");
-
-    while (1) {
- 	uint16_t port = 4567;
-
-	consoles_printf("net: Listening on port %u\n", port);
-	int l_fd = net_listen(port);
-
-	while (1) {
-	    int fd;
-	    struct sockaddr_in client;
-	    socklen_t size = sizeof(client);
-
-	    consoles_write_str("net: Waiting for connection.\n");
-	    if ((fd = accept(l_fd, (struct sockaddr *) &client, &size)) < 0) {
-	 	perror("net_accept");
-		ms_sleep(5*1000);
-	    } else {
-		consoles_printf("connect from host %s, port %hu.\n", inet_ntoa(client.sin_addr), ntohs(client.sin_port));
-		pi_thread_create("net-debug", console_main, new RTCConsole(fd));
-	    }
-	}
-    }
-}
-
-static void
 wifi_main(void *unused)
 {
-    pi_thread_create("stdio", console_main, new RTCConsole(new StdinReader(), new StdoutWriter()));
-    consoles_write_str("Starting SNTP thread.\n");
-    pi_thread_create("sntp", sntp_main, NULL);
-    consoles_write_str("Starting net thread.\n");
-    pi_thread_create("net", net_main, NULL);
-
-    consoles_write_str("Entering main loop.\n");
-    while (1) {
-	report_time();
-	ms_sleep(60*1000);
-    }
+    new ConsoleThread(new StdinReader(), new StdoutWriter());
+    new SNTPThread();
+    new NetThread(4567);
+    new ReportingThread();
 }
 
 int
