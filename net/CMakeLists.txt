@@ -17,6 +17,7 @@ endif()
 add_library(pi-net STATIC
   net.c
   net-line-reader.c
+  net-listener.cpp
   server.c
   sntp.c
   ${PLATFORM_OBJS}
