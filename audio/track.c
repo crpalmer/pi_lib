@@ -16,6 +16,27 @@ struct trackS {
     unsigned	   volume;
 };
 
+static track_t *
+track_new_audio_dev(const char *fname, audio_device_t *dev)
+{
+    track_t *t;
+    wav_t *wav;
+
+    if ((wav = wav_new(fname)) == NULL) {
+	return NULL;
+    }
+
+    t = fatal_malloc(sizeof(*t));
+    t->audio_dev = *dev;
+    t->wav = wav;
+    t->volume = 100;
+
+    audio_config_init_default(&t->audio_cfg);
+    wav_configure_audio(t->wav, &t->audio_cfg);
+
+    return t;
+}
+
 track_t *
 track_new(const char *fname)
 {
@@ -35,27 +56,6 @@ track_new_usb_out(const char *fname)
     audio_device_init(&dev, 1, 0, true);
 
     return track_new_audio_dev(fname, &dev);
-}
-
-track_t *
-track_new_audio_dev(const char *fname, audio_device_t *dev)
-{
-    track_t *t;
-    wav_t *wav;
-
-    if ((wav = wav_new(fname)) == NULL) {
-	return NULL;
-    }
-
-    t = fatal_malloc(sizeof(*t));
-    t->audio_dev = *dev;
-    t->wav = wav;
-    t->volume = 100;
-
-    audio_config_init_default(&t->audio_cfg);
-    wav_configure_audio(t->wav, &t->audio_cfg);
-
-    return t;
 }
 
 track_t *

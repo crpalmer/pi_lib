@@ -2,8 +2,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <pthread.h>
 #include "mem.h"
+#include "pi-threads.h"
 #include "producer-consumer.h"
 #include "time-utils.h"
 #include "talking-skull.h"
@@ -54,11 +54,10 @@ struct talking_skullS {
     state_t state;
     talking_skull_servo_update_t fn;
     void *fn_data;
-    pthread_t thread;
     producer_consumer_t *ops_pc;
     unsigned seq_complete;
-    pthread_mutex_t mutex;
-    pthread_cond_t cond;
+    pi_mutex_t *mutex;
+    pi_cond_t *cond;
     servo_operations_t *ops;
 };
 
@@ -252,7 +251,7 @@ state_update(state_t *s, servo_operations_t *ops, unsigned val)
     }
 }
 
-static void *
+static void
 update_main(void *t_as_vp)
 {
     talking_skull_t *t = (talking_skull_t *) t_as_vp;
@@ -265,13 +264,11 @@ update_main(void *t_as_vp)
 	servo_operations_play(ops, t->fn, t->fn_data);
 	if (ops->free_on_complete) servo_operations_destroy(ops);
 
-	pthread_mutex_lock(&t->mutex);
+	pi_mutex_lock(t->mutex);
 	t->seq_complete = seq;
-	pthread_cond_signal(&t->cond);
-	pthread_mutex_unlock(&t->mutex);
+	pi_cond_signal(t->cond);
+	pi_mutex_unlock(t->mutex);
     }
-
-    return NULL;
 }
 
 
@@ -304,14 +301,14 @@ talking_skull_new_with_n_to_avg(audio_meta_t *m, size_t n_to_avg, talking_skull_
     t->ops = NULL;
     t->ops_pc = producer_consumer_new(1);
     t->seq_complete = 0;
-    pthread_mutex_init(&t->mutex, NULL);
-    pthread_cond_init(&t->cond, NULL);
+    t->mutex = pi_mutex_new();
+    t->cond = pi_cond_new();
 
     state_init(&t->state, &t->m, n_to_avg);
     t->fn = fn;
     t->fn_data = fn_data;
 
-    pthread_create(&t->thread, NULL, update_main, t);
+    pi_thread_create("talking-skull", update_main, t);
 
     return t;
 }
@@ -359,11 +356,11 @@ talking_skull_play(talking_skull_t *t, unsigned char *data, unsigned n_bytes)
 void
 talking_skull_wait_completion(talking_skull_t *t, unsigned seq)
 {
-    pthread_mutex_lock(&t->mutex);
+    pi_mutex_lock(t->mutex);
     while (t->seq_complete < seq) {
-	pthread_cond_wait(&t->cond, &t->mutex);
+	pi_cond_wait(t->cond, t->mutex);
     }
-    pthread_mutex_unlock(&t->mutex);
+    pi_mutex_unlock(t->mutex);
 }
 
 struct talking_skull_actorS {

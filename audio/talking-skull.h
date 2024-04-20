@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include "audio-config.h"
+#include "audio.h"
 
 typedef struct talking_skullS talking_skull_t;
 typedef struct servo_operationsS servo_operations_t;

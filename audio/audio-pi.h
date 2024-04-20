@@ -75,6 +75,9 @@ audio_meta_init_from_config(audio_meta_t *m, audio_config_t *c)
     m->bytes_per_sample = (c->bits+7)/8;
 }
 
+audio_t *
+audio_new(audio_config_t *cfg, audio_device_t *device);
+
 #ifdef __cplusplus
 };
 #endif

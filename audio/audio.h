@@ -5,10 +5,13 @@
 extern "C" {
 #endif
 
-#include "audio-config.h"
-#include "util.h"
-
 typedef struct audioS audio_t;
+
+#ifdef PLATFORM_pico
+#include "audio-pico.h"
+#else
+#include "audio-pi.h"
+#endif
 
 audio_t *
 audio_new(audio_config_t *cfg, audio_device_t *device);
