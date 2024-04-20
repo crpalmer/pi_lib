@@ -9,7 +9,6 @@
 class Console : public Writer {
 public:
     Console() : Writer() { }
-
     Console(Reader *reader, Writer *writer) : r(reader), w(writer), Writer() { }
 
     ~Console() {
@@ -20,7 +19,7 @@ public:
  	on_death = od;
     }
 
-    void run() {
+    void main() {
 	const char *cmd;
 
 	while ((cmd = r->readline()) != NULL) {

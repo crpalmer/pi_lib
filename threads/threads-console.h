@@ -1,14 +1,12 @@
 #ifndef __THREADS_CONSOLE_H__
 #define __THREADS_CONSOLE_H__
 
-#include "consoles.h"
-#include "net-console.h"
 #include "pi-threads.h"
+#include "consoles.h"
 
-class ThreadsConsole : public NetConsole {
+class ThreadsConsole : public Console {
 public:
-    ThreadsConsole(Reader *r, Writer *w) : NetConsole(r, w) {}
-    ThreadsConsole(int fd) : NetConsole(fd) {}
+    ThreadsConsole(Reader *r, Writer *w) : Console(r, w) {}
 
     void process_cmd(const char *cmd) override {
 	if (is_command(cmd, "threads")) {
@@ -16,13 +14,13 @@ public:
 	    consoles_write_str(state);
 	    free(state);
 	} else {
-	    NetConsole::process_cmd(cmd);
+	    Console::process_cmd(cmd);
 	}
     }
 
     void usage() override {
-	NetConsole::usage();
-	consoles_write_str("threads - dump the current thread state\n");
+	Console::usage();
+	write_str("threads - dump the current thread state\n");
     }
 };
 

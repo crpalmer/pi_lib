@@ -10,10 +10,10 @@ void Console::process_cmd(const char *cmd) {
     } else if (is_command(cmd, "?") || is_command(cmd, "help")) {
 	usage();
     } else {
-	consoles_write_str("Invalid command, type ? or help for help.\n");
+	write_str("Invalid command, type ? or help for help.\n");
     }
 }
 
 void Console::usage() {
-    consoles_write_str("Usage:\n\nbootsel - reboot to bootloader.\n");
+    write_str("Usage:\n\nbootsel - reboot to bootloader.\n");
 }
