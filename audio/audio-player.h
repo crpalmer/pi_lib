@@ -11,14 +11,15 @@ class AudioPlayer : PiThread {
 public:
     AudioPlayer(Audio *audio);
 
-    void play(AudioBuffer *audio_buffer);
+    bool play(AudioBuffer *audio_buffer);
     void stop();
     void wait_done();
 
     bool is_active() { return player_is_active; }
-    void play_sync(AudioBuffer *audio_buffer) {
-	play(audio_buffer);
+    bool play_sync(AudioBuffer *audio_buffer) {
+	if (! play(audio_buffer)) return false;
 	wait_done();
+	return true;
     }
 
     void main(void) override;

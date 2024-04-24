@@ -6,6 +6,9 @@
 #include "mem.h"
 #include "audio.h"
 
+#define MAX_CARDS	10
+#define MAX_DEVICES	10
+
 static inline int flags(bool playback) { return (playback ? PCM_OUT : PCM_IN) | PCM_MONOTONIC; }
 
 AudioPi::AudioPi(bool playback, int card, int device) : card(card), device(device), playback(playback), pcm(NULL) {
@@ -44,7 +47,7 @@ AudioPi::AudioPi(bool playback, int card, int device) : card(card), device(devic
     }
 }
 
-void AudioPi::configure(AudioConfig *new_config) {
+bool AudioPi::configure(AudioConfig *new_config) {
     config.channels = new_config->get_num_channels();
     config.rate = new_config->get_rate();
     config.format = new_config->get_bytes_per_sample() == 2 ? PCM_FORMAT_S16_LE : new_config->get_bytes_per_sample() == 4 ? PCM_FORMAT_S32_LE : PCM_FORMAT_S24_LE;
@@ -56,15 +59,36 @@ void AudioPi::configure(AudioConfig *new_config) {
     config.start_threshold = config.period_size;
 
     if (pcm) pcm_close(pcm);
+    pcm = NULL;
 
-    if ((pcm = pcm_open(card, device, flags(playback), &config)) == NULL ||
-	! pcm_is_ready(pcm))
-    {
-	consoles_fatal_printf("Failed to open (%d, %d): %s\n", card, device, pcm_get_error(pcm));
-	/* TODO: Add -1 for a card and poll until we find a sound device.
-	 * This is convenient for the pi5 which doesn't have a headphone jack.
-	 */
+    if (card >= 0 && device >= 0) {
+	if ((pcm = pcm_open(card, device, flags(playback), &config)) == NULL) {
+	    consoles_printf("Preferred audio device (%d,%d) is not compatible or does not exist.\n", card, device);
+	}
+    } else if (card >= 0) {
+	for (int d = 0; d < MAX_DEVICES && ! pcm; d++) {
+	    if ((pcm = pcm_open(card, d, flags(playback), &config)) != NULL) {
+		if (pcm_is_ready(pcm)) consoles_printf("Found compatible PCM device (%d, %d)\n", card, d);
+		else pcm = NULL;
+	    }
+	}
     }
+
+    for (int c = 0; c < MAX_CARDS && ! pcm; c++) {
+	for (int d = 0; d < MAX_DEVICES && ! pcm; d++) {
+	    if ((pcm = pcm_open(c, d, flags(playback), &config)) != NULL) {
+		if (pcm_is_ready(pcm)) consoles_printf("Found compatible PCM device (%d, %d)\n", c, d);
+		else pcm = NULL;
+	    }
+	}
+    }
+
+    if (! pcm || ! pcm_is_ready(pcm)) {
+	consoles_printf("Could not find a PCM device that is compatible.\n");
+	return false;
+    }
+
+    return true;
 }
 
 size_t AudioPi::get_recommended_buffer_size() {

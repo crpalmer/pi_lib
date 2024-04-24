@@ -11,12 +11,12 @@ public:
 class Audio : public AudioConfig {
 public:
     virtual size_t get_recommended_buffer_size() { return 1024; };
-    virtual void configure(AudioConfig *config) {}
+    virtual bool configure(AudioConfig *config) = 0;
     virtual bool capture(void *buf, size_t n) { return false; }
     virtual bool play(void *buf, size_t n) { return false; }
-    int get_num_channels() override { return 2; }
-    int get_rate() override { return 44*1024; }
-    int get_bytes_per_sample() override { return 2; }
+    int get_num_channels() override = 0;
+    int get_rate() override = 0;
+    int get_bytes_per_sample() = 0;
 };
 
 #ifdef PLATFORM_pico
