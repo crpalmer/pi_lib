@@ -1,6 +1,5 @@
 #ifndef __SERVO_H__
 #define __SERVO_H__
-#endif
 
 #define SERVO_STANDARD_MIN 1050
 #define SERVO_STANDARD_MAX 1950
@@ -43,3 +42,5 @@ private:
 	return extended_pos;
     }
 };
+
+#endif
