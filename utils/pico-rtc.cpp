@@ -61,7 +61,7 @@ public:
 
 class SNTPThread : PiThread {
 public:
-   SNTPThread() : PiThread("sntp") { }
+   SNTPThread() : PiThread("sntp") { start(); }
 
     void main() {
         while (1) {

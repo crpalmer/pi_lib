@@ -14,6 +14,8 @@ public:
     PiThread(const char *name = "");
     virtual ~PiThread();
 
+    PiThread *start();
+
     virtual void main() = 0;
     static void thread_entry(void *vp) {
 	PiThread *t = (PiThread *) vp;
@@ -21,6 +23,7 @@ public:
     }
 
 private:
+    const char *name;
     TaskHandle_t task;
 };
 
@@ -34,8 +37,6 @@ public:
 
 private:
     SemaphoreHandle_t m;
-
-    friend class PiCond;
 };
 
 class PiCond {

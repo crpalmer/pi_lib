@@ -1,5 +1,4 @@
 add_library(platform OBJECT
-  audio.c
   call-every.c
   canvas-png.cpp
   digital-counter.cpp
@@ -12,13 +11,7 @@ add_library(platform OBJECT
   pi-gpio-pi-servo.c
   pi-usb.c
   pico-slave.cpp
-  producer-consumer.c
   st7735s.cpp
-  stop.c
-  talker-auto-gain.c
-  talking-skull.c
-  track.c
-  wav.c
 )
 
 add_definitions(-DNO_PIGPIO_EMULATION -DWall -Werror)

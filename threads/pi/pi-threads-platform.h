@@ -10,6 +10,8 @@ public:
     PiThread(const char *name = "");
     ~PiThread();
 
+    PiThread *start();
+
     virtual void main() = 0;
     static void thread_entry(void *vp) {
 	PiThread *t = (PiThread *) vp;

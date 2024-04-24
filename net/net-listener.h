@@ -6,7 +6,7 @@
 
 class NetListener : PiThread {
 public:
-    NetListener(uint16_t port) : port(port) {}
+    NetListener(uint16_t port) : port(port) { start(); }
     virtual void accepted(int fd) = 0;
     void main();
 

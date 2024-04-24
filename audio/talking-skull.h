@@ -1,74 +1,58 @@
-#ifndef __TALKING_SKULL__
-#define __TALKING_SKULL__
+#ifndef __TALKING_SKULL_H__
+#define __TALKING_SKULL_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <stdio.h>
+#include "pi-threads.h"
 
-#include "audio.h"
-
-typedef struct talking_skullS talking_skull_t;
-typedef struct servo_operationsS servo_operations_t;
-typedef struct talking_skull_actorS talking_skull_actor_t;
-
-typedef void (*talking_skull_servo_update_t)(void *data, double pos);
-
-talking_skull_t *
-talking_skull_new_is_track(audio_meta_t *m, bool is_track, talking_skull_servo_update_t fn, void *fn_data);
-
-talking_skull_t *
-talking_skull_new(audio_meta_t *m, talking_skull_servo_update_t fn, void *fn_data);
-
-talking_skull_t *
-talking_skull_new_with_n_to_avg(audio_meta_t *m, size_t n_to_avg, talking_skull_servo_update_t fn, void *fn_data);
-
-void
-talking_skull_destroy(talking_skull_t *t);
-
-unsigned
-talking_skull_play(talking_skull_t *t, unsigned char *data, unsigned n_bytes);
-
-servo_operations_t *
-talking_skull_prepare(talking_skull_t *, unsigned char *data, unsigned n_bytes);
-
-bool
-servo_operations_save(servo_operations_t *, const char *fname);
-
-void
-servo_operations_save_f(servo_operations_t *, FILE *f);
-
-servo_operations_t *
-servo_operations_load(const char *fname);
-
-servo_operations_t *
-servo_operations_load_f(FILE *f);
-
-unsigned
-talking_skull_play_prepared(talking_skull_t *, servo_operations_t *);
-
-void
-talking_skull_wait_completion(talking_skull_t *t, unsigned handle);
-
-talking_skull_actor_t *
-talking_skull_actor_new(const char *fname, talking_skull_servo_update_t update, void *data);
-
-talking_skull_actor_t *
-talking_skull_actor_new_ops(const char *fname, talking_skull_servo_update_t update, void *data);
-
-talking_skull_actor_t *
-talking_skull_actor_new_vsa(const char *fname, talking_skull_servo_update_t update, void *data);
-
-talking_skull_actor_t *
-talking_skull_actor_new_from_audio(const char *fname, talking_skull_servo_update_t update, void *data);
-
-talking_skull_actor_t *
-talking_skull_actor_new_with_n_to_avg(const char *fname, talking_skull_servo_update_t update, void *data, unsigned n_to_avg);
-
-void
-talking_skull_actor_play(talking_skull_actor_t *a);
-
-#ifdef __cplusplus
+class TalkingSkullOps {
+public:
+    virtual int get_usec_per_i() = 0;
+    virtual bool next(double *pos) = 0;
 };
-#endif
+
+class TalkingSkullFileOps : public TalkingSkullOps {
+public:
+    TalkingSkullFileOps(const char *fname);
+    ~TalkingSkullFileOps();
+
+    int get_usec_per_i() override { return usec_per_i; }
+    bool next(double *pos) override;
+
+private:
+    FILE *f;
+    int usec_per_i;
+};
+
+class TalkingSkullVsaOps : public TalkingSkullOps {
+public:
+    TalkingSkullVsaOps(const char *fname);
+    ~TalkingSkullVsaOps();
+    int get_usec_per_i() override { return 1000*1000*0.033; }
+    bool next(double *pos) override;
+
+private:
+    FILE *f;
+};
+
+int talking_skull_ops_to_filename(const char *fname, TalkingSkullOps *ops);
+int talking_skull_ops_to_file(FILE *f, TalkingSkullOps *ops);
+
+class TalkingSkull : PiThread {
+public:
+    TalkingSkull(TalkingSkullOps *ops, const char *thread_name = "talking-skull");
+    ~TalkingSkull();
+    void play();
+
+    void main() override;
+
+    virtual void update_pos(double pos) = 0;
+
+protected:
+    PiMutex *wait_lock;
+    PiCond  *wait_cond;
+    int usec_per_i;
+    double *pos;
+    size_t n_pos;
+};
 
 #endif

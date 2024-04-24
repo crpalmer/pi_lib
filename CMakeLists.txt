@@ -4,6 +4,7 @@ include(platform.cmake)
 
 project(pi-lib)
 
+add_subdirectory(audio)
 add_subdirectory(core)
 add_subdirectory(net)
 add_subdirectory(threads)

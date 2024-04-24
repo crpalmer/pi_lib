@@ -2,7 +2,9 @@
 
 class PiThreadWrapper : public PiThread {
 public:
-    PiThreadWrapper(const char *name, void (*main_fn)(void *), void *arg) : main_fn(main_fn), arg(arg), PiThread(name) { }
+    PiThreadWrapper(const char *name, void (*main_fn)(void *), void *arg) : main_fn(main_fn), arg(arg), PiThread(name) {
+        start();
+    }
 
     void main(void) {
 	main_fn(arg);

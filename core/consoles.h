@@ -7,6 +7,7 @@ extern "C" {
 
 int consoles_write_str(const char *str);
 int consoles_printf(const char *fmt, ...);
+void consoles_fatal_printf(const char *fmt, ...);
 
 #ifdef __cplusplus
 };

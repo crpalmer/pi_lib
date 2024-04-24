@@ -4,18 +4,19 @@ if("${PLATFORM}" STREQUAL "pico")
   )
 else()
   set(PLATFORM_SOURCE
-    talking-skull.c
   )
   set(PLATFORM_LIBS
   )
 endif()
 
 add_library(pi-audio STATIC
-  audio-${PLATFORM}.c
+  audio-${PLATFORM}.cpp
+  audio-player.cpp
   ${PLATFORM_SOURCE}
   talker-auto-gain.c
-  track.c
-  wav.c
+  talking-skull.cpp
+  talking-skull-from-audio.cpp
+  wav.cpp
 )
 
 target_include_directories(pi-audio PUBLIC ".")

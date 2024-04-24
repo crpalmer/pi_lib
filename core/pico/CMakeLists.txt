@@ -5,7 +5,6 @@ add_library(platform OBJECT
   neopixel-pico.cpp
   pi.c
   pi-gpio-pico.c
-  pico-audio.cpp
   pico-notes.cpp
   pico-servo.c
 )

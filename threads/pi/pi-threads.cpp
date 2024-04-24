@@ -20,6 +20,9 @@ void pi_threads_start_and_wait()
 }
 
 PiThread::PiThread(const char *name) : name(name) {
+}
+
+PiThread *PiThread::start() {
     if (pthread_create(&t, NULL, (void *(*)(void *)) PiThread::thread_entry, this)) {
         pthread_detach(t);
 
@@ -27,6 +30,7 @@ PiThread::PiThread(const char *name) : name(name) {
 	active_threads.push_back(this);
 	pthread_mutex_unlock(&at_lock);
     }
+    return this;
 }
 
 PiThread::~PiThread() {

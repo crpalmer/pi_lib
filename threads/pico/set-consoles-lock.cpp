@@ -5,11 +5,11 @@
 
 class ConsolesMutexLock : public ConsolesLock {
 public:
-    ConsolesMutexLock() { m = pi_mutex_new(); }
-    void lock() { pi_mutex_lock(m); }
-    void unlock() { pi_mutex_unlock(m); }
+    ConsolesMutexLock() { m = new PiMutex(); }
+    void lock() { m->lock(); }
+    void unlock() {m->unlock(); }
 private:
-    pi_mutex_t *m;
+    PiMutex *m;
 };
 
 void set_consoles_lock() {

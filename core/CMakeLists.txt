@@ -1,6 +1,7 @@
 add_subdirectory("${PLATFORM}")
 
 add_library(pi-core STATIC
+  buffer.cpp
   canvas.cpp
   console.cpp
   consoles-impl.cpp

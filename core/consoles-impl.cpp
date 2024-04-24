@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include "consoles.h"
 #include "consoles-lock.h"
+#include "pi.h"
 
 class Consoles : public Console, OnDeath<Console *> {
 public:
@@ -60,6 +61,15 @@ int consoles_printf(const char *fmt, ...) {
    va_end(va);
 
    return ret;
+}
+
+void consoles_fatal_printf(const char *fmt, ...) {
+   va_list va;
+   va_start(va, fmt);
+   Consoles::get().printf_va(fmt, va);
+   va_end(va);
+
+   pi_reboot_bootloader();
 }
 
 void consoles_set_consoles_lock(ConsolesLock *l) {

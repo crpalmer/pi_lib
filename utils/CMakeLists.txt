@@ -1,6 +1,10 @@
 function(util_common targetName)
     platform_executable(${targetName})
-    target_link_libraries(${targetName} pi-core ${ARGN})
+    target_link_libraries(${targetName}
+      pi-audio
+      pi-core
+      ${ARGN}
+    )
 endfunction()
 
 function(util_c targetName)
@@ -26,8 +30,7 @@ else()
   util_cpp(neopixel-pi)
   util_c(nes-dump)
   util_cpp(st7735s)
-  util_c(talking-skull-dump)
-  util_c(talking-skull-prepare)
+  util_cpp(talking-skull-dump)
   util_c(wb)
 endif()
 
@@ -39,3 +42,4 @@ util_cpp(rotary-encoder)
 # TODO: util_cpp(servo)
 util_c(sntp pi-net)
 util_cpp(ssd1306)
+util_cpp(wav-play)

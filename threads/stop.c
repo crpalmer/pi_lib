@@ -1,14 +1,14 @@
 #include <stdbool.h>
 #include <assert.h>
-#include <pthread.h>
 #include "mem.h"
+#include "pi-threads.h"
 #include "stop.h"
 
 struct stopS {
     volatile bool requested;
     volatile bool stopped;
-    pthread_mutex_t lock;
-    pthread_cond_t cond;
+    pi_mutex_t *lock;
+    pi_cond_t *cond;
 };
 
 stop_t *
@@ -16,8 +16,8 @@ stop_new(void)
 {
     stop_t *stop = fatal_malloc(sizeof(*stop));
 
-    pthread_mutex_init(&stop->lock, NULL);
-    pthread_cond_init(&stop->cond, NULL);
+    stop->lock = pi_mutex_new();
+    stop->cond = pi_cond_new();
 
     stop_reset(stop);
 
@@ -27,19 +27,19 @@ stop_new(void)
 void
 stop_request_stop(stop_t *stop)
 {
-    pthread_mutex_lock(&stop->lock);
+    pi_mutex_lock(stop->lock);
     stop->requested = true;
-    pthread_mutex_unlock(&stop->lock);
+    pi_mutex_unlock(stop->lock);
 }
 
 void
 stop_await_stop(stop_t *stop)
 {
-    pthread_mutex_lock(&stop->lock);
+    pi_mutex_lock(stop->lock);
     while (! stop->stopped) {
-	pthread_cond_wait(&stop->cond, &stop->lock);
+	pi_cond_wait(stop->cond, &stop->lock);
     }
-    pthread_mutex_unlock(&stop->lock);
+    pi_mutex_unlock(stop->lock);
 }
 
 void
@@ -61,7 +61,7 @@ stop_stopped(stop_t *stop)
 {
     if (stop) {
 	stop->stopped = true;
-	pthread_cond_signal(&stop->cond);
+	pi_cond_signal(stop->cond);
     }
 }
 
@@ -75,6 +75,8 @@ stop_reset(stop_t *stop)
 void
 stop_destroy(stop_t *stop)
 {
+    pi_mutex_destroy(stop->lock);
+    pi_cond_destroy(stop->cond);
     free(stop);
 }
 

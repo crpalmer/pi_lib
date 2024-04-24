@@ -4,7 +4,7 @@
 template <class X>
 class OnDeath {
 public:
-    virtual void on_death(X object);
+    virtual void on_death(X object) = 0;
 };
 
 #endif

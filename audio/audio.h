@@ -1,41 +1,28 @@
 #ifndef __AUDIO_H__
 #define __AUDIO_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+class AudioConfig {
+public:
+    virtual int get_num_channels() = 0;
+    virtual int get_rate() = 0;
+    virtual int get_bytes_per_sample() = 0;
+};
 
-typedef struct audioS audio_t;
+class Audio : public AudioConfig {
+public:
+    virtual size_t get_recommended_buffer_size() { return 1024; };
+    virtual void configure(AudioConfig *config) {}
+    virtual bool capture(void *buf, size_t n) { return false; }
+    virtual bool play(void *buf, size_t n) { return false; }
+    int get_num_channels() override { return 2; }
+    int get_rate() override { return 44*1024; }
+    int get_bytes_per_sample() override { return 2; }
+};
 
 #ifdef PLATFORM_pico
 #include "audio-pico.h"
 #else
 #include "audio-pi.h"
-#endif
-
-audio_t *
-audio_new(audio_config_t *cfg, audio_device_t *device);
-
-size_t
-audio_get_buffer_size(audio_t *);
-
-bool
-audio_set_volume(audio_t *, unsigned vol);
-
-bool
-audio_capture_buffer(audio_t *, unsigned char *buffer);
-
-bool
-audio_play_buffer(audio_t *, const unsigned char *buffer, size_t size);
-
-bool
-audio_print_controls(audio_t *, FILE *);
-
-void
-audio_destroy(audio_t *);
-
-#ifdef __cplusplus
-};
 #endif
 
 #endif

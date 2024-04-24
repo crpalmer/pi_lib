@@ -22,8 +22,12 @@ void pi_threads_start_and_wait() {
     vTaskStartScheduler();
 }
 
-PiThread::PiThread(const char *name) {
+PiThread::PiThread(const char *name) : name(name) {
+}
+
+PiThread *PiThread::start() {
     xTaskCreate(PiThread::thread_entry, name ? name : "pi-thread", 2048, this, 1, NULL);
+    return this;
 }
 
 PiThread::~PiThread() {

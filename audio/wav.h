@@ -1,47 +1,25 @@
 #ifndef __WAV_H__
 #define __WAV_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "stop.h"
-#include "talking-skull.h"
-#include "util.h"
-
 #include "audio.h"
+#include "audio-buffer.h"
+#include "buffer.h"
 
-typedef struct wavS wav_t;
+class Wav : public AudioConfig {
+public:
+    Wav(const char *fname) : Wav(new BufferFile(fname)) {}
+    Wav(Buffer *b);
+    ~Wav();
+    AudioBuffer *to_audio_buffer();
 
-wav_t *
-wav_new(const char *fname);
+    int get_num_channels() override { return num_channels; }
+    int get_rate() override { return sample_rate; }
+    int get_bytes_per_sample() override { return bytes_per_sample; }
 
-void
-wav_extract_servo_track(wav_t *w);
-
-void
-wav_configure_audio(wav_t *w, audio_config_t *m);
-
-audio_meta_t
-wav_get_meta(wav_t *w);
-
-unsigned char *
-wav_get_raw_data(wav_t *w, size_t *n_ret);
-
-bool
-wav_play(wav_t *w, audio_t *audio);
-
-bool
-wav_play_with_stop(wav_t *w, audio_t *audio, stop_t *stop);
-
-bool
-wav_play_with_talking_skull(wav_t *w, audio_t *audio, talking_skull_t *);
-
-void
-wav_destroy(wav_t *w);
-
-#ifdef __cplusplus
+private:
+    uint16_t num_channels, sample_rate, bytes_per_sample;
+    uint8_t *audio;
+    size_t n_audio;
 };
-#endif
 
 #endif
