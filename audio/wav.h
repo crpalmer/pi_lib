@@ -18,8 +18,7 @@ public:
 
 private:
     uint16_t num_channels, sample_rate, bytes_per_sample;
-    uint8_t *audio;
-    size_t n_audio;
+    Buffer *audio;
 };
 
 #endif

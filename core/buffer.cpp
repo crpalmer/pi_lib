@@ -30,6 +30,17 @@ int BufferFile::read(void *buf, size_t n) {
     return fread(buf, 1, n, f);
 }
 
+BufferBuffer *BufferFile::get_sub_buffer(size_t n) {
+    /* This is going to leak memory! */
+    void *new_data = fatal_malloc(n+1);
+    if (read(new_data, n) != n) {
+	free(new_data);
+	return NULL;
+    }
+    ((char *) new_data)[n] = '\0';
+    return new BufferBuffer(new_data, n);
+}
+
 int BufferBuffer::read(void *user_buf, size_t buf_size) {
     size_t to_read;
 
@@ -56,4 +67,9 @@ int BufferBuffer::seek_rel(long pos) {
     else if (pos + at > n) at = n;
     else at += pos;
     return 0;
+}
+
+BufferBuffer *BufferBuffer::get_sub_buffer(size_t size) {
+    if (at + size > n) return NULL;
+    return new BufferBuffer(&((char *) buffer)[at], size);
 }

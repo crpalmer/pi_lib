@@ -55,9 +55,7 @@ Wav::Wav(Buffer *b)
         case ID_DATA:
             /* Stop looking for chunks */
             more_chunks = false;
-	    n_audio = chunk_header.sz;
-	    audio = (uint8_t *) fatal_malloc(n_audio);
-	    b->read(audio, n_audio);
+	    audio = b->get_sub_buffer(chunk_header.sz);
             break;
         default:
             /* Unknown chunk, skip bytes */
@@ -72,7 +70,7 @@ Wav::Wav(Buffer *b)
 
 AudioBuffer *
 Wav::to_audio_buffer() {
-    return new AudioBuffer(new BufferBuffer(audio, n_audio), this);
+    return new AudioBuffer(audio, this);
 }
 
 Wav::~Wav()

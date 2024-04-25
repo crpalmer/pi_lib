@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+class BufferBuffer;
+
 class Buffer {
 public:
     virtual bool is_eof() = 0;
@@ -15,6 +17,7 @@ public:
 	read(&byte, 1);
 	return byte;
     }
+    virtual BufferBuffer *get_sub_buffer(size_t n) = 0;
 };
 
 class BufferFile : public Buffer {
@@ -26,6 +29,7 @@ public:
     int seek_abs(long pos) override;
     int seek_rel(long pos) override;
     const char *get_fname() override { return fname; }
+    BufferBuffer *get_sub_buffer(size_t n) override;
 
 private:
     const char *fname;
@@ -40,6 +44,10 @@ public:
     int seek_abs(long pos) override;
     int seek_rel(long pos) override;
     const char *get_fname() override { return "<buffer>"; }
+    BufferBuffer *get_sub_buffer(size_t n) override;
+
+    const void *get_data() { return buffer;}
+    size_t get_n_data() { return n; }
 
 private:
     const void *buffer;
