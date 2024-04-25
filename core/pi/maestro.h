@@ -57,6 +57,46 @@ maestro_set_servo_pos(maestro_t *m, servo_id_t id, double pos_0_100);
 
 #ifdef __cplusplus
 };
+
+#include "servo.h"
+
+class MaestroServo : public Servo {
+public:
+     MaestroServo(maestro_t *m, servo_id_t id) : m(m), id(id) { }
+
+     bool move_to(double pos) override {
+	return maestro_set_servo_pos(m, id, pos);
+     }
+
+     bool set_is_inverted(bool is_inverted) {
+	return maestro_set_servo_is_inverted(m, id, is_inverted);
+     }
+
+     bool set_range(unsigned min_us, unsigned max_us) override {
+	return maestro_set_servo_physical_range(m, id, min_us, max_us);
+     }
+
+     bool set_speed(unsigned ms_for_range) {
+	return maestro_set_servo_speed(m, id, ms_for_range) > 0;
+     }
+
+private:
+     maestro_t *m;
+     servo_id_t id;
+};
+
+class Maestro {
+public:
+     Maestro() { m = maestro_new(); }
+     ~Maestro() { maestro_destroy(m); }
+     void factory_reset() { maestro_factory_reset(m); }
+     int get_n_servos() { return maestro_n_servos(m); }
+     MaestroServo *get_servo(servo_id_t id) { return new MaestroServo(m, id); }
+
+private:
+     maestro_t *m;
+};
+     
 #endif
 
 #endif

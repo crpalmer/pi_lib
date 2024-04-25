@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include "pi.h"
 #include "pi-gpio.h"
-#include "servo.h"
+#include "servo-gpio.h"
 #include "util.h"
 
-//static char buf[1024];
+char buf[128];
 
 int
 main(int argc, char **argv)
@@ -15,12 +15,18 @@ main(int argc, char **argv)
     pi_init();
     pi_gpio_init();
 
-    Servo *servo = new Servo(2);
+    Servo *servo = new GpioServo(2, SERVO_HS425BB_MIN, SERVO_HS425BB_MAX);
+    servo->set_range(SERVO_HS425BB_MIN, SERVO_HS425BB_MAX);
 
-    while ((c = getchar()) >= 0) {
-	double where = (c - '0') / 10.0;
-	printf("go %f\n", where);
-	servo->go(where);
+    printf("Move servo to position [0, 100]:\n");
+    while (pi_readline(buf, sizeof(buf))) {
+	double pos;
+
+	if (sscanf(buf, "%lf", &pos) == 1) {
+	    if (servo->move_to(pos)) printf("Moved to %f\n", pos);
+	} else {
+	    printf("Enter a position [0, 100]\n");
+	}
     }
 
     return 0;
