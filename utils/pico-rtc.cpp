@@ -38,11 +38,12 @@ static void report_time()
     consoles_printf("Local time: %s\n", buf);
 }
 
-class ConsoleThread : public NetConsole {
+class ConsoleThread : public NetConsole, public PiThread {
 public:
-    ConsoleThread(Reader *r, Writer *w) : NetConsole(r, w) { }
-    ConsoleThread(int fd) : NetConsole(fd) { }
+    ConsoleThread(Reader *r, Writer *w) : NetConsole(r, w), PiThread("console") { start(); }
+    ConsoleThread(int fd) : NetConsole(fd), PiThread("console") { start(); }
 
+    void main() { Console::main(); }
     void process_cmd(const char *cmd) override {
 	if (is_command(cmd, "run-sntp")) {
 	    run_sntp();
@@ -73,7 +74,7 @@ public:
 
 class ReportingThread : PiThread {
 public:
-    ReportingThread() : PiThread("time-reporting") {}
+    ReportingThread() : PiThread("time-reporting") { start(); }
 
     void main() {
 	while (1) {
@@ -85,7 +86,7 @@ public:
 
 class NetThread : NetListener {
 public:
-    NetThread(uint16_t port) : NetListener(port) { }
+    NetThread(uint16_t port) : NetListener(port) { start(); }
 
     void accepted(int fd) {
 	new ConsoleThread(fd);

@@ -4,9 +4,9 @@
 #include <stdint.h>
 #include "pi-threads.h"
 
-class NetListener : PiThread {
+class NetListener : public PiThread {
 public:
-    NetListener(uint16_t port) : port(port) { start(); }
+    NetListener(uint16_t port) : port(port) { }
     virtual void accepted(int fd) = 0;
     void main();
 
