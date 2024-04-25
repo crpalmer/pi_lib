@@ -23,6 +23,9 @@ int pi_gpio_set(unsigned gpio, uint8_t value);
 int pi_gpio_set_pullup(unsigned gpio, unsigned updown);
 int pi_gpio_set_direction(unsigned gpio, unsigned direction);
 int pi_gpio_servo(unsigned gpio, unsigned ms);
+int pi_gpio_pwm_enable(unsigned gpio, unsigned freq_hz);
+int pi_gpio_pwm_disable(unsigned gpio);
+int pi_gpio_pwm_set_duty(unsigned gpio, double pct);
 
 typedef void (*pi_gpio_irq_handler_t)(void *arg, unsigned gpio, unsigned events);
 int pi_gpio_set_irq_handler(unsigned gpio, pi_gpio_irq_handler_t irq_handler, void *irq_handler_arg);

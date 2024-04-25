@@ -15,7 +15,7 @@ main(int argc, char **argv)
     pi_init();
     pi_gpio_init();
 
-    Servo *servo = new GpioServo(2, SERVO_HS425BB_MIN, SERVO_HS425BB_MAX);
+    Servo *servo = new GpioServo(22, SERVO_HS425BB_MIN, SERVO_HS425BB_MAX);
     servo->set_range(SERVO_HS425BB_MIN, SERVO_HS425BB_MAX);
 
     printf("Move servo to position [0, 100]:\n");

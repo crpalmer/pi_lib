@@ -6,7 +6,6 @@ add_library(platform OBJECT
   pi.c
   pi-gpio-pico.c
   pico-notes.cpp
-  pico-servo.c
 )
 
 target_include_directories(platform PRIVATE ..)
