@@ -21,7 +21,7 @@ bool AudioPlayer::play(AudioBuffer *audio_buffer) {
 
     if (! audio->configure(audio_buffer)) return false;
 
-    buffer = audio_buffer->get_buffer();
+    buffer = audio_buffer;
     player_is_active = true;
     start_cond->signal();
     mutex->unlock();
@@ -49,11 +49,14 @@ void AudioPlayer::main(void) {
 	    start_cond->wait(mutex);
 	}
 
+	audio->configure(buffer);
         size_t n = audio->get_recommended_buffer_size();
         void *buf = fatal_malloc(n);
 
-	while (! buffer->is_eof() && ! stop_requested) {
-	    size_t bytes = buffer->read(buf, n);
+	Buffer *b = buffer->get_buffer();
+
+	while (! b->is_eof() && ! stop_requested) {
+	    size_t bytes = b->read(buf, n);
 	    if (bytes < 0) {
 		consoles_printf("audio-player failed to read data, aborting stream.\n");
 		break;

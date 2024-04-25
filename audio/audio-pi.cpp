@@ -48,9 +48,19 @@ AudioPi::AudioPi(bool playback, int card, int device) : card(card), device(devic
 }
 
 bool AudioPi::configure(AudioConfig *new_config) {
+    enum pcm_format format = bytes_to_pcm_format(new_config->get_bytes_per_sample());
+
+    if (pcm &&
+	config.channels == new_config->get_num_channels() &&
+        config.rate == new_config->get_rate() &&
+	config.format == format) {
+	/* Config hasn't changed, we can continue to use the existing PCM handle */
+	return true;
+    }
+
     config.channels = new_config->get_num_channels();
     config.rate = new_config->get_rate();
-    config.format = new_config->get_bytes_per_sample() == 2 ? PCM_FORMAT_S16_LE : new_config->get_bytes_per_sample() == 4 ? PCM_FORMAT_S32_LE : PCM_FORMAT_S24_LE;
+    config.format = format;
     config.period_size = 1024;
     config.period_count = 2;
     config.silence_threshold = config.period_size * config.period_count;

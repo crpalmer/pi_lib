@@ -28,7 +28,7 @@ private:
     bool         player_is_active = false;
     bool         stop_requested = false;
     Audio       *audio;
-    Buffer      *buffer = NULL;
+    AudioBuffer *buffer = NULL;
     PiMutex     *mutex;
     PiCond      *start_cond, *stop_cond;
 };
