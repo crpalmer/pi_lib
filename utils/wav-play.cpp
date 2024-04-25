@@ -56,9 +56,6 @@ private:
 int main(int argc, char **argv)
 {
     pi_init_with_threads();
-#ifdef PLATFORM_pico
-    ms_sleep(2000); 
-#endif
     new MainThread(
 #ifdef PLATFORM_pi
         argc-1, &argv[1]

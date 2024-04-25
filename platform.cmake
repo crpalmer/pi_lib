@@ -14,8 +14,8 @@ add_compile_definitions(Wall Werror)
 
 function(platform_executable targetName)
   if("${PLATFORM}" STREQUAL "pico")
-    pico_enable_stdio_usb(${targetName} 1)
-    pico_enable_stdio_uart(${targetName} 0)
+    pico_enable_stdio_usb(${targetName} 0)
+    pico_enable_stdio_uart(${targetName} 1)
     # create map/bin/hex file etc.
     pico_add_extra_outputs(${targetName})
   elseif("${PLATFORM}" STREQUAL "pi")
