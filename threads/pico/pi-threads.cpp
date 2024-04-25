@@ -31,7 +31,6 @@ PiThread *PiThread::start() {
 }
 
 PiThread::~PiThread() {
-    vTaskDelete(NULL);
 }
 
 PiMutex::PiMutex() {

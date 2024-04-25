@@ -20,6 +20,7 @@ public:
     static void thread_entry(void *vp) {
 	PiThread *t = (PiThread *) vp;
 	t->main();
+	vTaskDelete(NULL);
     }
 
 private:
