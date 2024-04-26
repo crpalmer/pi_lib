@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "pi-gpio.h"
 #include "time-utils.h"
 
 #include "pi.h"
@@ -8,6 +9,7 @@
 void
 pi_init(void)
 {
+    pi_gpio_init();
 }
 
 void

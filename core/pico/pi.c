@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <pico/stdlib.h>
 #include <sys/time.h>
+#include "pi-gpio.h"
 #include "time-utils.h"
 
 #include "pi.h"
@@ -83,6 +84,7 @@ pi_init_no_reboot(void)
 {
     stdio_init_all();
     adc_init();
+    pi_gpio_init();
     setenv("TZ", "EST+5EDT,M3.2.0/2,M11.1.0/2", 1);
     tzset();
 }
