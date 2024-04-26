@@ -1,8 +1,6 @@
 #ifndef __NOTES_H__
 #define __NOTES_H__
 
-#include <pico/time.h>
-
 typedef struct {
    unsigned frequency;
    unsigned ms;
@@ -10,12 +8,9 @@ typedef struct {
 
 class Notes {
 public:
-    Notes(unsigned gpio, int max_queue_size = 1000);
+    Notes(unsigned gpio) : gpio(gpio) { }
 
-    void play(note_t *note, int n_notes = 1, int time_scaling = 1);
-
-    /* internal use only */
-    int64_t play_next();
+    void play(note_t *notes, int n_notes = 1, int time_scaling = 1);
 
     static const unsigned B0  = 31;
     static const unsigned C1  = 33;
@@ -109,16 +104,7 @@ public:
     static const unsigned REST = 0;
 
 private:
-    alarm_id_t alarm_id;
     unsigned gpio;
-    unsigned slice_num;
-
-    note_t *notes;
-    int     max_queue_size;
-    int     pop_at, push_at;
-    int     delay_next_us = 0;
-
-    inline int next_index(int i) { return (i+1) % max_queue_size; }
 };
 
 #endif

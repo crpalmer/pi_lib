@@ -75,17 +75,17 @@ main()
 {
     pi_init();
 
-    Notes *notes = new Notes(14);
+    Notes *notes = new Notes(21);
 
     while (pi_readline(buf, sizeof(buf)) != NULL) {
 	uint pin, freq, duty;
 	if (strncmp(buf, "bd", 2) == 0) {
 	    int scaling = atoi(&buf[2]);
-	    if (scaling == 0) scaling = 275;
+	    if (scaling == 0) scaling = 225;
 	    notes->play(happy_birthday, sizeof(happy_birthday) / sizeof(happy_birthday[0]), scaling);
 	} else if (strncmp(buf, "hp", 2) == 0) {
 	    int scaling = atoi(&buf[2]);
-	    if (scaling == 0) scaling = 300;
+	    if (scaling == 0) scaling = 250;
 	    notes->play(harry_potter, sizeof(harry_potter) / sizeof(harry_potter[0]), scaling);
         } else if (strcmp(buf, "bootsel") == 0) {
             pi_reboot_bootloader();
