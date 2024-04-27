@@ -1,43 +1,80 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "pico/stdlib.h"
-#include "hardware/pio.h"
-#include "hardware/clocks.h"
-#include "pico-audio.pio.h"
 #include "audio.h"
 #include "audio-buffer.h"
+#include "consoles.h"
 
-#define GPIO_FUNC_PIOx(pio) (pio == 0 ? GPIO_FUNC_PIO0 : GPIO_FUNC_PIO1)
-#define PIO(pio) (pio == 0 ? pio0 : pio1)
+#include "util.h"
 
-AudioPico::AudioPico(int data_pin, int clock_pin, int pio, int sm) : pio(pio), sm(sm) {
-    gpio_set_function(data_pin, GPIO_FUNC_PIOx(pio));
-    gpio_set_function(clock_pin, GPIO_FUNC_PIOx(pio));
-    gpio_set_function(clock_pin+1, GPIO_FUNC_PIOx(pio));
+#include "audio-pico.h"
 
-    pio_sm_claim(PIO(pio), sm);
+#define SAMPLES_PER_BUFFER 256
 
-    uint offset = pio_add_program(PIO(pio), &audio_pio_program);
+AudioPico::AudioPico(int data_pin, int clock_pin_base, int dma_channel, int sm) {
+    static audio_format_t audio_format = {
+            .sample_freq = 44100,
+            .format = AUDIO_BUFFER_FORMAT_PCM_S16,
+            .channel_count = 2,
+    };
 
-    audio_pio_program_init(PIO(pio), sm, offset, data_pin, clock_pin);
+    static struct audio_buffer_format producer_format = {
+            .format = &audio_format,
+            .sample_stride = 4,
+    };
 
-    set_frequency(44100);
+    bytes_per_sample = 2 /* channels */ * 2 /* 16 bit signed format */;
 
-    pio_sm_set_enabled(PIO(pio), sm, true);
+    producer_pool = audio_new_producer_pool(&producer_format, 3,
+                                                                      SAMPLES_PER_BUFFER); // todo correct size
+    bool __unused ok;
+    const struct audio_format *output_format;
+    struct audio_i2s_config config = {
+            .data_pin = (uint8_t) data_pin,
+            .clock_pin_base = (uint8_t) clock_pin_base,
+            .dma_channel = (uint8_t) dma_channel,
+            .pio_sm = (uint8_t) sm,
+    };
+
+    output_format = audio_i2s_setup(&audio_format, &config);
+    if (!output_format) {
+        panic("PicoAudio: Unable to open audio device.\n");
+    }
+
+    ok = audio_i2s_connect(producer_pool);
+    assert(ok);
+    audio_i2s_set_enabled(true);
 }
 
-void AudioPico::set_frequency(int freq) {
-    uint32_t system_clock_frequency = clock_get_hz(clk_sys);
-    uint32_t divider = system_clock_frequency * 4 / freq; // avoid arithmetic overflow
-    pio_sm_set_clkdiv_int_frac(PIO(pio), sm, divider >> 8u, divider & 0xffu);
+bool AudioPico::configure(AudioConfig *config) {
+    if (config->get_num_channels() != 2 || config->get_rate() != 44100 || config->get_bytes_per_sample() != 2) {
+	consoles_fatal_printf("Audio format is not currently compatible.  Must be 2 channels, 44100 hz, 16 bit signed.\n");
+    }
+    this->config = config;
+    bytes_per_sample = config->get_num_channels() * config->get_bytes_per_sample();
+    return true;
 }
 
-bool AudioPico::play(void *data, size_t n) {
-    uint32_t val;
-    AudioBuffer *buffer = new AudioBuffer(new BufferBuffer(data, n), config);
+size_t AudioPico::get_recommended_buffer_size() {
+    return SAMPLES_PER_BUFFER * get_bytes_per_sample() * get_num_channels();
+};
 
-    while (buffer->next(&val)) {
-	pio_sm_put_blocking(PIO(pio), sm, val);
+bool AudioPico::play(void *data_vp, size_t n) {
+    uint8_t *data = (uint8_t *) data_vp;
+
+    for (int i = 0; i < n; ) {
+        struct audio_buffer *buffer = take_audio_buffer(producer_pool, true);
+        uint8_t *bytes = (uint8_t *) buffer->buffer->bytes;
+
+	int bytes_per_buffer = buffer->max_sample_count * bytes_per_sample;
+	int n_to_copy = bytes_per_buffer > (n - i) ? (n - i) : bytes_per_buffer;
+
+	memcpy(bytes, &data[i], n_to_copy);
+
+        buffer->sample_count = n_to_copy / bytes_per_sample;
+        give_audio_buffer(producer_pool, buffer);
+
+	i += n_to_copy;
     }
 
     return true;

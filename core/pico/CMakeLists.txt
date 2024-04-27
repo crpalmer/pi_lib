@@ -10,7 +10,6 @@ add_library(platform OBJECT
 
 target_include_directories(platform PRIVATE ..)
 
-pico_generate_pio_header(platform ${CMAKE_CURRENT_LIST_DIR}/pico-audio.pio)
 pico_generate_pio_header(platform ${CMAKE_CURRENT_LIST_DIR}/neopixel.pio)
 
 target_link_libraries(platform PUBLIC

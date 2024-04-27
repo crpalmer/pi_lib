@@ -1,8 +1,4 @@
 if("${PLATFORM}" STREQUAL "pico")
-  set(PICO_BOARD pico_w)
-
-  include(${CMAKE_SOURCE_DIR}/pico_sdk_import.cmake)
-  pico_sdk_init()
 elseif("${PLATFORM}" STREQUAL "pi")
 else()
   message(FATAL_ERROR "You must specify a PLATFORM variable: 'pi' or 'pico'")

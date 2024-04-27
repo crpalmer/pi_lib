@@ -1,6 +1,11 @@
+include(../pico_extras_import.cmake)
+
 if("${PLATFORM}" STREQUAL "pico")
+  set(PLATFORM_SOURCE
+  )
   set(PLATFORM_LIBS
     pico_stdlib
+    pico_audio_i2s
   )
 else()
   set(PLATFORM_SOURCE
@@ -22,7 +27,7 @@ add_library(pi-audio STATIC
 target_include_directories(pi-audio PUBLIC ".")
 
 target_link_libraries(pi-audio PUBLIC
-  ${PLATFORM_LIBS}
   pi-core
   pi-threads
+  ${PLATFORM_LIBS}
 )
