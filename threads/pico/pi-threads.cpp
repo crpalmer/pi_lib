@@ -12,11 +12,19 @@ rtos_sleep(unsigned ms) {
     vTaskDelay(ms);
 }
 
-void pi_init_with_threads(void) {
+static void init_with_threads(void *main_as_vp) {
     pi_init_no_reboot();
-}
+    ms_sleep(2000);
 
-void pi_threads_start_and_wait() {
+    char *argv = fatal_strdup("pico");
+    pi_threads_main_t main = (pi_threads_main_t) main_as_vp;
+    main(1, &argv);
+
+    vTaskDelete(NULL);
+}
+    
+void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
+    xTaskCreate(init_with_threads, "main", 2048, (void *) main, 1, NULL);
     pico_set_sleep_fn(rtos_sleep);
     set_consoles_lock();
     vTaskStartScheduler();

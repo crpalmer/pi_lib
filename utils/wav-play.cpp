@@ -9,59 +9,33 @@
 #include "time-utils.h"
 #include "wav.h"
 
-class MainThread : public PiThread {
-public:
-    MainThread(int n_files = 0, char **files = NULL) : PiThread("main"), n_files(n_files), files(files) { 
+void load_and_play(AudioPlayer *player, Buffer *buffer) {
+    printf("Playing %s\n", buffer->get_fname());
+    Wav *wav = new Wav(buffer);
+
+    player->play(wav->to_audio_buffer());
+    player->wait_done();
+}
+
+void threads_main(int argc, char **argv) {
 #ifdef PLATFORM_pi
-	audio = new AudioPi();
+    Audio *audio = new AudioPi();
 #else
-	audio = new AudioPico();
+    Audio *audio = new AudioPico();
 #endif
-	player = new AudioPlayer(audio);
+    AudioPlayer *player = new AudioPlayer(audio);
 
-	start();
-    }
-
-    void main(void) {
-	if (n_files == 0) {
-	    load_and_play(new BufferBuffer(fanfare_wav, fanfare_wav_len));
-	} else {
-	    for (int i = 0; i < n_files; i++) {
-		load_and_play(new BufferFile(files[i]));
-	    }
+    if (argc <= 1) {
+	load_and_play(player, new BufferBuffer(fanfare_wav, fanfare_wav_len));
+    } else {
+	for (int i = 1; i < argc; i++) {
+	    load_and_play(player, new BufferFile(argv[i]));
 	}
-	printf("All Done.\n");
-	pi_reboot_bootloader();
     }
-
-private:
-    void load_and_play(Buffer *buffer) {
-	printf("Loading %s\n", buffer->get_fname());
-	Wav *wav = new Wav(buffer);
-
-	printf("Playing\n");
-	player->play(wav->to_audio_buffer());
-	player->wait_done();
-	printf("Complete.\n");
-    }
-
-private:
-    int n_files;
-    char **files;
-
-    Audio *audio;
-    AudioPlayer *player;
-};
+}
 
 int main(int argc, char **argv)
 {
-    pi_init_with_threads();
-    new MainThread(
-#ifdef PLATFORM_pi
-        argc-1, &argv[1]
-#endif
-    );
-    pi_threads_start_and_wait();
-
+    pi_init_with_threads(threads_main, argc, argv);
     return 0;
 }

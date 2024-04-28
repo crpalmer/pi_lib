@@ -9,14 +9,9 @@
 static pthread_mutex_t at_lock = PTHREAD_MUTEX_INITIALIZER;
 static std::list<PiThread *> active_threads;
 
-void pi_init_with_threads(void)
-{
+void pi_init_with_threads(pi_threads_main_t main, int argc, const char **argv) {
     pi_init();
-}
-
-void pi_threads_start_and_wait()
-{
-    while (1) ms_sleep(10000);
+    main(argc, argv);
 }
 
 PiThread::PiThread(const char *name) : name(name) {

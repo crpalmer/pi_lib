@@ -94,16 +94,18 @@ public:
 };
 
 static void
-wifi_main(void *unused)
+threads_main(int argc, char **argv)
 {
     new ConsoleThread(new StdinReader(), new StdoutWriter());
-    new SNTPThread();
+    wifi_init();
+    wifi_wait_for_connection();
     new NetThread(4567);
+    new SNTPThread();
     new ReportingThread();
 }
 
 int
 main(int argc, char **argv)
 {
-    pi_init_with_wifi(wifi_main, NULL);
+    pi_init_with_threads(threads_main, argc, argv);
 }

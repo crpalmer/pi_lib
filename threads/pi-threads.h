@@ -10,8 +10,12 @@ extern "C" {
 typedef void pi_mutex_t;
 typedef void pi_cond_t;
 
-void pi_init_with_threads(void);
-void pi_threads_start_and_wait();
+typedef void (*pi_threads_main_t)(int argc, char **argv);
+
+/* Note: argc/argv are ignored in the pico implementation as
+ * there is no commandline for a pico.
+ */
+void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv);
 
 void pi_threads_dump_state();
 char *pi_threads_get_state();

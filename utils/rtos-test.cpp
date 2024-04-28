@@ -38,10 +38,12 @@ void readline_task(void *arg_unused) {
     }
 }
 
-int main() {
-    pi_init_with_threads();
+void threads_main(int argc, char **argv) {
     pi_thread_create("hello", hello, NULL);
     pi_thread_create("world", world, NULL);
     pi_thread_create("readline", readline_task, NULL);
-    pi_threads_start_and_wait();
+}
+
+int main(int argc, char **argv) {
+    pi_init_with_threads(threads_main, argc, argv);
 }

@@ -45,37 +45,13 @@ printf("Connected.\n");
     }
 }
 
-typedef struct {
-    void (*main)(void *);
-    void *args;
-} start_args_t;
-
-static void
-run_main(void *start_args_as_vp)
-{
-    start_args_t *start_args = (start_args_t *) start_args_as_vp;
-
-    wifi_wait_for_connection();
-    pi_thread_create("main", start_args->main, start_args->args);
-    free(start_args);
-}
-
 void
-pi_init_with_wifi(void (*main)(void *), void *args)
+wifi_init()
 {
-    pi_init_with_threads();
-
     m_connection = pi_mutex_new();
     c_connection = pi_cond_new();
 
     pi_thread_create("wifi up", connect_to_wifi, NULL);
-
-    start_args_t *start_args = fatal_malloc(sizeof(*start_args));
-    start_args->main = main;
-    start_args->args = args;
-    pi_thread_create("run-main", run_main, start_args);
-
-    pi_threads_start_and_wait();
 }
 
 bool

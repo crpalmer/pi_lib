@@ -35,8 +35,11 @@ static struct {
 #include "time-utils.h"
 
 static void
-wifi_main(void *unused)
+threads_main(int argc, char **argv)
 {
+    wifi_init();
+    wifi_wait_for_connection();
+
     m = pi_mutex_new();
     c = pi_cond_new();
 
@@ -48,22 +51,10 @@ wifi_main(void *unused)
 	pi_cond_wait(c, m);
     }
     pi_mutex_unlock(m);
-
-    printf("All requests complete\n");
-    pi_reboot_bootloader();
 }
 
 int
 main(int argc, char **argv)
 {
-#ifdef PLATFORM_pico
-    char *pico[] = { "pico", "time.nist.gov", "pool.ntp.org" };
-    args.argc = 3;
-    args.argv = pico;
-#else
-    args.argc = argc;
-    args.argv = argv;
-#endif
-
-    pi_init_with_wifi(wifi_main, NULL);
+    pi_init_with_threads(threads_main, argc, argv);
 }
