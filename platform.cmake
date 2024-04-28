@@ -6,7 +6,7 @@ endif()
 
 add_compile_definitions(PLATFORM_${PLATFORM})
 add_compile_definitions("WIFI_SSID=\"$ENV{WIFI_SSID}\"" "WIFI_PASSWORD=\"$ENV{WIFI_PASSWORD}\"")
-add_compile_definitions(Wall Werror)
+add_compile_options(-Wall -Werror)
 
 function(platform_executable targetName)
   if("${PLATFORM}" STREQUAL "pico")

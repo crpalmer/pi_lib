@@ -51,8 +51,8 @@ bool AudioPi::configure(AudioConfig *new_config) {
     enum pcm_format format = bytes_to_pcm_format(new_config->get_bytes_per_sample());
 
     if (pcm &&
-	config.channels == new_config->get_num_channels() &&
-        config.rate == new_config->get_rate() &&
+	config.channels == (unsigned) new_config->get_num_channels() &&
+        config.rate == (unsigned) new_config->get_rate() &&
 	config.format == format) {
 	/* Config hasn't changed, we can continue to use the existing PCM handle */
 	return true;

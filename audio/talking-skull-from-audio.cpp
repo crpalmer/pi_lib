@@ -20,16 +20,16 @@ TalkingSkullAudioOps::TalkingSkullAudioOps(AudioBuffer *audio, unsigned n_to_avg
 
 bool TalkingSkullAudioOps::next(double *pos) {
     unsigned long long sum = 0;
-    for (int i_avg = 0; i_avg < n_to_avg; i_avg++) {
+    for (unsigned i_avg = 0; i_avg < n_to_avg; i_avg++) {
 	unsigned mx = 0;
-	for (int i_max = 0; i_max < n_per_sample; i_max++) {
+	for (unsigned i_max = 0; i_max < n_per_sample; i_max++) {
 	    uint32_t val_unsigned;
 	    int32_t val;
 
 	    if (! audio->next(&val_unsigned)) return false;
 	    val = val_unsigned;
 	    if (val < 0) val = -val;
-	    if (val > mx) mx = val;
+	    if ((unsigned) val > mx) mx = val;
 	}
 	sum += mx;
     }

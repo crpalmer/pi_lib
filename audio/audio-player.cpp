@@ -3,7 +3,7 @@
 
 #include "audio-player.h"
 
-AudioPlayer::AudioPlayer(Audio *audio) : audio(audio), PiThread("audio-player") {
+AudioPlayer::AudioPlayer(Audio *audio) : PiThread("audio-player"), audio(audio) {
     mutex = new PiMutex();
     stop_cond = new PiCond();
     start_cond = new PiCond();

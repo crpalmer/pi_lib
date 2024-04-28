@@ -9,7 +9,7 @@
 class Console : public Writer {
 public:
     Console() : Writer() { }
-    Console(Reader *reader, Writer *writer) : r(reader), w(writer), Writer() { }
+    Console(Reader *reader, Writer *writer) : Writer(), r(reader), w(writer) { }
 
     ~Console() {
 	if (on_death) on_death->on_death(this);

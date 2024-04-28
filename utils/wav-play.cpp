@@ -11,7 +11,7 @@
 
 class MainThread : public PiThread {
 public:
-    MainThread(int n_files = 0, char **files = NULL) : n_files(n_files), files(files), PiThread("main") { 
+    MainThread(int n_files = 0, char **files = NULL) : PiThread("main"), n_files(n_files), files(files) { 
 #ifdef PLATFORM_pi
 	audio = new AudioPi();
 #else

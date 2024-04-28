@@ -10,8 +10,6 @@ char buf[128];
 int
 main(int argc, char **argv)
 {
-    int c;
-
     pi_init();
     pi_gpio_init();
 

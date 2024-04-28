@@ -230,4 +230,6 @@ int pi_gpio_pwm_set_duty(unsigned gpio, double pct)
 
     pwm_set_chan_level(slice, channel, top * pct);
     pwm_set_enabled(slice, true);
+
+    return 0;
 }

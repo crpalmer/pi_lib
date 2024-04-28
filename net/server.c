@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+#include "consoles.h"
 #include "mem.h"
 #include "net.h"
 #include "net-line-reader.h"
@@ -31,9 +32,6 @@ connection_main(void *c_as_vp)
     while ((cmd = net_line_reader_read(reader)) != NULL) {
 	server_args_t *server = c->server;
 	char *response = server->command(server->state, cmd, c->addr, c->size);
-	bool success;
-
-printf("response: %s\n", response);
 
 	if (! strlen(response) || response[strlen(response)] != '\n') {
 	    char *response2 = malloc(strlen(response) + 2);
@@ -42,7 +40,9 @@ printf("response: %s\n", response);
 	    response = response2;
 	}
 
-	success = write(fd, response, strlen(response)) == strlen(response);
+	if (write(fd, response, strlen(response)) != strlen(response)) {
+	    consoles_printf("Write failed.\n");
+	}
 	free(response);
     }
     net_line_reader_destroy(reader);

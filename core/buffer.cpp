@@ -26,7 +26,7 @@ BufferFile::~BufferFile() {
     fclose(f);
 }
 
-int BufferFile::read(void *buf, size_t n) {
+size_t BufferFile::read(void *buf, size_t n) {
     return fread(buf, 1, n, f);
 }
 
@@ -41,7 +41,7 @@ BufferBuffer *BufferFile::get_sub_buffer(size_t n) {
     return new BufferBuffer(new_data, n);
 }
 
-int BufferBuffer::read(void *user_buf, size_t buf_size) {
+size_t BufferBuffer::read(void *user_buf, size_t buf_size) {
     size_t to_read;
 
     if (at >= n) return 0;
@@ -57,7 +57,7 @@ int BufferBuffer::read(void *user_buf, size_t buf_size) {
 
 int BufferBuffer::seek_abs(long pos) {
     if (pos < 0) at = 0;
-    else if (pos > n) at = n;
+    else if ((size_t) pos > n) at = n;
     else at = pos;
     return 0;
 }

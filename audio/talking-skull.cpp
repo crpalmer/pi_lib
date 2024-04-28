@@ -17,7 +17,7 @@ TalkingSkullFileOps::~TalkingSkullFileOps() {
 }
 
 bool TalkingSkullFileOps::next(double *pos) {
-    return fscanf(f, "%g", pos) == 1;
+    return fscanf(f, "%lg", pos) == 1;
 }
 
 /* -------------------------------------------------------------- */

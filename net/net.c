@@ -7,7 +7,7 @@
 #include "net.h"
 #include "global-trace.h"
 
-#if 1
+#if 0
 #include <string.h>
 static char *get_ip_str(const struct sockaddr *sa, char *s, size_t maxlen)
 {

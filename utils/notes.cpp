@@ -78,7 +78,6 @@ main()
     Notes *notes = new Notes(21);
 
     while (pi_readline(buf, sizeof(buf)) != NULL) {
-	uint pin, freq, duty;
 	if (strncmp(buf, "bd", 2) == 0) {
 	    int scaling = atoi(&buf[2]);
 	    if (scaling == 0) scaling = 225;

@@ -62,12 +62,12 @@ size_t AudioPico::get_recommended_buffer_size() {
 bool AudioPico::play(void *data_vp, size_t n) {
     uint8_t *data = (uint8_t *) data_vp;
 
-    for (int i = 0; i < n; ) {
+    for (size_t i = 0; i < n; ) {
         struct audio_buffer *buffer = take_audio_buffer(producer_pool, true);
         uint8_t *bytes = (uint8_t *) buffer->buffer->bytes;
 
-	int bytes_per_buffer = buffer->max_sample_count * bytes_per_sample;
-	int n_to_copy = bytes_per_buffer > (n - i) ? (n - i) : bytes_per_buffer;
+	size_t bytes_per_buffer = buffer->max_sample_count * bytes_per_sample;
+	size_t n_to_copy = bytes_per_buffer > (n - i) ? (n - i) : bytes_per_buffer;
 
 	memcpy(bytes, &data[i], n_to_copy);
 
