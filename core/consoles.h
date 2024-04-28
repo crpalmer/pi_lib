@@ -12,11 +12,13 @@ void consoles_fatal_printf(const char *fmt, ...);
 #ifdef __cplusplus
 };
 
+class Console;
+void consoles_add(Console *c);
+void consoles_remove(Console *c);
+
 #include "console.h"
 #include "consoles-lock.h"
 
-void consoles_add(Console *c);
-void consoles_on_death(Console *c);
 void consoles_set_consoles_lock(ConsolesLock *lock);
 
 #endif

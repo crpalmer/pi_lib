@@ -5,7 +5,7 @@
 #include "consoles-lock.h"
 #include "pi.h"
 
-class Consoles : public Console, OnDeath<Console *> {
+class Consoles : public Writer {
 public:
     static Consoles& get() {
         static Consoles instance;
@@ -20,10 +20,9 @@ public:
 	lock->lock();
         active.push_back(c);
 	lock->unlock();
-	c->set_on_death_notifier(this);
     }
 
-    void on_death(Console *c) {
+    void remove(Console *c) {
 	lock->lock();
 	active.remove(c);
 	lock->unlock();
@@ -46,8 +45,8 @@ void consoles_add(Console *c) {
     Consoles::get().add(c);
 }
 
-void consoles_on_death(Console *c) {
-    Consoles::get().on_death(c);
+void consoles_remove(Console *c) {
+    Consoles::get().remove(c);
 }
 
 int consoles_write_str(const char *str) {

@@ -4,7 +4,7 @@ add_library(pi-core STATIC
   buffer.cpp
   canvas.cpp
   console.cpp
-  consoles-impl.cpp
+  consoles.cpp
   file.c
   global-trace.c
   grove.cpp

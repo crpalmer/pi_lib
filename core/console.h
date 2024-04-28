@@ -2,21 +2,22 @@
 #define __CONSOLE_H__
 
 #include <string.h>
-#include "on-death.h"
+#include "consoles.h"
 #include "reader.h"
 #include "writer.h"
 
 class Console : public Writer {
 public:
-    Console() : Writer() { }
-    Console(Reader *reader, Writer *writer) : Writer(), r(reader), w(writer) { }
-
-    ~Console() {
-	if (on_death) on_death->on_death(this);
+    Console() : Writer() {
+	consoles_add(this);
     }
 
-    void set_on_death_notifier(OnDeath<Console *> *od) {
- 	on_death = od;
+    Console(Reader *reader, Writer *writer) : Writer(), r(reader), w(writer) {
+	consoles_add(this);
+    }
+
+    ~Console() {
+	consoles_remove(this);
     }
 
     void main() {
@@ -42,8 +43,6 @@ public:
 private:
     Reader *r;
     Writer *w;
-
-    OnDeath<Console *> *on_death = NULL;
 };
 
 #endif
