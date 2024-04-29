@@ -54,6 +54,7 @@ void AudioPlayer::main(void) {
         void *buf = fatal_malloc(n);
 
 	Buffer *b = buffer->get_buffer();
+	b->seek_abs(0);
 
 	while (! b->is_eof() && ! stop_requested) {
 	    size_t bytes = b->read(buf, n);
