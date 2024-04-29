@@ -8,23 +8,6 @@
 #include "time-utils.h"
 #include "wav.h"
 
-#ifdef PLATFORM_pico
-
-#include <malloc.h>
-
-uint32_t getTotalHeap(void) {
-   extern char __StackLimit, __bss_end__;
-
-   return &__StackLimit  - &__bss_end__;
-}
-
-uint32_t getFreeHeap(void) {
-   struct mallinfo m = mallinfo();
-
-   return getTotalHeap() - m.uordblks;
-}
-#endif
-
 class LaughTalkingSkull : public TalkingSkull {
 public:
     LaughTalkingSkull(int gpio) : TalkingSkull(), servo(new GpioServo(gpio)) {}
@@ -48,12 +31,12 @@ void talk_once(Audio *audio, AudioPlayer *player, TalkingSkull *skull) {
 
     TalkingSkullOps *ops = new TalkingSkullAudioOps(audio_buffer);
     skull->ops(ops);
-    delete ops;
 
     player->play(audio_buffer);
     skull->play();
     player->wait_done();
 
+    delete ops;
     delete buffer;
     delete audio_buffer;
     delete wav;
@@ -72,10 +55,9 @@ void threads_main(int argc, char **argv) {
     printf("Loading...\n");
     while (1) {
 	ms_sleep(1000);
+	printf("Starting to talk\n");
 	talk_once(audio, player, skull);
-#ifdef PLATFORM_pico
-        printf("Heap free: %ld\n", (long) getFreeHeap());
-#endif
+	pi_threads_dump_state();
     }
 }
 

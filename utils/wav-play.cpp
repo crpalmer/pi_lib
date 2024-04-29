@@ -16,8 +16,8 @@ void load_and_play(AudioPlayer *player, Buffer *buffer) {
 
     AudioBuffer *audio_buffer = wav->to_audio_buffer();
     player->play(audio_buffer);
-    delete audio_buffer;
     player->wait_done();
+    delete audio_buffer;
     delete wav;
 }
 
@@ -39,6 +39,7 @@ void threads_main(int argc, char **argv) {
 	        load_and_play(player, new BufferFile(argv[i]));
 	    }
         }
+	pi_threads_dump_state();
 	ms_sleep(1000);
     }
 }

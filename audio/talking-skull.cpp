@@ -58,7 +58,6 @@ void TalkingSkull::ops(TalkingSkullOps *ops) {
     wait_lock->lock();
 
     usec_per_i = ops->get_usec_per_i();
-
     n_pos = 0;
 
     double next_pos;

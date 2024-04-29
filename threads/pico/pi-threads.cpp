@@ -137,12 +137,27 @@ void PiCond::broadcast() {
     lock->unlock();
 }
 
+#include <malloc.h>
+
+static uint32_t getTotalHeap(void) {
+   extern char __StackLimit, __bss_end__;
+
+   return &__StackLimit  - &__bss_end__;
+}
+
+static uint32_t getFreeHeap(void) {
+   struct mallinfo m = mallinfo();
+
+   return getTotalHeap() - m.uordblks;
+}
+
 char *
 pi_threads_get_state()
 {
     char *state;
     state = (char *) fatal_malloc(10*1048);
-    vTaskList(state);
+    sprintf(state, "Free heap memory: %d\n", (int) getFreeHeap());
+    vTaskList(&state[strlen(state)]);
     return state;
 }
 
