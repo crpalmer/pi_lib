@@ -39,8 +39,10 @@ int talking_skull_ops_to_file(FILE *f, TalkingSkullOps *ops);
 
 class TalkingSkull : PiThread {
 public:
-    TalkingSkull(TalkingSkullOps *ops, const char *thread_name = "talking-skull");
+    TalkingSkull(const char *thread_name = "talking-skull");
     ~TalkingSkull();
+
+    void ops(TalkingSkullOps *ops);
     void play();
 
     void main() override;
@@ -52,7 +54,7 @@ protected:
     PiCond  *wait_cond;
     int usec_per_i;
     double *pos;
-    size_t n_pos;
+    size_t n_pos, a_pos;
 };
 
 #endif

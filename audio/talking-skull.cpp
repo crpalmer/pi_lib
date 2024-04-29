@@ -43,14 +43,22 @@ bool TalkingSkullVsaOps::next(double *pos) {
     return true;
 }
 
-TalkingSkull::TalkingSkull(TalkingSkullOps *ops, const char *thread_name) : PiThread(thread_name) {
+TalkingSkull::TalkingSkull(const char *thread_name) : PiThread(thread_name) {
     wait_lock = new PiMutex();
     wait_cond = new PiCond();
+    n_pos = 0;
+    a_pos = 16;
+    pos = (double *) fatal_malloc(a_pos * sizeof(*pos));
+    usec_per_i = 0;
+
+    start();
+}
+
+void TalkingSkull::ops(TalkingSkullOps *ops) {
+    wait_lock->lock();
 
     usec_per_i = ops->get_usec_per_i();
 
-    size_t a_pos = 16;
-    pos = (double *) fatal_malloc(a_pos * sizeof(*pos));
     n_pos = 0;
 
     double next_pos;
@@ -62,7 +70,7 @@ TalkingSkull::TalkingSkull(TalkingSkullOps *ops, const char *thread_name) : PiTh
 	pos[n_pos++] = next_pos;
     }
 
-    start();
+    wait_lock->unlock();
 }
 
 TalkingSkull::~TalkingSkull() {
