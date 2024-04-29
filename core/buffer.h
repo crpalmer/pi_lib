@@ -7,6 +7,7 @@ class BufferBuffer;
 
 class Buffer {
 public:
+    virtual ~Buffer() {}
     virtual bool is_eof() = 0;
     virtual size_t read(void *buf, size_t n) = 0;
     virtual int seek_abs(long pos) = 0;
@@ -23,7 +24,7 @@ public:
 class BufferFile : public Buffer {
 public:
     BufferFile(const char *fname);
-    ~BufferFile();
+    ~BufferFile() override;
     bool is_eof() override;
     size_t read(void *buf, size_t n) override;
     int seek_abs(long pos) override;
@@ -39,6 +40,7 @@ private:
 class BufferBuffer : public Buffer {
 public:
     BufferBuffer(const void *buffer, size_t n) : buffer(buffer), n(n), at(0) {}
+    ~BufferBuffer() override;
     bool is_eof() override { return at == n; }
     size_t read(void *buf, size_t buf_size) override;
     int seek_abs(long pos) override;

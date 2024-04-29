@@ -13,6 +13,9 @@ public:
 	bytes_per_sample = config->get_bytes_per_sample();
     }
 
+    virtual ~AudioBuffer() {
+    }
+
     bool next(uint32_t *val) {
 	*val = 0;
 	for (int i = 0; i < bytes_per_sample; i++) {

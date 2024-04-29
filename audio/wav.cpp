@@ -28,8 +28,7 @@ struct chunk_fmt {
     uint16_t bits_per_sample;
 };
 
-Wav::Wav(Buffer *b)
-{
+Wav::Wav(Buffer *b) : buffer(b) {
     struct riff_wave_header riff_wave_header;
     struct chunk_header chunk_header;
     struct chunk_fmt fmt;
@@ -75,5 +74,6 @@ Wav::to_audio_buffer() {
 
 Wav::~Wav()
 {
-    free(audio);
+    if (delete_buffer) delete buffer;
+    if (audio) delete audio;
 }

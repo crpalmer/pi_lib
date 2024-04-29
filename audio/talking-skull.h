@@ -6,6 +6,7 @@
 
 class TalkingSkullOps {
 public:
+    virtual ~TalkingSkullOps() { }
     virtual int get_usec_per_i() = 0;
     virtual bool next(double *pos) = 0;
 };
@@ -13,7 +14,7 @@ public:
 class TalkingSkullFileOps : public TalkingSkullOps {
 public:
     TalkingSkullFileOps(const char *fname);
-    ~TalkingSkullFileOps();
+    ~TalkingSkullFileOps() override;
 
     int get_usec_per_i() override { return usec_per_i; }
     bool next(double *pos) override;
@@ -26,7 +27,7 @@ private:
 class TalkingSkullVsaOps : public TalkingSkullOps {
 public:
     TalkingSkullVsaOps(const char *fname);
-    ~TalkingSkullVsaOps();
+    ~TalkingSkullVsaOps() override;
     int get_usec_per_i() override { return 1000*1000*0.033; }
     bool next(double *pos) override;
 

@@ -9,7 +9,7 @@
 static pthread_mutex_t at_lock = PTHREAD_MUTEX_INITIALIZER;
 static std::list<PiThread *> active_threads;
 
-void pi_init_with_threads(pi_threads_main_t main, int argc, const char **argv) {
+void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
     pi_init();
     main(argc, argv);
 }
@@ -75,4 +75,7 @@ void PiCond::signal() {
 
 void PiCond::broadcast() {
     pthread_cond_broadcast(&c);
+}
+
+void pi_threads_dump_state() {
 }

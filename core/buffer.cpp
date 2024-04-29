@@ -31,7 +31,6 @@ size_t BufferFile::read(void *buf, size_t n) {
 }
 
 BufferBuffer *BufferFile::get_sub_buffer(size_t n) {
-    /* This is going to leak memory! */
     void *new_data = fatal_malloc(n+1);
     if (read(new_data, n) != n) {
 	free(new_data);
@@ -72,4 +71,7 @@ int BufferBuffer::seek_rel(long pos) {
 BufferBuffer *BufferBuffer::get_sub_buffer(size_t size) {
     if (at + size > n) return NULL;
     return new BufferBuffer(&((char *) buffer)[at], size);
+}
+
+BufferBuffer::~BufferBuffer() {
 }

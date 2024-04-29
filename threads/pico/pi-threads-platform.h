@@ -21,6 +21,7 @@ public:
 	PiThread *t = (PiThread *) vp;
 	t->main();
 	vTaskDelete(NULL);
+	delete t;
     }
 
 private:

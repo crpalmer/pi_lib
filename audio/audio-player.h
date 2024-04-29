@@ -10,6 +10,7 @@
 class AudioPlayer : PiThread {
 public:
     AudioPlayer(Audio *audio);
+    ~AudioPlayer();
 
     bool play(AudioBuffer *audio_buffer);
     void stop();

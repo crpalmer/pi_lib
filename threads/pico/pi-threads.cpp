@@ -68,6 +68,7 @@ PiCond::PiCond() {
 
 PiCond::~PiCond() {
     broadcast();
+    delete lock;
 }
 
 static TickType_t abstime_to_ticks(const struct timespec *abstime) {

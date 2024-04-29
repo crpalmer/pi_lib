@@ -1,6 +1,7 @@
 #ifndef __SERVO_GPIO_H__
 #define __SERVO_GPIO_H__
 
+#include "pi-gpio.h"
 #include "servo.h"
 
 class GpioServo : public Servo {

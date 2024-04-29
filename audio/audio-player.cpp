@@ -11,6 +11,12 @@ AudioPlayer::AudioPlayer(Audio *audio) : PiThread("audio-player"), audio(audio) 
     start();
 }
 
+AudioPlayer::~AudioPlayer() {
+    delete mutex;
+    delete stop_cond;
+    delete start_cond;
+}
+
 bool AudioPlayer::play(AudioBuffer *audio_buffer) {
     mutex->lock();
     if (player_is_active) {

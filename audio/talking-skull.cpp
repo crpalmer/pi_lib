@@ -74,6 +74,8 @@ void TalkingSkull::ops(TalkingSkullOps *ops) {
 }
 
 TalkingSkull::~TalkingSkull() {
+    delete wait_lock;
+    delete wait_cond;
     free(pos);
 }
 

@@ -17,6 +17,7 @@
 
 class Servo {
 public:
+    virtual ~Servo() {}
     virtual bool move_to(double pos_from_0_to_100) { return false; }
     virtual bool set_is_inverted(bool is_inverted) { return false; }
     virtual bool set_range(unsigned mn, unsigned mx) { return false; }

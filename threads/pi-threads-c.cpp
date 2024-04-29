@@ -5,9 +5,11 @@ public:
     PiThreadWrapper(const char *name, void (*main_fn)(void *), void *arg) : PiThread(name), main_fn(main_fn), arg(arg) {
         start();
     }
+    virtual ~PiThreadWrapper() {}
 
     void main(void) {
 	main_fn(arg);
+	delete this;
     }
 
 private:
@@ -45,6 +47,7 @@ void pi_mutex_unlock(pi_mutex_t *m_vp)
 
 void pi_mutex_destroy(pi_mutex_t *m_vp)
 {
+    delete (PiMutex *) m_vp;
 }
 
 pi_cond_t *pi_cond_new()
@@ -82,4 +85,5 @@ void pi_cond_broadcast(pi_cond_t *c_vp)
 
 void pi_cond_destroy(pi_cond_t *c_vp)
 {
+    delete (PiCond *) c_vp;
 }
