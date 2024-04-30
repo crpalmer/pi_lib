@@ -5,7 +5,6 @@
 #include <ctype.h>
 #include "pi.h"
 #include "rotary-encoder.h"
-#include "util.h"
 
 static char buf[10*1024];
 static RotaryEncoder *re;

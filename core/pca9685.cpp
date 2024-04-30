@@ -2,7 +2,6 @@
 #include "i2c.h"
 #include "pca9685.h"
 #include "pi-gpio.h"
-#include "util.h"
 
 #define MODE1_RESET_BIT		0x80
 #define MODE1_EXTCLK_BIT	0x40

@@ -4,7 +4,7 @@
 #include <assert.h>
 #include "mem.h"
 #include "pi-threads.h"
-#include "util.h"
+#include "random-utils.h"
 #include "wb.h"
 
 #include "lights.h"

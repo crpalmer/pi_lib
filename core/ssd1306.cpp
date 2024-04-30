@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "i2c.h"
-#include "util.h"
 
 #include "ssd1306.h"
 

@@ -1,7 +1,6 @@
 ﻿#include <stdio.h>
 #include "ble.h"
 #include "pi.h"
-#include "util.h"
 
 static char buffer[1024];
 

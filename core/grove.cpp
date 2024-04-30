@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "i2c.h"
-#include "util.h"
 #include "grove.h"
 
 const unsigned char speed_addr = 0x82;

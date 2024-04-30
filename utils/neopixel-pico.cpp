@@ -10,7 +10,6 @@
 #include "stdio-driver-writer.h"
 #include "threads-console.h"
 #include "time-utils.h"
-#include "util.h"
 
 static int n_leds = 0;
 static NeoPixelPico *neo;

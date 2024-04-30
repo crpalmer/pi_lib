@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <string.h>
 #include "time-utils.h"
-#include "util.h"
 
 #include "neopixel-pi.h"
 

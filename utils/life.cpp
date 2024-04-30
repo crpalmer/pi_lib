@@ -8,7 +8,7 @@
 #include "pi.h"
 #include "pi-gpio.h"
 #include "time-utils.h"
-#include "util.h"
+#include "random-utils.h"
 
 static Display *display;
 static Canvas *canvas[2];

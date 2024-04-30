@@ -5,7 +5,6 @@
 #include "pi.h"
 //#include "canvas-png.h"
 #include "st7735s.h"
-#include "util.h"
 
 int
 main(int argc, char **argv)

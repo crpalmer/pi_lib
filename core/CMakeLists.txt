@@ -14,7 +14,7 @@ add_library(pi-core STATIC
   pca9685.cpp
   ssd1306.cpp
   string-utils.c
-  util.c
+  random-utils.c
   wb.c
   ween-board.cpp
 )

@@ -3,7 +3,6 @@
 #include "ble.h"
 #include "mem.h"
 #include "time-utils.h"
-#include "util.h"
 
 #define BLE_MODE_PIN 15
 #define UART_BAUD 115200

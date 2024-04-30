@@ -4,7 +4,6 @@
 #include <string.h>
 #include "gp-input.h"
 #include "pi.h"
-#include "util.h"
 
 static char buf[10*1024];
 #define MAX_INPUTS 1000

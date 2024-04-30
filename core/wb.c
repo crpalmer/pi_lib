@@ -3,7 +3,6 @@
 #include <assert.h>
 #include "pi-gpio.h"
 #include "time-utils.h"
-#include "util.h"
 
 #include "wb.h"
 

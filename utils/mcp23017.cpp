@@ -4,7 +4,6 @@
 #include "i2c.h"
 #include "mcp23017.h"
 #include "pi.h"
-#include "util.h"
 
 static char buf[100*1024];
 

@@ -5,7 +5,6 @@
 #include "i2c.h"
 #include "ssd1306.h"
 #include "pi.h"
-#include "util.h"
 
 static Display *display;
 static Canvas *canvas;

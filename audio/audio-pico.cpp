@@ -5,8 +5,6 @@
 #include "audio-buffer.h"
 #include "consoles.h"
 
-#include "util.h"
-
 #include "audio-pico.h"
 
 #define SAMPLES_PER_BUFFER 256

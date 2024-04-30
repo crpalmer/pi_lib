@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <time.h>
-#include "util.h"
+#include "random-utils.h"
 
 void
 seed_random()

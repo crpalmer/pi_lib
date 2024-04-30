@@ -3,7 +3,6 @@
 #include "pi.h"
 #include "pi-gpio.h"
 #include "servo-gpio.h"
-#include "util.h"
 
 char buf[128];
 

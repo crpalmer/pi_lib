@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <math.h>
-#include "util.h"
 #include "digital-counter.h"
 #include "wb.h"
 

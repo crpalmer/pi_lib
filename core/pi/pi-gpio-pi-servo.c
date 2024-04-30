@@ -5,7 +5,6 @@
 #include <linux/gpio.h>
 #include <pigpio.h>
 #include "pi-gpio.h"
-#include "util.h"
 
 int pi_gpio_servo(unsigned gpio, unsigned ms)
 {

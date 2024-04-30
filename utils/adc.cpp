@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include "pi.h"
 #include "time-utils.h"
-#include "util.h"
 
 #define USE_ADS1115
 
