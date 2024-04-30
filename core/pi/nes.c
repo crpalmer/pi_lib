@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "pi.h"
 #include "nes.h"
 
 #include <linux/input.h>
@@ -34,11 +35,11 @@ static void handle_abs_event(struct input_event *e, nes_event_t *nes)
 }
 
 int
-nes_read(nes_event_t *nes, FILE *f)
+nes_read(nes_event_t *nes, file_t *f)
 {
     struct input_event e;
 
-    if (fread(&e, sizeof(e), 1, f) == 1) {
+    if (file_read(f, &e, sizeof(e)) == sizeof(e)) {
 	switch(e.type) {
 	case EV_KEY: handle_key_event(&e, nes); break;
 	case EV_ABS: handle_abs_event(&e, nes); break;
@@ -76,11 +77,11 @@ handle_legacy_arrow(unsigned char *buf)
 }
 
 int
-nes_read_legacy(nes_event_t *nes, FILE *f)
+nes_read_legacy(nes_event_t *nes, file_t *f)
 {
     unsigned char buf[8];
 
-    if (fread(buf, sizeof(buf), 1, f) != 1) return -1;
+    if (file_read(f, buf, sizeof(buf)) != sizeof(buf)) return -1;
     switch(buf[6]) {
     case 1:
 	nes->button = handle_legacy_button(buf);

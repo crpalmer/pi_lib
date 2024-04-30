@@ -1,9 +1,9 @@
 [submodule "tinyalsa"]
-	path = tinyalsa
+	path = external/tinyalsa
 	url = git@github.com:crpalmer/tinyalsa.git
 	branch = master
 [submodule "tinyalsa/"]
 	branch = master
 [submodule "threads/pico/FreeRTOS-FAT-CLI-for-RPi-Pico"]
-	path = threads/pico/FreeRTOS-FAT-CLI-for-RPi-Pico
+	path = external/FreeRTOS-FAT-CLI-for-RPi-Pico
 	url = git@github.com:carlk3/FreeRTOS-FAT-CLI-for-RPi-Pico.git

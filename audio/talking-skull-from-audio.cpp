@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "pi.h"
 #include "consoles.h"
 #include "mem.h"
 #include "time-utils.h"

@@ -2,6 +2,7 @@ add_library(platform OBJECT
   call-every.c
   canvas-png.cpp
   digital-counter.cpp
+  file.c
   i2c.cpp
   maestro.c
   neopixel-pi.cpp

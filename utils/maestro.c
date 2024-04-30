@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include "pi.h"
 #include "maestro.h"
 #include "pi-usb.h"
 
@@ -41,7 +42,7 @@ main(int argc, char **argv)
 	exit(1);
     }
 
-    while (fgets(buf, sizeof(buf), stdin) != NULL && ! feof(stdin)) {
+    while (fgets(buf, sizeof(buf), stdin) != NULL && ! file_is_eof(stdin)) {
 	int c, d, dd;
 
 	if (buf[0] == 'i') {

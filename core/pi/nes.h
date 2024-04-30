@@ -17,9 +17,9 @@ typedef struct {
     int dir;	/* +1, 0, -1: 0 means released */
 } nes_event_t;
 
-int nes_read(nes_event_t *e, FILE *f);
+int nes_read(nes_event_t *e, file_t *f);
 
-int nes_read_legacy(nes_event_t *e, FILE *f);
+int nes_read_legacy(nes_event_t *e, file_t *f);
 
 #ifdef __cplusplus
 };

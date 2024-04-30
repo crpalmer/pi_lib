@@ -3,6 +3,7 @@
 #include <string.h>
 #include <linux/input.h>
 #include <linux/input-event-codes.h>
+#include "pi.h"
 #include "nes.h"
 
 #define F_event "/dev/input/by-id/usb-0079_Controller-event-joystick"
@@ -27,7 +28,7 @@ main(int argc, char **argv)
     }
 
     printf("Using: %s\n", fname);
-    if ((f = fopen(fname, "r")) == 0) {
+    if ((f = file_open_read(fname)) == 0) {
 	perror(fname);
 	exit(0);
     }
@@ -48,5 +49,5 @@ main(int argc, char **argv)
 	    break;
 	}
     }
-    fclose(f);
+    file_close(f);
 }

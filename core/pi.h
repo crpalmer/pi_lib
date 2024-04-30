@@ -1,6 +1,13 @@
 #ifndef __PI_H__
 #define __PI_H__
 
+#include <stdio.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "file.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

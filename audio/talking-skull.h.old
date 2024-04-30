@@ -35,13 +35,13 @@ bool
 servo_operations_save(servo_operations_t *, const char *fname);
 
 void
-servo_operations_save_f(servo_operations_t *, FILE *f);
+servo_operations_save_f(servo_operations_t *, file_t *f);
 
 servo_operations_t *
 servo_operations_load(const char *fname);
 
 servo_operations_t *
-servo_operations_load_f(FILE *f);
+servo_operations_load_f(file_t *f);
 
 unsigned
 talking_skull_play_prepared(talking_skull_t *, servo_operations_t *);

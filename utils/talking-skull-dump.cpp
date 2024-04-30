@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "pi.h"
 #include "talking-skull-from-audio.h"
 #include "wav.h"
 

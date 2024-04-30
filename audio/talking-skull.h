@@ -20,23 +20,12 @@ public:
     bool next(double *pos) override;
 
 private:
-    FILE *f;
+    file_t *f;
     int usec_per_i;
 };
 
-class TalkingSkullVsaOps : public TalkingSkullOps {
-public:
-    TalkingSkullVsaOps(const char *fname);
-    ~TalkingSkullVsaOps() override;
-    int get_usec_per_i() override { return 1000*1000*0.033; }
-    bool next(double *pos) override;
-
-private:
-    FILE *f;
-};
-
 int talking_skull_ops_to_filename(const char *fname, TalkingSkullOps *ops);
-int talking_skull_ops_to_file(FILE *f, TalkingSkullOps *ops);
+int talking_skull_ops_to_file(file_t *f, TalkingSkullOps *ops);
 
 class TalkingSkull : PiThread {
 public:

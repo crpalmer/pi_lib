@@ -34,7 +34,7 @@ public:
 
 private:
     const char *fname;
-    FILE *f;
+    file_t *f;
 };
 
 class BufferBuffer : public Buffer {

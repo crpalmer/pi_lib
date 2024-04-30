@@ -1,5 +1,6 @@
 add_library(platform OBJECT
   call-every.c
+  file.c
   i2c.cpp
   light-sensor.cpp
   neopixel-pico.cpp
@@ -8,7 +9,7 @@ add_library(platform OBJECT
   pico-notes.cpp
 )
 
-target_include_directories(platform PRIVATE ..)
+target_include_directories(platform PRIVATE . ..)
 
 pico_generate_pio_header(platform ${CMAKE_CURRENT_LIST_DIR}/neopixel.pio)
 

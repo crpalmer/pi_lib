@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <usb.h>
 #include <fcntl.h>
+#include "pi.h"
 #include "pi-usb.h"
 
 void
@@ -51,7 +52,7 @@ pi_usb_open_tty(unsigned vendor_id, unsigned product_id)
 	unsigned vendor, product;
 
 	sprintf(fname, "/sys/class/tty/ttyACM%d/device/uevent", n);
-	if ((f = fopen(fname, "r")) == NULL) continue;
+	if ((f = file_open_read(fname)) == NULL) continue;
 	while (fgets(buf, sizeof(buf)-1, f) != NULL) {
 	    if (sscanf(buf, UEVENT_PRODUCT"%x/%x/", &vendor, &product) != 2) continue;
 	    if ((vendor_id && vendor != vendor_id) ||
@@ -61,7 +62,7 @@ pi_usb_open_tty(unsigned vendor_id, unsigned product_id)
 
 	    sprintf(fname, "/dev/ttyACM%d", n);
 	    if ((fd = open(fname, O_RDWR)) >= 0) {
-		fclose(f);
+		file_close(f);
 		fprintf(stderr, "Opened tty: %s\n", fname);
 		return fd;
 	    } else {

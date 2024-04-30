@@ -1,3 +1,4 @@
+#include "pi.h"
 #include "consoles.h"
 #include "mem.h"
 

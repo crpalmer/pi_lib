@@ -29,6 +29,7 @@ else()
     )
 endif()
 
+message(pi-core PUBLIC "." "${PLATFORM}")
 target_include_directories(pi-core PUBLIC "." "${PLATFORM}")
 
 target_link_libraries(pi-core PUBLIC

@@ -1,47 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "pi.h"
 #include "consoles.h"
 #include "mem.h"
 #include "time-utils.h"
 #include "talking-skull.h"
 
 TalkingSkullFileOps::TalkingSkullFileOps(const char *fname) {
-    if ((f = fopen(fname, "r")) == NULL) {
+    if ((f = file_open_read(fname)) == NULL) {
 	consoles_fatal_printf("Could not open: %s\n", fname);
     }
-    fscanf(f, "%d", &usec_per_i);
+    file_scanf(f, "%d", &usec_per_i);
 }
 
 TalkingSkullFileOps::~TalkingSkullFileOps() {
-    fclose(f);
+    file_close(f);
 }
 
 bool TalkingSkullFileOps::next(double *pos) {
-    return fscanf(f, "%lg", pos) == 1;
+    return file_scanf(f, "%lg", pos) == 1;
 }
 
 /* -------------------------------------------------------------- */
-
-TalkingSkullVsaOps::TalkingSkullVsaOps(const char *fname) {
-    if ((f = fopen(fname, "r")) == NULL) {
-	consoles_fatal_printf("Could not open %s\n", fname);
-    }
-}
-
-TalkingSkullVsaOps::~TalkingSkullVsaOps() {
-    fclose(f);
-}
-    
-/* -------------------------------------------------------------- */
-
-bool TalkingSkullVsaOps::next(double *pos) {
-    char buf[128];
-
-    if (! fgets(buf, sizeof(buf), f)) return false;
-    *pos = atoi(buf) / 254.0 * 100;
-
-    return true;
-}
 
 TalkingSkull::TalkingSkull(const char *thread_name) : PiThread(thread_name) {
     wait_lock = new PiMutex();
@@ -113,23 +93,21 @@ TalkingSkull::main() {
 
 int
 talking_skull_ops_to_filename(const char *fname, TalkingSkullOps *ops) {
-    FILE *f;
+    file_t *f;
 
-    if ((f = fopen(fname, "w")) == NULL) return -1;
+    if ((f = file_open_write(fname)) == NULL) return -1;
     int ret = talking_skull_ops_to_file(f, ops);
-    fclose(f);
+    file_close(f);
 
     return ret;
 }
 
 int
-talking_skull_ops_to_file(FILE *f, TalkingSkullOps *ops) {
-    fprintf(f, "%d", ops->get_usec_per_i());
+talking_skull_ops_to_file(file_t *f, TalkingSkullOps *ops) {
+    file_printf(f, "%d", ops->get_usec_per_i());
     double pos;
     for (int i = 0; ops->next(&pos); i++) {
-	fprintf(f, "%c%g", i % 10 == 0 ? '\n' : ' ', pos);
+	file_printf(f, "%c%g", i % 10 == 0 ? '\n' : ' ', pos);
     }
-    fclose(f);
-
     return 0;
 }

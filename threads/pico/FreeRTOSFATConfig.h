@@ -85,6 +85,10 @@ specific language governing permissions and limitations under the License.
 
 #include <time.h>   
     
+#ifndef portINLINE
+#define portINLINE inline
+#endif
+
 /* Must be set to either pdFREERTOS_LITTLE_ENDIAN or pdFREERTOS_BIG_ENDIAN,
 depending on the endian of the architecture on which FreeRTOS is running. */
 #define ffconfigBYTE_ORDER pdFREERTOS_LITTLE_ENDIAN
@@ -335,7 +339,9 @@ connected. */
 // #define FF_PRINTF(fmt, args...)    vLoggingPrintf(fmt, ## args)
 // #define FF_PRINTF   task_printf
 // #define FF_PRINTF   printf
-#define FF_PRINTF error_message_printf_plain
+// #define FF_PRINTF error_message_printf_plain
+#include "consoles.h"
+#define FF_PRINTF consoles_printf
 
 /* Visual studio does not have an implementation of strcasecmp().
 _RB_ Cannot use FF_NOSTRCASECMP setting as the internal implementation of

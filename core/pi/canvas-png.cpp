@@ -2,19 +2,19 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <png.h>
-#include "file.h"
 #include "mem.h"
+#include "pi.h"
 
 #include "canvas-png.h"
 
 CanvasPNG::CanvasPNG(const char *fname)
 {
-    FILE *f;
+    file_t *f;
     unsigned char header[8];
 
     had_error = 0;
 
-    if ((f = media_fopen_read(fname)) == NULL) {
+    if ((f = media_file_open_read(fname)) == NULL) {
 fail:
 	perror(fname);
 	w = h = 0;
@@ -22,7 +22,7 @@ fail:
 	return;
     }
 
-    if (fread(header, 1, 8, f) != 8) {
+    if (file_read(f, header, 8) != 8) {
 	fprintf(stderr, "%s: Failed to read header\n", fname);
 	goto fail;
     }
@@ -70,7 +70,7 @@ fail:
     default: assert(0);
     }
 
-    fclose(f);
+    file_close(f);
 }
 
 RGB32 CanvasPNG::get_pixel(int x, int y)

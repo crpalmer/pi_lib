@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "pi.h"
 #include "pico/stdlib.h"
 #include "audio.h"
 #include "audio-buffer.h"

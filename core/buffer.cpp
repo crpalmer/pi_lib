@@ -1,33 +1,33 @@
 #include <stdio.h>
+#include "pi.h"
 #include "consoles.h"
-#include "file.h"
 
 #include "buffer.h"
 
 BufferFile::BufferFile(const char *fname) : fname(fname) {
-    if ((f = media_fopen_read(fname)) == NULL) {
+    if ((f = media_file_open_read(fname)) == NULL) {
         consoles_fatal_printf("Failed to open %s\n", fname);
     }
 }
 
 bool BufferFile::is_eof() {
-    return feof(f);
+    return file_is_eof(f);
 }
 
 int BufferFile::seek_abs(long pos) {
-    return fseek(f, pos, SEEK_SET);
+    return file_seek_abs(f, pos);
 }
 
 int BufferFile::seek_rel(long pos) {
-    return fseek(f, pos, SEEK_CUR);
+    return file_seek_rel(f, pos);
 }
 
 BufferFile::~BufferFile() {
-    fclose(f);
+    file_close(f);
 }
 
 size_t BufferFile::read(void *buf, size_t n) {
-    return fread(buf, 1, n, f);
+    return file_read(f, buf, n);
 }
 
 BufferBuffer *BufferFile::get_sub_buffer(size_t n) {

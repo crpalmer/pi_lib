@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "pi.h"
 #include "audio.h"
 #include "audio-player.h"
 #include "laugh.h"

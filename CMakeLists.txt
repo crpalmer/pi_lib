@@ -5,6 +5,8 @@ if("${PLATFORM}" STREQUAL pico)
   include($ENV{PICO_EXTRAS_PATH}/external/pico_extras_import.cmake)
 endif()
 
+add_subdirectory(external)
+
 project(pi-lib)
 
 if("${PLATFORM}" STREQUAL pico)
@@ -18,7 +20,3 @@ add_subdirectory(core)
 add_subdirectory(net)
 add_subdirectory(threads)
 add_subdirectory(utils)
-
-if("${PLATFORM}" STREQUAL "pi")
-  add_subdirectory(tinyalsa)
-endif()
