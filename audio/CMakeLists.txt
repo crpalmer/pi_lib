@@ -1,5 +1,3 @@
-include(../pico_extras_import.cmake)
-
 if("${PLATFORM}" STREQUAL "pico")
   set(PLATFORM_SOURCE
   )
