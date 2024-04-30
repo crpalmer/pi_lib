@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include <string.h>
+#include "pi.h"
+#include "pi-threads.h"
 #include "time-utils.h"
 #include "wb.h"
 
 static char buf[1024];
-static pthread_t watcher;
 static volatile int watcher_enabled;
 
 #define WATCHER_DEBOUNCE_MS 5
@@ -22,7 +22,7 @@ print_inputs(unsigned value)
     }
 }
 
-static void *
+static void
 watcher_main(void *unused)
 {
     unsigned last = wb_get_all_with_debounce(WATCHER_DEBOUNCE_MS);
@@ -47,11 +47,10 @@ watcher_main(void *unused)
 	    }
 	}
     }
-    return NULL;
 }
 
-int
-main(int argc, char **argv)
+void
+threads_main(int argc, char **argv)
 {
     int res;
 
@@ -69,9 +68,9 @@ main(int argc, char **argv)
 	exit(1);
     }
 
-    pthread_create(&watcher, NULL, watcher_main, NULL);
+    pi_thread_create("watcher", watcher_main, NULL);
 
-    while (fgets(buf, sizeof(buf), stdin) != NULL && ! feof(stdin)) {
+    while (fgets(buf, sizeof(buf), stdin) != NULL && ! file_is_eof(stdin)) {
 	int bank, pin, value;
 
 	if (buf[0] == 'g') {
@@ -123,6 +122,9 @@ usage:
 	    fprintf(stderr, "g [<pin 1-8>]\ns <bank 1/2> <pin 1-8> <value 0/1>\n- <pin 1-8> set pull down\n+ <pin 1-8> set pull up\n= <pin 1-8> remove pulll up/down\nw [ <pin 1-8> ] wait for a pin to read true\nW [ <pin 1-8> ] wait for a pin to read false\nT enable watcher thread\nt disable watcher thread\n");
 	}
     }
+}
 
+int main(int argc, char **argv) {
+    pi_init_with_threads(threads_main, argc, argv);
     return 0;
 }
