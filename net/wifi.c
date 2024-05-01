@@ -15,14 +15,6 @@ static const char *password = WIFI_PASSWORD;
 
 static void connect_to_wifi(void *unused)
 {
-    if (cyw43_arch_init()) {
-        printf("failed to initialise\n");
-        exit(1);
-    }
-
-    cyw43_arch_enable_sta_mode();
-    cyw43_wifi_pm(&cyw43_state, cyw43_pm_value(CYW43_NO_POWERSAVE_MODE, 20, 1, 1, 1));
-
     printf("trying to connected to %s %s\n", ssid, password);
     while (1) {
         int link_status = cyw43_tcpip_link_status(&cyw43_state, CYW43_ITF_STA);
@@ -50,6 +42,14 @@ wifi_init()
 {
     m_connection = pi_mutex_new();
     c_connection = pi_cond_new();
+
+    if (cyw43_arch_init()) {
+        printf("failed to initialise\n");
+        exit(1);
+    }
+
+    cyw43_arch_enable_sta_mode();
+    cyw43_wifi_pm(&cyw43_state, cyw43_pm_value(CYW43_NO_POWERSAVE_MODE, 20, 1, 1, 1));
 
     pi_thread_create("wifi up", connect_to_wifi, NULL);
 }
