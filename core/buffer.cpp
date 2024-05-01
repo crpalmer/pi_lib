@@ -4,7 +4,7 @@
 
 #include "buffer.h"
 
-BufferFile::BufferFile(const char *fname, long start, long max_bytes) : fname(fname), start(start), max_bytes(max_bytes) {
+BufferFile::BufferFile(const char *fname, long start, long max_bytes) : fname(fname), at(0), start(start), max_bytes(max_bytes) {
     if ((f = media_file_open_read(fname)) == NULL) {
         consoles_fatal_printf("Failed to open %s\n", fname);
     }
