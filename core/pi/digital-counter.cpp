@@ -9,7 +9,7 @@
 #define POST_RESET_PAUSE 1000
 #define PAUSE 10
 
-digital_counter_t::digital_counter_t(output_t *inc, output_t *dec, output_t *reset) : inc(inc), dec(dec), reset(reset)
+digital_counter_t::digital_counter_t(Output *inc, Output *dec, Output *reset) : inc(inc), dec(dec), reset(reset)
 {
     pause = PAUSE;
     reset_pause = RESET_PAUSE;
@@ -70,7 +70,7 @@ void *digital_counter_t::thread_main(void *this_as_vp) {
 	int delta = dc->target - dc->actual;
 	int abs_delta = fabs(delta);
 	int step = delta > 0 ? 1 : -1;
-	output_t *output = delta > 0 ? dc->inc : dc->dec;
+	Output *output = delta > 0 ? dc->inc : dc->dec;
 	int i;
 
 	if (dc->target * 2*dc->pause + 2*dc->reset_pause + dc->post_reset_pause < abs_delta * 2*dc->pause || (delta < 0 && ! dc->dec)) {

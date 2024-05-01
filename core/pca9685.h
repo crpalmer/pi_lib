@@ -3,16 +3,16 @@
 
 #include "io.h"
 
-class PCA9685_output_t;
+class PCA9685_Output;
 
 class PCA9685 {
-    friend PCA9685_output_t;
+    friend PCA9685_Output;
 
 public:
     PCA9685(unsigned address = 0x40, unsigned hz = 1024);
     ~PCA9685();
 
-    output_t *get_output(unsigned id);
+    Output *get_output(unsigned id);
 
 protected:
     void set(unsigned id, double pct);
@@ -25,9 +25,9 @@ private:
     int i2c;
 };
 
-class PCA9685_output_t : public output_t {
+class PCA9685_Output : public Output {
 public:
-    PCA9685_output_t(PCA9685 *parent, unsigned id) : parent(parent), id(id) {}
+    PCA9685_Output(PCA9685 *parent, unsigned id) : parent(parent), id(id) {}
     virtual void set(bool value) override { parent->set(id, value ? 1.0 : 0.0); }
     virtual void pwm(double pct) override { parent->set(id, pct); }
 

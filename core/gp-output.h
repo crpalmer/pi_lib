@@ -6,7 +6,7 @@
 #include "io.h"
 #include "pi-gpio.h"
 
-class GPOutput : public output_t {
+class GPOutput : public Output {
 public:
 
     GPOutput(unsigned gpio) {

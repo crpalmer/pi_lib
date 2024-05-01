@@ -19,7 +19,7 @@ public:
 
 class BlinkOneAction : public Action {
 public:
-    BlinkOneAction(output_t *light) : light(light), state(1)
+    BlinkOneAction(Output *light) : light(light), state(1)
     {}
 
     void step() {
@@ -28,7 +28,7 @@ public:
     }
 
 private:
-    output_t *light;
+    Output *light;
     int      state;
 };
 
@@ -44,7 +44,7 @@ public:
 
 private:
     Lights *lights;
-    output_t *light;
+    Output *light;
     int      state;
 };
 
@@ -54,8 +54,8 @@ public:
     {
 	n = 0;
 
-	l = new output_t*[lights->lights.size()];
-	for (output_t *&o : lights->lights) {
+	l = new Output*[lights->lights.size()];
+	for (Output *&o : lights->lights) {
 	    l[n++] = o;
 	}
     }
@@ -68,14 +68,14 @@ public:
 
 private:
     Lights *lights;
-    output_t **l;
-    output_t *picked;
+    Output **l;
+    Output *picked;
     unsigned n;
 };
 
 class ChaseAction : public Action {
 public:
-    ChaseAction(list<output_t *> lights) : lights(lights), last(NULL)
+    ChaseAction(list<Output *> lights) : lights(lights), last(NULL)
     {
 	it = this->lights.begin();
     }
@@ -91,13 +91,13 @@ public:
     }
 
 private:
-    list<output_t *> lights;
-    list<output_t *>::iterator it;
-    output_t *last;
+    list<Output *> lights;
+    list<Output *>::iterator it;
+    Output *last;
 };
 
 void
-Lights::add(output_t *light)
+Lights::add(Output *light)
 {
     assert(light);
     lights.push_back(light);
@@ -106,7 +106,7 @@ Lights::add(output_t *light)
 void
 Lights::set_all(unsigned value)
 {
-    list<output_t *> :: iterator it;
+    list<Output *> :: iterator it;
 
     for (it = lights.begin(); it != lights.end(); it++) {
 	(*it)->set(value);
@@ -159,7 +159,7 @@ Lights::blink_all()
 }
 
 void
-Lights::blink_one(output_t *l)
+Lights::blink_one(Output *l)
 {
     set_action(new BlinkOneAction(l));
 }
@@ -181,7 +181,7 @@ Lights::chase()
 
 struct lightsS {
     Lights *lights;
-    output_t **outputs;
+    Output **outputs;
     unsigned min_pin;
 };
 
@@ -193,7 +193,7 @@ lights_new(unsigned min_pin, unsigned max_pin)
 
     lights->lights = l;
     lights->min_pin = min_pin;
-    lights->outputs = (output_t **) fatal_malloc(sizeof(*lights->outputs) * (max_pin - min_pin + 1));
+    lights->outputs = (Output **) fatal_malloc(sizeof(*lights->outputs) * (max_pin - min_pin + 1));
 
     for (unsigned pin = min_pin; pin <= max_pin; pin++) {
 	lights->outputs[pin - min_pin] = wb_get_output(pin);

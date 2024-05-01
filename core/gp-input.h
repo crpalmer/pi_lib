@@ -14,10 +14,10 @@ public:
     virtual void on_change() { }
 };
 
-class GPInput : public input_t {
+class GPInput : public Input {
 public:
 
-    GPInput(unsigned gpio) : input_t() {
+    GPInput(unsigned gpio) : Input() {
 	this->gpio = gpio;
         pi_gpio_set_direction(gpio, PI_INPUT);
     }

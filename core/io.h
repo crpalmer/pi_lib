@@ -3,19 +3,19 @@
 
 #include "time-utils.h"
 
-class output_t {
+class Output {
 public:
-     ~output_t() {}
+     ~Output() {}
      virtual void set(bool value) = 0;
      virtual void pwm(double pct_on) { set(pct_on >= 0.5); }
      virtual void on() { set(1); }
      virtual void off() { set(0); }
 };
 
-class input_t {
+class Input {
 public:
-     input_t() { debounce_ms = 0; is_inverted = 0; }
-     ~input_t() {}
+     Input() { debounce_ms = 0; is_inverted = 0; }
+     ~Input() {}
      virtual unsigned get_fast() = 0;
      virtual void set_pullup_up() = 0;
      virtual void set_pullup_down() = 0;

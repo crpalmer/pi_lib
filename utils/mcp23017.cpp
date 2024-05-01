@@ -8,17 +8,17 @@
 static char buf[100*1024];
 
 static MCP23017 *mcp;
-static input_t *inputs[2][8];
-static output_t *outputs[2][8];
+static Input *inputs[2][8];
+static Output *outputs[2][8];
 
-static input_t *ensure_input(unsigned bank, unsigned pin)
+static Input *ensure_input(unsigned bank, unsigned pin)
 {
     assert(outputs[bank][pin] == NULL);
     if (inputs[bank][pin] == NULL) inputs[bank][pin] = mcp->get_input(bank, pin);
     return inputs[bank][pin];
 }
 
-static output_t *ensure_output(unsigned bank, unsigned pin)
+static Output *ensure_output(unsigned bank, unsigned pin)
 {
     assert(inputs[bank][pin] == NULL);
     if (outputs[bank][pin] == NULL) outputs[bank][pin] = mcp->get_output(bank, pin);
@@ -62,7 +62,7 @@ main(int argc, char **argv)
 		printf("%d\n", ensure_input(bank, pin)->get());
 		break;
 	    case 'G':  {
-		input_t *input = ensure_input(bank, pin);
+		Input *input = ensure_input(bank, pin);
 		unsigned cur = input->get();
 		while (cur == input->get()) {}
 		printf("%d\n", !cur);

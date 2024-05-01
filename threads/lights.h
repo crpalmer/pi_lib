@@ -34,8 +34,8 @@ friend class ChaseAction;
 public:
     Lights();
 
-    void add(output_t *light);
-    void blink_one(output_t *light);
+    void add(Output *light);
+    void blink_one(Output *light);
     void blink_all();
     void chase();
     void set_blink_ms(int blink_ms) { this->blink_ms = blink_ms; }
@@ -64,7 +64,7 @@ private:
 
     pi_mutex_t      *lock;
     pi_cond_t       *cond;
-    std::list<output_t *>  lights;
+    std::list<Output *>  lights;
     unsigned	     blink_pin;
     Action	    *action;
 };

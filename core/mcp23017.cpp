@@ -6,9 +6,9 @@
 
 #define TRACE_WRITES		0
 
-class MCP23017_input : public input_t {
+class MCP23017_input : public Input {
 public:
-    MCP23017_input(MCP23017 *parent, unsigned bank, unsigned pin) : input_t() {
+    MCP23017_input(MCP23017 *parent, unsigned bank, unsigned pin) : Input() {
 	this->parent = parent;
 	this->bank   = bank;
 	this->pin    = pin;
@@ -27,7 +27,7 @@ private:
     unsigned pin;
 };
 
-class MCP23017_output : public output_t {
+class MCP23017_output : public Output {
 public:
     MCP23017_output(MCP23017 *parent, unsigned bank, unsigned pin) {
 	this->parent = parent;
@@ -101,7 +101,7 @@ void MCP23017::write_out(unsigned bank)
     i2c_write_byte(i2c, out_val_addr[bank], out[bank]);
 }
 
-input_t *MCP23017::get_input(unsigned bank, unsigned pin)
+Input *MCP23017::get_input(unsigned bank, unsigned pin)
 {
     assert_bank_pin(bank, pin);
     set_bit(dir[bank], pin, 1);
@@ -109,7 +109,7 @@ input_t *MCP23017::get_input(unsigned bank, unsigned pin)
     return new MCP23017_input(this, bank, pin);
 }
 
-output_t *MCP23017::get_output(unsigned bank, unsigned pin)
+Output *MCP23017::get_output(unsigned bank, unsigned pin)
 {
     assert_bank_pin(bank, pin);
     set_bit(dir[bank], pin, 0);

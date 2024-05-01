@@ -6,12 +6,12 @@
 
 class L298N : public motor_t {
 public:
-    L298N(output_t *en, output_t *dir1, output_t *dir2);
+    L298N(Output *en, Output *dir1, Output *dir2);
     void speed(double) override;
     void direction(bool forward) override;
 
 private:
-    output_t *en, *dir1, *dir2;
+    Output *en, *dir1, *dir2;
 };
 
 #endif

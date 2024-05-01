@@ -5,9 +5,9 @@
 
 #include "io.h"
 
-input_t *wb_get_input(unsigned pin);
-output_t *wb_get_output(unsigned bank, unsigned pin);
-output_t *wb_get_output(unsigned pin);
+Input *wb_get_input(unsigned pin);
+Output *wb_get_output(unsigned bank, unsigned pin);
+Output *wb_get_output(unsigned pin);
 
 extern "C" {
 #endif

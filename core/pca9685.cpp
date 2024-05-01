@@ -62,9 +62,9 @@ void PCA9685::set_pwm_freq(unsigned hz)
     i2c_write_byte(i2c, PCA9685_MODE1, mode | MODE1_AUTO_INC_BIT);
 }
 
-output_t *PCA9685::get_output(unsigned id)
+Output *PCA9685::get_output(unsigned id)
 {
-    return new PCA9685_output_t(this, id);
+    return new PCA9685_Output(this, id);
 }
 
 void PCA9685::set(unsigned id, double freq)

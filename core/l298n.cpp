@@ -1,6 +1,6 @@
 #include "l298n.h"
 
-L298N::L298N(output_t *en, output_t *dir1, output_t *dir2) : en(en), dir1(dir1), dir2(dir2)
+L298N::L298N(Output *en, Output *dir1, Output *dir2) : en(en), dir1(dir1), dir2(dir2)
 {
     en->set(0);
     dir1->set(0);

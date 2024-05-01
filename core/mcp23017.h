@@ -19,10 +19,10 @@ public:
     MCP23017(unsigned address = 0x27);
     ~MCP23017();
 
-    input_t *get_input(unsigned bank, unsigned pin);
-    input_t *get_input(unsigned pin) { return get_input(pin / 8, pin % 8); }
-    output_t *get_output(unsigned bank, unsigned pin);
-    output_t *get_output(unsigned pin) { return get_output(pin / 8, pin % 8); }
+    Input *get_input(unsigned bank, unsigned pin);
+    Input *get_input(unsigned pin) { return get_input(pin / 8, pin % 8); }
+    Output *get_output(unsigned bank, unsigned pin);
+    Output *get_output(unsigned pin) { return get_output(pin / 8, pin % 8); }
 
 protected:
     unsigned get(unsigned bank, unsigned pin);

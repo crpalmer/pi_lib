@@ -10,7 +10,7 @@ static char line[1024];
 
 int main(int argc, char **argv)
 {
-     output_t *inc = NULL, *dec = NULL, *reset = NULL;
+     Output *inc = NULL, *dec = NULL, *reset = NULL;
 
      if (argc != 5) {
 usage:

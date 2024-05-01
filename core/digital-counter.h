@@ -9,7 +9,7 @@
 
 class digital_counter_t {
 public:
-    digital_counter_t(output_t *inc, output_t *dec, output_t *reset);
+    digital_counter_t(Output *inc, Output *dec, Output *reset);
     ~digital_counter_t();
 
     void add(int delta);
@@ -19,7 +19,7 @@ public:
 private:
     static void *thread_main(void *);
 
-    output_t *inc, *dec, *reset;
+    Output *inc, *dec, *reset;
     pthread_mutex_t lock;
     pthread_cond_t cond;
     pthread_t thread;
