@@ -49,6 +49,6 @@ net_sntp_time(const char *host, struct timespec *now)
 	}
     }
 
-    close(fd);
+    closesocket(fd);
     return ret;
 }

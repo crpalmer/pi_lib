@@ -18,23 +18,24 @@ public:
 	read(&byte, 1);
 	return byte;
     }
-    virtual BufferBuffer *get_sub_buffer(size_t n) = 0;
+    virtual Buffer *get_sub_buffer(size_t n) = 0;
 };
 
 class BufferFile : public Buffer {
 public:
-    BufferFile(const char *fname);
+    BufferFile(const char *fname, long start = 0, long max_bytes = -1);
     ~BufferFile() override;
     bool is_eof() override;
     size_t read(void *buf, size_t n) override;
     int seek_abs(long pos) override;
     int seek_rel(long pos) override;
     const char *get_fname() override { return fname; }
-    BufferBuffer *get_sub_buffer(size_t n) override;
+    Buffer *get_sub_buffer(size_t n) override;
 
 private:
     const char *fname;
     file_t *f;
+    long at, start, max_bytes;
 };
 
 class BufferBuffer : public Buffer {
@@ -46,7 +47,7 @@ public:
     int seek_abs(long pos) override;
     int seek_rel(long pos) override;
     const char *get_fname() override { return "<buffer>"; }
-    BufferBuffer *get_sub_buffer(size_t n) override;
+    Buffer *get_sub_buffer(size_t n) override;
 
     const void *get_data() { return buffer;}
     size_t get_n_data() { return n; }

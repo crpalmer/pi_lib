@@ -4,21 +4,23 @@
 
 #include "buffer.h"
 
-BufferFile::BufferFile(const char *fname) : fname(fname) {
+BufferFile::BufferFile(const char *fname, long start, long max_bytes) : fname(fname), start(start), max_bytes(max_bytes) {
     if ((f = media_file_open_read(fname)) == NULL) {
         consoles_fatal_printf("Failed to open %s\n", fname);
     }
 }
 
 bool BufferFile::is_eof() {
-    return file_is_eof(f);
+    return (max_bytes >= 0 && at >= max_bytes) || file_is_eof(f);
 }
 
 int BufferFile::seek_abs(long pos) {
+    at = pos;
     return file_seek_abs(f, pos);
 }
 
 int BufferFile::seek_rel(long pos) {
+    at += pos;
     return file_seek_rel(f, pos);
 }
 
@@ -27,17 +29,14 @@ BufferFile::~BufferFile() {
 }
 
 size_t BufferFile::read(void *buf, size_t n) {
-    return file_read(f, buf, n);
+    if (max_bytes >= 0 && at + (long) n > max_bytes) n = max_bytes - at;
+    size_t did = file_read(f, buf, n);
+    if (did > 0) at += did;
+    return did;
 }
 
-BufferBuffer *BufferFile::get_sub_buffer(size_t n) {
-    void *new_data = fatal_malloc(n+1);
-    if (read(new_data, n) != n) {
-	free(new_data);
-	return NULL;
-    }
-    ((char *) new_data)[n] = '\0';
-    return new BufferBuffer(new_data, n);
+Buffer *BufferFile::get_sub_buffer(size_t n) {
+    return new BufferFile(fname, at, n);
 }
 
 size_t BufferBuffer::read(void *user_buf, size_t buf_size) {
@@ -68,7 +67,7 @@ int BufferBuffer::seek_rel(long pos) {
     return 0;
 }
 
-BufferBuffer *BufferBuffer::get_sub_buffer(size_t size) {
+Buffer *BufferBuffer::get_sub_buffer(size_t size) {
     if (at + size > n) return NULL;
     return new BufferBuffer(&((char *) buffer)[at], size);
 }

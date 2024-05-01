@@ -28,7 +28,7 @@ main(int argc, char **argv)
     }
 
     printf("Using: %s\n", fname);
-    if ((f = file_open_read(fname)) == 0) {
+    if ((f = file_open(fname, "rb")) == 0) {
 	perror(fname);
 	exit(0);
     }

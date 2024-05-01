@@ -26,6 +26,8 @@
 #define LWIP_SO_SNDTIMEO 1
 #define LWIP_SO_RCVTIMEO 1
 
+#define LWIP_POSIX_SOCKETS_IO_NAMES 0	/* uses #define for common words like "read", "write"!!! */
+
 /* from pico-examples: */
 
 #if PICO_CYW43_ARCH_POLL

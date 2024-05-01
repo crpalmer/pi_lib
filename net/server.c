@@ -40,13 +40,13 @@ connection_main(void *c_as_vp)
 	    response = response2;
 	}
 
-	if (write(fd, response, strlen(response)) != strlen(response)) {
+	if (send(fd, response, strlen(response), 0) != strlen(response)) {
 	    consoles_printf("Write failed.\n");
 	}
 	free(response);
     }
     net_line_reader_destroy(reader);
-    close(fd);
+    closesocket(fd);
     free(c);
 }
 

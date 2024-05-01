@@ -52,7 +52,7 @@ pi_usb_open_tty(unsigned vendor_id, unsigned product_id)
 	unsigned vendor, product;
 
 	sprintf(fname, "/sys/class/tty/ttyACM%d/device/uevent", n);
-	if ((f = file_open_read(fname)) == NULL) continue;
+	if ((f = file_open(fname, "rb")) == NULL) continue;
 	while (fgets(buf, sizeof(buf)-1, f) != NULL) {
 	    if (sscanf(buf, UEVENT_PRODUCT"%x/%x/", &vendor, &product) != 2) continue;
 	    if ((vendor_id && vendor != vendor_id) ||

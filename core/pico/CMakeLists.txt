@@ -1,6 +1,5 @@
 add_library(platform OBJECT
   call-every.c
-  file.c
   i2c.cpp
   light-sensor.cpp
   neopixel-pico.cpp

@@ -4,8 +4,7 @@
 
 #include "file.h"
 
-file_t *file_open_read(const char *fname) { return fopen(fname, "rb"); }
-file_t *file_open_write(const char *fname) { return fopen(fname, "wb"); }
+file_t *file_open(const char *fname, const char *mode) { return fopen(fname, mode); }
 
 void file_printf(file_t *file, const char *fmt, ...) {
    va_list va;

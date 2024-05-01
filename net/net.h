@@ -19,6 +19,11 @@
 extern "C" {
 #endif
 
+#ifdef PLATFORM_pi
+#include <unistd.h>
+static inline void closesocket(int socket) { close(socket); }
+#endif
+
 int net_connect_tcp(const char *hostname, uint16_t port);
 int net_connect_udp(const char *hostname, uint16_t port);
 #define net_connect(hostname, port) net_connect_tcp(hostname, port)

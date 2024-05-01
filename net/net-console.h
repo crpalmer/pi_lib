@@ -12,7 +12,7 @@ public:
     NetConsole(int fd) : ThreadsConsole(new NetReader(fd), new NetWriter(fd)) { }
 
     ~NetConsole() {
-	if (fd >= 0) close(fd);
+	if (fd >= 0) closesocket(fd);
     }
 
 private:

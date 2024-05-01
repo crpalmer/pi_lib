@@ -30,15 +30,19 @@ void threads_main(int argc, char **argv) {
     AudioPlayer *player = new AudioPlayer(audio);
 
     while (1) {
-        if (argc <= 1) {
-	    Buffer *buffer = new BufferBuffer(fanfare_wav, fanfare_wav_len);
-	    load_and_play(player, buffer);
-	    delete buffer;
-        } else {
-	    for (int i = 1; i < argc; i++) {
-	        load_and_play(player, new BufferFile(argv[i]));
-	    }
-        }
+	static char buf[1024];
+	Buffer *buffer;
+
+	pi_readline(buf, sizeof(buf));
+	if (strcmp(buf, "laugh") == 0) {
+	    buffer = new BufferBuffer(fanfare_wav, fanfare_wav_len);
+	} else {
+	    buffer = new BufferFile(buf);
+	}
+
+	load_and_play(player, buffer);
+	delete buffer;
+
 	pi_threads_dump_state();
 	ms_sleep(1000);
     }

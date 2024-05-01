@@ -64,7 +64,7 @@ static int net_connect_common(const char *host, uint16_t port, int type) {
 		freeaddrinfo(addr_info);
 		return fd;
 	    }
-	    close(fd);
+	    closesocket(fd);
          }
      }
 

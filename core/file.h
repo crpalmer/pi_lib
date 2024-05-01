@@ -10,11 +10,10 @@ extern "C" {
 
 file_t *media_file_open_read(const char *fname);
 
-file_t *file_open_read(const char *fname);
-file_t *file_open_write(const char *fname);
+file_t *file_open(const char *fname, const char *mode);
 
-size_t file_write(file_t *file, void *data, size_t n_data);
-size_t file_read(file_t *file, void *data, size_t n_data);
+size_t file_read(file_t *file, void *data, size_t size);
+size_t file_write(file_t *file, void *data, size_t size);
 
 bool file_seek_abs(file_t *file, unsigned long pos);
 bool file_seek_rel(file_t *file, long delta);

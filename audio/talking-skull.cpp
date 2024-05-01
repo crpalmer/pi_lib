@@ -7,7 +7,7 @@
 #include "talking-skull.h"
 
 TalkingSkullFileOps::TalkingSkullFileOps(const char *fname) {
-    if ((f = file_open_read(fname)) == NULL) {
+    if ((f = file_open(fname, "rb")) == NULL) {
 	consoles_fatal_printf("Could not open: %s\n", fname);
     }
     file_scanf(f, "%d", &usec_per_i);
@@ -95,7 +95,7 @@ int
 talking_skull_ops_to_filename(const char *fname, TalkingSkullOps *ops) {
     file_t *f;
 
-    if ((f = file_open_write(fname)) == NULL) return -1;
+    if ((f = file_open(fname, "rb")) == NULL) return -1;
     int ret = talking_skull_ops_to_file(f, ops);
     file_close(f);
 

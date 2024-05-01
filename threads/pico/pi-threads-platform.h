@@ -56,6 +56,13 @@ private:
     SemaphoreHandle_t add_to_wait_list();
 };
 
+extern "C" {
+#endif
+
+void file_init();
+
+#ifdef __cplusplus
+};
 #endif
 
 #endif
