@@ -25,8 +25,10 @@ static void init_with_threads(void *main_as_vp) {
     vTaskDelete(NULL);
 }
     
+#define STACK_SIZE 2048
+
 void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
-    xTaskCreate(init_with_threads, "main", 2048, (void *) main, 1, NULL);
+    xTaskCreate(init_with_threads, "main", STACK_SIZE, (void *) main, 1, NULL);
     pico_set_sleep_fn(rtos_sleep);
     set_consoles_lock();
     vTaskStartScheduler();
@@ -36,7 +38,7 @@ PiThread::PiThread(const char *name) : name(name) {
 }
 
 PiThread *PiThread::start() {
-    xTaskCreate(PiThread::thread_entry, name ? name : "pi-thread", 2048, this, 1, NULL);
+    xTaskCreate(PiThread::thread_entry, name ? name : "pi-thread", STACK_SIZE, this, 1, NULL);
     return this;
 }
 
