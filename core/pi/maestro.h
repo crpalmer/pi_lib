@@ -58,7 +58,7 @@ maestro_set_servo_pos(maestro_t *m, servo_id_t id, double pos_0_100);
 #ifdef __cplusplus
 };
 
-#include "servo.h"
+#include "servo-factory.h"
 
 class MaestroServo : public Servo {
 public:
@@ -68,7 +68,7 @@ public:
 	return maestro_set_servo_pos(m, id, pos);
      }
 
-     bool set_is_inverted(bool is_inverted) {
+     bool set_is_inverted(bool is_inverted) override {
 	return maestro_set_servo_is_inverted(m, id, is_inverted);
      }
 
@@ -85,13 +85,13 @@ private:
      servo_id_t id;
 };
 
-class Maestro {
+class Maestro : public ServoFactory {
 public:
      Maestro() { m = maestro_new(); }
      ~Maestro() { maestro_destroy(m); }
      void factory_reset() { maestro_factory_reset(m); }
-     int get_n_servos() { return maestro_n_servos(m); }
-     MaestroServo *get_servo(servo_id_t id) { return new MaestroServo(m, id); }
+     int get_n_servos() override { return maestro_n_servos(m); }
+     MaestroServo *get_servo(unsigned id) override { return new MaestroServo(m, id); }
 
 private:
      maestro_t *m;
