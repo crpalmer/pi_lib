@@ -10,10 +10,10 @@ class AudioBuffer;
 
 class AudioBuffer : public AudioConfig {
 public:
-    AudioBuffer(Buffer *buffer, AudioConfig *config, int a_block = 4096) : buffer(buffer), config(config), a_block(a_block) {
+    AudioBuffer(Buffer *buffer, AudioConfig *config, int a_block = 1024) : buffer(buffer), config(config), a_block(a_block) {
 	bytes_per_sample = config->get_bytes_per_sample();
 
-	block = (uint8_t *) fatal_malloc(a_block);
+	block = (uint8_t *) fatal_malloc(a_block * sizeof(*block));
 	block_pos = 0;
 	n_block = 0;
     }
@@ -41,6 +41,12 @@ public:
     int get_bytes_per_sample() { return config->get_bytes_per_sample(); }
 
     Buffer *get_buffer() { return buffer; }
+
+    bool reset() {
+	buffer->seek_abs(0);
+	n_block = block_pos = 0;
+	return true;
+    }
 
 private:
     Buffer *buffer;

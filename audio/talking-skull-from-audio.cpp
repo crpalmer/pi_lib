@@ -9,13 +9,11 @@
 
 #define SAMPLE_MS	20
 
-TalkingSkullAudioOps::TalkingSkullAudioOps(AudioBuffer *audio, unsigned n_to_avg) : audio(audio), n_to_avg(n_to_avg) {
-    unsigned long long values_per_sec = audio->get_rate() * audio->get_num_channels() / n_to_avg;
+TalkingSkullAudioOps::TalkingSkullAudioOps(AudioBuffer *audio_buffer, unsigned n_to_avg) : audio_buffer(audio_buffer), n_to_avg(n_to_avg) {
+    unsigned long long values_per_sec = audio_buffer->get_rate() * audio_buffer->get_num_channels() / n_to_avg;
     n_per_sample = values_per_sec * SAMPLE_MS / 1000;
 
-    bytes_per_audio = audio->get_bytes_per_sample();
-
-    double i_to_usec = 1000.0 * 1000 / audio->get_rate() / audio->get_num_channels();
+    double i_to_usec = 1000.0 * 1000 / audio_buffer->get_rate() / audio_buffer->get_num_channels();
     usec_per_i = i_to_usec * n_per_sample * n_to_avg;
 }
 
@@ -27,7 +25,7 @@ bool TalkingSkullAudioOps::next(double *pos) {
 	    uint32_t val_unsigned;
 	    int32_t val;
 
-	    if (! audio->next(&val_unsigned)) return false;
+	    if (! audio_buffer->next(&val_unsigned)) return false;
 	    val = val_unsigned;
 	    if (val < 0) val = -val;
 	    if ((unsigned) val > mx) mx = val;
@@ -37,4 +35,8 @@ bool TalkingSkullAudioOps::next(double *pos) {
     
     *pos = ((double) sum) / n_to_avg / (0x7fffffff) * 100;
     return true;
+}
+
+bool TalkingSkullAudioOps::reset() {
+    return audio_buffer->reset();
 }

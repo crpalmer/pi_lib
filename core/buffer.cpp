@@ -16,12 +16,14 @@ bool BufferFile::is_eof() {
 
 int BufferFile::seek_abs(long pos) {
     at = pos;
-    return file_seek_abs(f, pos);
+    if (at < 0) at = 0;
+    if (max_bytes > 0 && at >= max_bytes) at = max_bytes - 1;
+    return file_seek_abs(f, start+at);
 }
 
 int BufferFile::seek_rel(long pos) {
     at += pos;
-    return file_seek_rel(f, pos);
+    return file_seek_abs(f, at);
 }
 
 BufferFile::~BufferFile() {

@@ -14,9 +14,8 @@ rtos_sleep(unsigned ms) {
 
 static void init_with_threads(void *main_as_vp) {
     pi_init_no_reboot();
-    ms_sleep(2000);
-
     file_init();
+    ms_sleep(2000);
 
     char *argv = fatal_strdup("pico");
     pi_threads_main_t main = (pi_threads_main_t) main_as_vp;

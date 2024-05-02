@@ -21,46 +21,59 @@ bool TalkingSkullFileOps::next(double *pos) {
     return file_scanf(f, "%lg", pos) == 1;
 }
 
-/* -------------------------------------------------------------- */
-
-TalkingSkull::TalkingSkull(const char *thread_name) : PiThread(thread_name) {
-    wait_lock = new PiMutex();
-    wait_cond = new PiCond();
-    n_pos = 0;
-    a_pos = 16;
-    pos = (double *) fatal_malloc(a_pos * sizeof(*pos));
-    usec_per_i = 0;
-
-    start();
+bool TalkingSkullFileOps::reset() {
+    return file_seek_abs(f, 0);
 }
 
-void TalkingSkull::ops(TalkingSkullOps *ops) {
-    wait_lock->lock();
+/* -------------------------------------------------------------- */
 
-    usec_per_i = ops->get_usec_per_i();
-    n_pos = 0;
+TalkingSkull::TalkingSkull(const char *thread_name, int bytes_per_op) : PiThread(thread_name), bytes_per_op(bytes_per_op) {
+    wait_lock = new PiMutex();
+    wait_cond = new PiCond();
 
-    double next_pos;
-    while (ops->next(&next_pos)) {
-	if (n_pos >= a_pos) {
-	    a_pos *= 2;
-	    pos = (double *) fatal_realloc(pos, a_pos * sizeof(*pos));
-	}
-	pos[n_pos++] = next_pos;
-    }
+    a_ops = 32;
+    n_ops = 0;
+    ops = (uint8_t *) fatal_malloc(a_ops * bytes_per_op);
 
-    wait_lock->unlock();
+    op_bits = (1 << (8*bytes_per_op)) - 1;
+
+    start();
 }
 
 TalkingSkull::~TalkingSkull() {
     delete wait_lock;
     delete wait_cond;
-    free(pos);
+    free(ops);
+}
+
+void TalkingSkull::set_ops(TalkingSkullOps *skull_ops) {
+    wait_lock->lock();
+
+    usec_per_i = skull_ops->get_usec_per_i();
+
+    double pos;
+    while (skull_ops->next(&pos)) {
+	if (n_ops >= a_ops) {
+	    if (a_ops < 1024) a_ops *= 2;
+	    else a_ops += 512;
+	    ops = (uint8_t *) realloc(ops, a_ops * bytes_per_op);
+	}
+	uint32_t encoded = pos / 100 * op_bits;
+	for (int i = 0; i < bytes_per_op; i++) ops[n_ops * bytes_per_op + i] = (encoded >> (8*i)) & 0xff;
+ 	n_ops++;
+    }
+
+    wait_lock->unlock();
 }
 
 void TalkingSkull::play() {
     wait_lock->lock();
     wait_cond->signal();
+    wait_lock->unlock();
+}
+
+void TalkingSkull::wait_done() {
+    wait_lock->lock();
     wait_lock->unlock();
 }
 
@@ -71,20 +84,21 @@ TalkingSkull::main() {
 	wait_cond->wait(wait_lock);
 	
 	struct timespec next;
-	unsigned cur = 0;
-
 	nano_gettime(&next);
 
-	while (cur < n_pos) {
+	for (size_t i = 0; i < n_ops; i++) {
 	    struct timespec now;
 
 	    nano_gettime(&now);
 	    nano_add_usec(&next, usec_per_i);
+
 	    if (nano_later_than(&next, &now)) {
 		nano_sleep_until(&next);
-		update_pos(pos[cur]);
+		uint32_t decoded = 0;
+		for (int j = 0; j < bytes_per_op; j++) decoded |= (ops[i*bytes_per_op + j]) << (8 * j);
+		double pos = decoded / (double) op_bits * 100;
+		update_pos(pos);
 	    }
-	    cur++;
 	}
     }
 }

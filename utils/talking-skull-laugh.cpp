@@ -31,7 +31,7 @@ void talk_once(Audio *audio, AudioPlayer *player, TalkingSkull *skull) {
     AudioBuffer *audio_buffer = wav->to_audio_buffer();
 
     TalkingSkullOps *ops = new TalkingSkullAudioOps(audio_buffer);
-    skull->ops(ops);
+    skull->set_ops(ops);
 
     player->play(audio_buffer);
     skull->play();

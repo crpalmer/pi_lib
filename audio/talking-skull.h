@@ -9,6 +9,7 @@ public:
     virtual ~TalkingSkullOps() { }
     virtual int get_usec_per_i() = 0;
     virtual bool next(double *pos) = 0;
+    virtual bool reset() = 0;
 };
 
 class TalkingSkullFileOps : public TalkingSkullOps {
@@ -18,6 +19,7 @@ public:
 
     int get_usec_per_i() override { return usec_per_i; }
     bool next(double *pos) override;
+    bool reset() override;
 
 private:
     file_t *f;
@@ -29,11 +31,12 @@ int talking_skull_ops_to_file(file_t *f, TalkingSkullOps *ops);
 
 class TalkingSkull : PiThread {
 public:
-    TalkingSkull(const char *thread_name = "talking-skull");
+    TalkingSkull(const char *thread_name = "talking-skull", int bytes_per_op = 2);
     ~TalkingSkull();
 
-    void ops(TalkingSkullOps *ops);
+    void set_ops(TalkingSkullOps *ops);
     void play();
+    void wait_done();
 
     void main() override;
 
@@ -42,9 +45,13 @@ public:
 protected:
     PiMutex *wait_lock;
     PiCond  *wait_cond;
-    int usec_per_i;
-    double *pos;
-    size_t n_pos, a_pos;
+
+    int bytes_per_op;
+    uint8_t *ops;
+    size_t n_ops, a_ops;
+
+    uint32_t op_bits;
+    unsigned usec_per_i;
 };
 
 #endif
