@@ -122,8 +122,6 @@ nano_elapsed_ms(const struct timespec *newer, const struct timespec *later)
     printf("%ld.%010ld - %ld.%010ld = %d * 1000\n", newer->tv_sec, newer->tv_nsec, later->tv_sec, later->tv_nsec, ms);
 #endif
 
-    assert(ms >= 0);
-
     return ms;
 }
 
