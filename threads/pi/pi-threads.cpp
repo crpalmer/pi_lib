@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <list>
 #include "pi.h"
+#include "consoles.h"
 #include "time-utils.h"
 
 #include "pi-threads.h"
@@ -78,4 +79,9 @@ void PiCond::broadcast() {
 }
 
 void pi_threads_dump_state() {
+    consoles_printf("No state dump available for the Pi\n");
+}
+
+char *pi_threads_get_state() {
+    return fatal_strdup("No state dump available for the Pi\n");
 }
