@@ -5,6 +5,7 @@ function(util_common targetName)
       pi-core
       ${ARGN}
     )
+    target_compile_definitions(${targetName} PUBLIC "CYW43_HOST_NAME=\"${targetName}\"")
 endfunction()
 
 function(util_c targetName)
