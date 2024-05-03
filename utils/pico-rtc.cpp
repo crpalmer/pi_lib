@@ -13,19 +13,6 @@
 
 #include "time-utils.h"
 
-static void run_sntp()
-{
-    struct timespec now;
-
-    while (net_sntp_time(NULL, &now) < 0) {
-	perror("net_sntp_time");
-	ms_sleep(5*1000);
-    }
-
-    consoles_printf("Setting RTC to %lu seconds.\n", (unsigned long) now.tv_sec);
-    pico_set_rtc((time_t) now.tv_sec);
-}
-
 static void report_time()
 {
     struct tm *tm_info, tm_space;
@@ -46,7 +33,7 @@ public:
     void main() { Console::main(); }
     void process_cmd(const char *cmd) override {
 	if (is_command(cmd, "run-sntp")) {
-	    run_sntp();
+	    net_sntp_set_pico_rtc(NULL);
 	} else if (is_command(cmd, "get-time")) {
 	    report_time();
 	} else {
@@ -66,7 +53,7 @@ public:
 
     void main() {
         while (1) {
-	    run_sntp();
+	    net_sntp_set_pico_rtc(NULL);
 	    ms_sleep(60*60*1000);
        }
     }

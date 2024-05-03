@@ -3,7 +3,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include "pi.h"
+#include "consoles.h"
 #include "net.h"
+#include "time-utils.h"
+#include "wifi.h"
+
+#include "sntp.h"
 
 #define	SNTP_SECS_AT_UNIX_EPOCH (2208988800)
 
@@ -18,7 +24,6 @@ sntp_value(const uint8_t *ptr)
 
 #define NTP_SCALE_FRAC 4294967295.0
 
-#include "time-utils.h"
 int
 net_sntp_time(const char *host, struct timespec *now)
 {
@@ -51,4 +56,21 @@ net_sntp_time(const char *host, struct timespec *now)
 
     closesocket(fd);
     return ret;
+}
+
+int
+net_sntp_set_pico_rtc(const char *host) {
+#ifdef PLATFORM_pico
+    wifi_wait_for_connection();
+    struct timespec now;
+
+    while (net_sntp_time(host, &now) < 0) {
+        consoles_printf("net_sntp_time failed, retrying.\n");
+        ms_sleep(5*1000);
+    }
+
+    consoles_printf("Setting RTC to %lu seconds.\n", (unsigned long) now.tv_sec);
+    pico_set_rtc((time_t) now.tv_sec);
+#endif
+    return 0;
 }

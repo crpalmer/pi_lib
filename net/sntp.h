@@ -10,6 +10,9 @@ extern "C" {
 int
 net_sntp_time(const char *host, struct timespec *now);
 
+int
+net_sntp_set_pico_rtc(const char *host);
+
 #ifdef __cplusplus
 };
 #endif
