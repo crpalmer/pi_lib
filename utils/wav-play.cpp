@@ -4,7 +4,6 @@
 #include "audio-player.h"
 #include "buffer.h"
 #include "fanfare-wav.h"
-#include "laugh.h"
 #include "pi.h"
 #include "pi-threads.h"
 #include "time-utils.h"
@@ -34,10 +33,11 @@ void threads_main(int argc, char **argv) {
 	Buffer *buffer;
 
 	pi_readline(buf, sizeof(buf));
-	if (strcmp(buf, "laugh") == 0) {
+	if (strcmp(buf, "fanfare") == 0) {
 	    buffer = new BufferBuffer(fanfare_wav, fanfare_wav_len);
 	} else {
-	    buffer = new BufferFile(buf);
+	    buffer = buffer_file_open(buf);
+	    if (! buffer) continue;
 	}
 
 	load_and_play(player, buffer);

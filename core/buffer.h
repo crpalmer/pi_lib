@@ -23,7 +23,7 @@ public:
 
 class BufferFile : public Buffer {
 public:
-    BufferFile(const char *fname, long start = 0, long max_bytes = -1);
+    BufferFile(const char *fname, long start = 0, long max_bytes = -1, file_t *f = NULL);
     ~BufferFile() override;
     bool is_eof() override;
     size_t read(void *buf, size_t n) override;
@@ -34,8 +34,8 @@ public:
 
 private:
     const char *fname;
-    file_t *f;
     long at, start, max_bytes;
+    file_t *f;
 };
 
 class BufferBuffer : public Buffer {
@@ -56,5 +56,7 @@ private:
     const void *buffer;
     size_t n, at;
 };
+
+BufferFile *buffer_file_open(const char *fname);
 
 #endif

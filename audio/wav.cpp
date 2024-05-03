@@ -29,7 +29,7 @@ struct chunk_fmt {
     uint16_t bits_per_sample;
 };
 
-Wav::Wav(Buffer *b) : buffer(b) {
+Wav::Wav(Buffer *b, bool delete_buffer) : buffer(b), delete_buffer(delete_buffer) {
     struct riff_wave_header riff_wave_header;
     struct chunk_header chunk_header;
     struct chunk_fmt fmt;
@@ -77,4 +77,10 @@ Wav::~Wav()
 {
     if (delete_buffer) delete buffer;
     if (audio) delete audio;
+}
+
+Wav *wav_open(const char *fname) {
+    BufferFile *b = buffer_file_open(fname);
+    if (! b) return NULL;
+    return new Wav(b, true);
 }

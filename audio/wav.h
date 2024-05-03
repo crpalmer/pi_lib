@@ -8,7 +8,7 @@
 class Wav : public AudioConfig {
 public:
     Wav(const char *fname) : Wav(new BufferFile(fname)) { delete_buffer = true; }
-    Wav(Buffer *b);
+    Wav(Buffer *b, bool delete_buffer = false);
     virtual ~Wav();
     AudioBuffer *to_audio_buffer();
 
@@ -20,7 +20,9 @@ private:
     uint16_t num_channels, sample_rate, bytes_per_sample;
     Buffer *audio = NULL;
     Buffer *buffer;
-    bool delete_buffer = false;
+    bool delete_buffer;
 };
+
+Wav *wav_open(const char *fname);
 
 #endif

@@ -6,18 +6,16 @@
 int
 main(int argc, char **argv)
 {
-    Wav *wav;
-    TalkingSkullAudioOps *ops;
-
     if (argc != 2) {
 	fprintf(stderr, "usage: filename.wav\n");
 	return 1;
     }
 
-    wav = new Wav(new BufferFile(argv[1]));
-    ops = new TalkingSkullAudioOps(wav->to_audio_buffer());
-
-    talking_skull_ops_to_file(stdout, ops);
+    Wav *wav = wav_open(new BufferFile(argv[1]));
+    if (wav) {
+        TalkingSkullAudioOps *ops = new TalkingSkullAudioOps(wav->to_audio_buffer());
+        talking_skull_ops_to_file(stdout, ops);
+    }
 
     return 0;
 }
