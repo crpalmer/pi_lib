@@ -1,6 +1,7 @@
 #include "net.h"
 #include "consoles.h"
 #include "time-utils.h"
+#include "wifi.h"
 
 #include "net-listener.h"
 
@@ -9,6 +10,13 @@ void NetListener::main() {
 
     while (1) {
         uint16_t port = 4567;
+
+#ifdef PLATFORM_pico
+	while (! wifi_is_connected()) {
+	    consoles_printf("net: Waiting for WiFi to become available.\n");
+	    wifi_wait_for_connection();
+	}
+#endif
 
         consoles_printf("net: Listening on port %u\n", port);
         int l_fd = net_listen(port);
