@@ -24,7 +24,7 @@ static void init_with_threads(void *main_as_vp) {
     vTaskDelete(NULL);
 }
     
-#define STACK_SIZE 2048
+#define STACK_SIZE 1024
 
 void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
     xTaskCreate(init_with_threads, "main", STACK_SIZE, (void *) main, 1, NULL);
