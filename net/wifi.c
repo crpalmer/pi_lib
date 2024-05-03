@@ -15,17 +15,17 @@ static const char *password = WIFI_PASSWORD;
 
 static void connect_to_wifi(void *unused)
 {
-    printf("trying to connected to %s %s\n", ssid, password);
+    printf("WiFi: trying to connect.\n");
     while (1) {
         int link_status = cyw43_tcpip_link_status(&cyw43_state, CYW43_ITF_STA);
         if (link_status != CYW43_LINK_UP) {
 	    is_connected = false;
 
-            printf("Connecting to Wi-Fi, current status is %d\n", link_status);
+            printf("WiFi: Connection status: %d\n", link_status);
             if (cyw43_arch_wifi_connect_timeout_ms(ssid, password, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
                 printf("failed to connect.\n");
             } else {
-printf("Connected.\n");
+		printf("WiFi: Connected.\n");
 		pi_mutex_lock(m_connection);
 		is_connected = true;
 		pi_cond_broadcast(c_connection);
