@@ -6,7 +6,6 @@ add_library(pi-core STATIC
   console.cpp
   consoles.cpp
   file.c
-  global-trace.c
   grove.cpp
   l298n.cpp
   mcp23017.cpp

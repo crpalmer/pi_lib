@@ -1,11 +1,9 @@
 #include <stdio.h>
-#include <errno.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <sys/time.h>
+#include "pi.h"
+#include "consoles.h"
 #include "net.h"
-#include "global-trace.h"
 
 #if 0
 #include <string.h>
@@ -113,7 +111,7 @@ net_listen(uint16_t port)
 	exit(1);
     }
 
-    if (global_trace) fprintf(stderr, "%s: on socket %d port %d\n", __func__, sock, port);
+    consoles_printf("%s: on socket %d port %d\n", __func__, sock, port);
 
     return sock;
 }

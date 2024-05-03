@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include "pi.h"
-#include "global-trace.h"
 #include "mem.h"
 #include "string-utils.h"
 

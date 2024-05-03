@@ -5,7 +5,6 @@
 #include "mem.h"
 #include "net.h"
 #include "net-line-reader.h"
-#include "global-trace.h"
 
 #define MIN_READ_SIZE	1024
 
