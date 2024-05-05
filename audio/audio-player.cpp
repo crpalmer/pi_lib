@@ -9,7 +9,7 @@ AudioPlayer::AudioPlayer(Audio *audio) : PiThread("audio-player"), audio(audio) 
     stop_cond = new PiCond();
     start_cond = new PiCond();
 
-    start();
+    start(2);
 }
 
 AudioPlayer::~AudioPlayer() {

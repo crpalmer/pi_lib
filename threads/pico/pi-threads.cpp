@@ -36,8 +36,8 @@ void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
 PiThread::PiThread(const char *name) : name(name) {
 }
 
-PiThread *PiThread::start() {
-    xTaskCreate(PiThread::thread_entry, name ? name : "pi-thread", STACK_SIZE, this, 1, NULL);
+PiThread *PiThread::start(int priority) {
+    xTaskCreate(PiThread::thread_entry, name ? name : "pi-thread", STACK_SIZE, this, priority, NULL);
     return this;
 }
 

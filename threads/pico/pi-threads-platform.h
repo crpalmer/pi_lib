@@ -14,7 +14,7 @@ public:
     PiThread(const char *name = "");
     virtual ~PiThread();
 
-    PiThread *start();
+    PiThread *start(int priority = 1);
 
     virtual void main() = 0;
     static void thread_entry(void *vp) {

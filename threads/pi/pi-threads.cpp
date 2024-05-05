@@ -18,7 +18,7 @@ void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
 PiThread::PiThread(const char *name) : name(name) {
 }
 
-PiThread *PiThread::start() {
+PiThread *PiThread::start(int priority_unused) {
     if (pthread_create(&t, NULL, (void *(*)(void *)) PiThread::thread_entry, this)) {
         pthread_detach(t);
 
