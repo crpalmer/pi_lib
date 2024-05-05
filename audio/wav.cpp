@@ -29,16 +29,17 @@ struct chunk_fmt {
     uint16_t bits_per_sample;
 };
 
-Wav::Wav(Buffer *b, bool delete_buffer) : buffer(b), delete_buffer(delete_buffer) {
+AudioBuffer *wav_open(Buffer *b) {
     struct riff_wave_header riff_wave_header;
     struct chunk_header chunk_header;
     struct chunk_fmt fmt;
     bool more_chunks = true;
+    Buffer *audio_data = NULL;
 
     b->read(&riff_wave_header, sizeof(riff_wave_header));
-    if ((riff_wave_header.riff_id != ID_RIFF) ||
-        (riff_wave_header.wave_id != ID_WAVE)) {
-        consoles_fatal_printf("Error: '%s' is not a riff/wave file\n", b->get_fname());
+    if ((riff_wave_header.riff_id != ID_RIFF) || (riff_wave_header.wave_id != ID_WAVE)) {
+        consoles_printf("wav: %s is not a riff/wave file\n", b->get_fname());
+	return NULL;
     }
 
     do {
@@ -55,7 +56,7 @@ Wav::Wav(Buffer *b, bool delete_buffer) : buffer(b), delete_buffer(delete_buffer
         case ID_DATA:
             /* Stop looking for chunks */
             more_chunks = false;
-	    audio = b->get_sub_buffer(chunk_header.sz);
+    	    audio_data = b->get_sub_buffer(chunk_header.sz);
             break;
         default:
             /* Unknown chunk, skip bytes */
@@ -63,24 +64,18 @@ Wav::Wav(Buffer *b, bool delete_buffer) : buffer(b), delete_buffer(delete_buffer
         }
     } while (more_chunks);
 
-    sample_rate = fmt.sample_rate;
-    num_channels = fmt.num_channels;
-    bytes_per_sample = (fmt.bits_per_sample+7) / 8;
+    if (! audio_data) {
+	consoles_printf("wav: %s did not contain any audio data.\n", b->get_fname());
+	return NULL;
+    }
+
+    return new AudioBuffer(audio_data, fmt.num_channels, fmt.sample_rate, (fmt.bits_per_sample+7) / 8);
 }
 
-AudioBuffer *
-Wav::to_audio_buffer() {
-    return new AudioBuffer(audio, this);
-}
-
-Wav::~Wav()
-{
-    if (delete_buffer) delete buffer;
-    if (audio) delete audio;
-}
-
-Wav *wav_open(const char *fname) {
+AudioBuffer *wav_open(const char *fname) {
     BufferFile *b = buffer_file_open(fname);
     if (! b) return NULL;
-    return new Wav(b, true);
+    AudioBuffer *wav = wav_open(b);
+    delete b;
+    return wav;
 }

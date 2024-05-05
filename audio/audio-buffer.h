@@ -10,19 +10,27 @@ class AudioBuffer;
 
 class AudioBuffer : public AudioConfig {
 public:
-    AudioBuffer(Buffer *buffer, AudioConfig *config, int a_block = 1024) : buffer(buffer), config(config), a_block(a_block) {
-	bytes_per_sample = config->get_bytes_per_sample();
+    // NOTE: AudioBuffer takes over ownership of buffer.  You should not acess it after pass
+    // it to the constructor and the AudioBuffer takes care of deleting it when done.
 
+    AudioBuffer(Buffer *buffer, AudioConfig *config, int a_block = 1024) : AudioBuffer(buffer, config->get_num_channels(), config->get_rate(), config->get_bytes_per_sample(), a_block) { }
+
+    AudioBuffer(Buffer *buffer, int num_channels, int rate, int bytes_per_sample, int a_block = 1024) : buffer(buffer), num_channels(num_channels), rate(rate), bytes_per_sample(bytes_per_sample), a_block(a_block) {
 	block = (uint8_t *) fatal_malloc(a_block * sizeof(*block));
 	block_pos = 0;
 	n_block = 0;
     }
 
     virtual ~AudioBuffer() {
+	delete buffer;
 	free(block);
     }
 
-    bool next(uint32_t *val) {
+    virtual Buffer *get_buffer() { return buffer; }
+
+    virtual const char *get_fname() { return buffer->get_fname(); }
+
+    virtual bool next(uint32_t *val) {
 	*val = 0;
 	for (int i = 0; i < bytes_per_sample; i++) {
 	    if (block_pos >= n_block) {
@@ -36,25 +44,24 @@ public:
 	return true;
     }
 
-    int get_num_channels() override { return config->get_num_channels(); }
-    int get_rate() override { return config->get_rate(); }
-    int get_bytes_per_sample() { return config->get_bytes_per_sample(); }
-
-    Buffer *get_buffer() { return buffer; }
-
-    bool reset() {
+    virtual bool reset() {
 	buffer->seek_abs(0);
 	n_block = block_pos = 0;
 	return true;
     }
 
+    int get_num_channels() override { return num_channels; }
+    int get_rate() override { return rate; }
+    int get_bytes_per_sample() { return bytes_per_sample; }
+
 private:
     Buffer *buffer;
-    AudioConfig *config;
+    int num_channels;
+    int rate;
+    int bytes_per_sample;
 
     uint8_t *block;
     int a_block, n_block, block_pos;
-    int bytes_per_sample;
 };
 
 #endif

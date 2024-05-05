@@ -3,6 +3,7 @@
 
 class AudioConfig {
 public:
+    virtual ~AudioConfig() { }
     virtual int get_num_channels() = 0;
     virtual int get_rate() = 0;
     virtual int get_bytes_per_sample() = 0;

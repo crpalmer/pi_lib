@@ -27,20 +27,18 @@ private:
 
 void talk_once(Audio *audio, AudioPlayer *player, TalkingSkull *skull) {
     Buffer *buffer = new BufferBuffer(laugh_wav, laugh_wav_len);
-    Wav *wav = new Wav(buffer);
-    AudioBuffer *audio_buffer = wav->to_audio_buffer();
+    AudioBuffer *audio_buffer = wav_open(buffer);
+    delete buffer;
 
     TalkingSkullOps *ops = new TalkingSkullAudioOps(audio_buffer);
     skull->set_ops(ops);
+    delete ops;
 
     player->play(audio_buffer);
     skull->play();
     player->wait_done();
 
-    delete ops;
-    delete buffer;
     delete audio_buffer;
-    delete wav;
 }
 
 void threads_main(int argc, char **argv) {

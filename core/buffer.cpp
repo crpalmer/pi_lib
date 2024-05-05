@@ -4,8 +4,10 @@
 
 #include "buffer.h"
 
-BufferFile::BufferFile(const char *fname, long start, long max_bytes, file_t *f) : fname(fname), at(0), start(start), max_bytes(max_bytes), f(f) {
-    if (! f && (f = media_file_open_read(fname)) == NULL) {
+BufferFile::BufferFile(const char *fname, long start, long max_bytes, file_t *user_f) : fname(fname), at(0), start(start), max_bytes(max_bytes) {
+    if (user_f) {
+	f = user_f;
+    } else if ((f = media_file_open_read(fname)) == NULL) {
         consoles_fatal_printf("Failed to open %s\n", fname);
     }
 }

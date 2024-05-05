@@ -11,11 +11,8 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    Wav *wav = wav_open(new BufferFile(argv[1]));
-    if (wav) {
-        TalkingSkullAudioOps *ops = new TalkingSkullAudioOps(wav->to_audio_buffer());
-        talking_skull_ops_to_file(stdout, ops);
-    }
+    TalkingSkullOps *ops = TalkingSkullAudioOps::open_wav(argv[1]);
+    if (ops) talking_skull_ops_to_file(stdout, ops);
 
     return 0;
 }

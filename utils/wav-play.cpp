@@ -9,17 +9,6 @@
 #include "time-utils.h"
 #include "wav.h"
 
-void load_and_play(AudioPlayer *player, Buffer *buffer) {
-    printf("Playing %s\n", buffer->get_fname());
-    Wav *wav = new Wav(buffer);
-
-    AudioBuffer *audio_buffer = wav->to_audio_buffer();
-    player->play(audio_buffer);
-    player->wait_done();
-    delete audio_buffer;
-    delete wav;
-}
-
 void threads_main(int argc, char **argv) {
 #ifdef PLATFORM_pi
     Audio *audio = new AudioPi();
@@ -30,18 +19,23 @@ void threads_main(int argc, char **argv) {
 
     while (1) {
 	static char buf[1024];
-	Buffer *buffer;
+	AudioBuffer *audio_buffer;
 
 	pi_readline(buf, sizeof(buf));
 	if (strcmp(buf, "fanfare") == 0) {
-	    buffer = new BufferBuffer(fanfare_wav, fanfare_wav_len);
+	    Buffer *buffer = new BufferBuffer(fanfare_wav, fanfare_wav_len);
+	    audio_buffer = wav_open(buffer);
+	    delete buffer;
 	} else {
-	    buffer = buffer_file_open(buf);
-	    if (! buffer) continue;
+	    audio_buffer = wav_open(buf);
 	}
+	if (! audio_buffer) continue;
 
-	load_and_play(player, buffer);
-	delete buffer;
+	printf("Playing %s\n", audio_buffer->get_fname());
+	player->play(audio_buffer);
+	player->wait_done();
+
+	delete audio_buffer;
 
 	pi_threads_dump_state();
 	ms_sleep(1000);
