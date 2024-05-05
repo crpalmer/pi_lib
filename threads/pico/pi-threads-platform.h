@@ -11,7 +11,7 @@
 
 class PiThread {
 public:
-    PiThread(const char *name = "");
+    PiThread(const char *name = "<unnamed>");
     virtual ~PiThread();
 
     PiThread *start(int priority = 1);
