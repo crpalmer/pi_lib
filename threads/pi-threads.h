@@ -17,8 +17,8 @@ typedef void (*pi_threads_main_t)(int argc, char **argv);
  */
 void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv);
 
+size_t pi_threads_get_free_ram();
 void pi_threads_dump_state();
-char *pi_threads_get_state();
 
 void pi_thread_create(const char *name, void (*thread_main)(void *arg), void *thread_arg);
 

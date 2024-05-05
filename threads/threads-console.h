@@ -10,9 +10,9 @@ public:
 
     void process_cmd(const char *cmd) override {
 	if (is_command(cmd, "threads")) {
-	    char *state = pi_threads_get_state();
-	    consoles_write_str(state);
-	    free(state);
+	    pi_threads_dump_state();
+	} else if (is_command(cmd, "free")) {
+	    printf("Free RAM: %ld\n", (long) pi_threads_get_free_ram());
 	} else {
 	    Console::process_cmd(cmd);
 	}
@@ -20,7 +20,7 @@ public:
 
     void usage() override {
 	Console::usage();
-	write_str("threads - dump the current thread state\n");
+	printf("free - report amount of free memory\nthreads - dump the current thread state\n");
     }
 };
 

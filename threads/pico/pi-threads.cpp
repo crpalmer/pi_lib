@@ -140,38 +140,36 @@ void PiCond::broadcast() {
     lock->unlock();
 }
 
-#include <malloc.h>
-
-static uint32_t getTotalHeap(void) {
-   extern char __StackLimit, __bss_end__;
-
-   return &__StackLimit  - &__bss_end__;
+static const char *task_state_to_str(eTaskState state) {
+    switch (state) {
+    case eReady: return "rdy";
+    case eRunning: return "run";
+    case eBlocked: return "blkd";
+    case eSuspended: return "susp";
+    case eDeleted: return "del";
+    case eInvalid: return "invl";
+    }
+    assert(0);
+    return NULL;
 }
 
-static uint32_t getFreeHeap(void) {
-   struct mallinfo m = mallinfo();
-
-   return getTotalHeap() - m.uordblks;
-}
-
-char *
-pi_threads_get_state()
-{
-    char *state;
-    state = (char *) fatal_malloc(10*1048);
-    sprintf(state, "Free heap memory: %d\n", (int) getFreeHeap());
-    vTaskList(&state[strlen(state)]);
-    return state;
+size_t pi_threads_get_free_ram() {
+    return (size_t) xPortGetFreeHeapSize();
 }
 
 void
-pi_threads_dump_state()
-{
-    char *state = pi_threads_get_state();
+pi_threads_dump_state() {
+    int n_tasks = uxTaskGetNumberOfTasks() + 2;	// just in case somehow 2 get created between calls!
+    TaskStatus_t *status = (TaskStatus_t *) fatal_malloc(sizeof(*status) * n_tasks);
+    unsigned long total_run_time;
+    n_tasks = uxTaskGetSystemState(status, n_tasks, &total_run_time);
 
-    printf("Task Name     State    Prio    Stack    #\n");
-    printf("------------- -----    ----    -----   ---\n%s", state);
-    free(state);
+    consoles_printf(" #  Task Name        State Prio Stack\n");
+    consoles_printf("--- ---------------- ----- ---- -----\n");
+    for (int i = 0; i < n_tasks; i++) {
+	consoles_printf("%3d %-16s %-5s %4d %4ld\n", status[i].xTaskNumber, status[i].pcTaskName, task_state_to_str(status[i].eCurrentState), status[i].uxCurrentPriority, status[i].usStackHighWaterMark);
+    }
+    free(status);
 }
 
 void

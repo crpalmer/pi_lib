@@ -78,10 +78,10 @@ void PiCond::broadcast() {
     pthread_cond_broadcast(&c);
 }
 
-void pi_threads_dump_state() {
-    consoles_printf("No state dump available for the Pi\n");
+size_t pi_threads_get_free_ram() {
+    return 0;  // TODO: parse /proc/meminfo and report it
 }
 
-char *pi_threads_get_state() {
-    return fatal_strdup("No state dump available for the Pi\n");
+void pi_threads_dump_state() {
+    consoles_printf("No state dump available for the Pi\n");
 }
