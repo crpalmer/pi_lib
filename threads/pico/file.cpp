@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include "pi.h"
 
 #include "ff_headers.h"
 #include "ff_sddisk.h"
@@ -8,7 +9,6 @@
 #include "ff_utils.h"
 #include "hw_config.h"
 
-#include "pi.h"
 #include "pi-threads.h"
 #include "consoles.h"
 #include "string-utils.h"

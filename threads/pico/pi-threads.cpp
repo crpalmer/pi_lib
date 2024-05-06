@@ -1,10 +1,11 @@
 #include <stdio.h>
+#include "pi.h"
 #include "mem.h"
 #include "consoles.h"
-#include "time-utils.h"
-#include "pi.h"
+#include "freertos-heap.h"
 #include "pi-threads.h"
 #include "set-consoles-lock.h"
+#include "time-utils.h"
 
 static void
 rtos_sleep(unsigned ms) {
@@ -12,7 +13,12 @@ rtos_sleep(unsigned ms) {
     vTaskDelay(ms);
 }
 
+const char *get_task_name() {
+   return pcTaskGetName(NULL);
+}
+
 static void init_with_threads(void *main_as_vp) {
+    mem_set_get_task_name(get_task_name);
     pi_init_no_reboot();
     file_init();
     ms_sleep(2000);
@@ -27,6 +33,7 @@ static void init_with_threads(void *main_as_vp) {
 #define STACK_SIZE 1024
 
 void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
+    malloc_lock_init();
     xTaskCreate(init_with_threads, "main", STACK_SIZE, (void *) main, 1, NULL);
     pico_set_sleep_fn(rtos_sleep);
     set_consoles_lock();
