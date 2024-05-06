@@ -1,54 +1,41 @@
 #ifndef __WB_H__
 #define __WB_H__
 
-#ifdef __cplusplus
-
+#include <string.h>
+#include "gp-input.h"
+#include "gp-output.h"
 #include "io.h"
 
-Input *wb_get_input(unsigned pin);
-Output *wb_get_output(unsigned bank, unsigned pin);
-Output *wb_get_output(unsigned pin);
+class WeenBoard {
+public:
+    WeenBoard(int version = 2) : WeenBoard(input_maps[version-1], output_maps[version-1]) { }
+    WeenBoard(const int inputs[8], const int outputs[2][8]) {
+	for (int i = 0; i < 8; i++) {
+	    this->inputs[i] = inputs[i];
+	    for (int j = 0; j < 2; j++) {
+		this->outputs[i][j] = outputs[i][j];
+	    }
+	}
+    }
 
-extern "C" {
-#endif
+    Input *get_input(int id) {
+	assert(id > 0 && id <= 8);
+	return new GPInput(inputs[id-1]);
+    }
 
-#include <stdbool.h>
+    Output *get_output(int bank, int id) {
+	assert(bank == 1 || bank == 2);
+	assert(id > 0 && id <= 8);
+	return new GPOutput(outputs[bank-1][id-1]);
+    }
+	
+private:
+    int *inputs, *outputs[8];
 
-#define WB_PIN_MASK(pin) (1<<(pin))
-#define WB_PIN_MASK_ALL (0x1fe)
-
-typedef enum {
-   WB_PULL_UP_NONE,
-   WB_PULL_UP_DOWN,
-   WB_PULL_UP_UP
-} wb_pull_up_mode_t;
-
-int wb_init(void);
-int wb_init_v2(void);
-
-bool wb_get(unsigned pin);
-
-unsigned wb_get_all(void);
-unsigned wb_get_all_with_debounce(unsigned debounce_ms);
-
-void wb_set(unsigned bank, unsigned pin, unsigned value);
-
-void wb_set_outputs(unsigned mask, unsigned values);
-
-void wb_set_pull_up(unsigned pin, wb_pull_up_mode_t mode);
-
-unsigned wb_wait_for_pins_full(unsigned pins, unsigned values, unsigned debounce_ms, unsigned max_ms);
-
-unsigned wb_wait_for_pins_timeout(unsigned pins, unsigned values, unsigned max_ms);
-
-unsigned wb_wait_for_pins(unsigned pins, unsigned values);
-
-bool wb_wait_for_pin_timeout(unsigned pin, unsigned value, unsigned max_ms);
-
-void wb_wait_for_pin(unsigned pin, unsigned value);
-
-#ifdef __cplusplus
+    const int input_maps[2][8] = { { 14, 15, 18, 23, 22, 27, 17, 4 },
+                                   { 23, 18, 15, 14, 22, 27, 17, 4 } };
+    const int output_maps[2][2][8] = { { { 24, 25, 8, 7, 12, 16, 20, 21 }, { 26, 19, 13, 6, 5, 11, 9, 10 } },
+                                       { { 24, 25, 8, 7, 12, 16, 20, 21 }, { 26, 18, 13, 6, 5, 11, 9, 10 } } };
 };
-#endif
 
 #endif

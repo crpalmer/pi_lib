@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <fcntl.h>
+#include "pi.h"
+#include "mem.h"
 #include "pi-usb.h"
 #include "maestro.h"
 #include "time-utils.h"

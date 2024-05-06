@@ -1,26 +1,8 @@
 #ifndef __LIGHTS_H__
 #define __LIGHTS_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct lightsS lights_t;
-
-lights_t *lights_new(unsigned min_pin, unsigned max_pin);
-void lights_chase(lights_t *);
-void lights_on(lights_t *);
-void lights_off(lights_t *);
-void lights_select(lights_t *, unsigned selected);
-void lights_blink(lights_t *);
-void lights_blink_one(lights_t *l, unsigned pin);
-void lights_blink_random(lights_t *l);
-
-#ifdef __cplusplus
-};
-
-#include "pi-threads.h"
 #include "io.h"
+#include "pi-threads.h"
 
 #include <list>
 
@@ -69,5 +51,4 @@ private:
     Action	    *action;
 };
 
-#endif
 #endif

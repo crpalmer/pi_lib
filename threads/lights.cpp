@@ -8,8 +8,6 @@
 
 #include "lights.h"
 
-using namespace std;
-
 class Action {
 public:
     virtual ~Action() {}
@@ -74,7 +72,7 @@ private:
 
 class ChaseAction : public Action {
 public:
-    ChaseAction(list<Output *> lights) : lights(lights), last(NULL)
+    ChaseAction(std::list<Output *> lights) : lights(lights), last(NULL)
     {
 	it = this->lights.begin();
     }
@@ -90,8 +88,8 @@ public:
     }
 
 private:
-    list<Output *> lights;
-    list<Output *>::iterator it;
+    std::list<Output *> lights;
+    std::list<Output *>::iterator it;
     Output *last;
 };
 
@@ -105,7 +103,7 @@ Lights::add(Output *light)
 void
 Lights::set_all(unsigned value)
 {
-    list<Output *> :: iterator it;
+    std::list<Output *> :: iterator it;
 
     for (it = lights.begin(); it != lights.end(); it++) {
 	(*it)->set(value);
@@ -174,67 +172,4 @@ Lights::chase()
 {
     if (lights.size() > 1) set_action(new ChaseAction(lights));
     else blink_all();
-}
-
-/* C compatibility code */
-
-struct lightsS {
-    Lights *lights;
-    Output **outputs;
-    unsigned min_pin;
-};
-
-lights_t *
-lights_new(unsigned min_pin, unsigned max_pin)
-{
-    lights_t *lights = (lights_t *) fatal_malloc(sizeof(*lights));
-    Lights *l = new Lights();
-
-    lights->lights = l;
-    lights->min_pin = min_pin;
-    lights->outputs = (Output **) fatal_malloc(sizeof(*lights->outputs) * (max_pin - min_pin + 1));
-
-    for (unsigned pin = min_pin; pin <= max_pin; pin++) {
-	lights->outputs[pin - min_pin] = wb_get_output(pin);
-	l->add(lights->outputs[pin - min_pin]);
-    }
-
-    return lights;
-}
-
-void
-lights_chase(lights_t *l)
-{
-    l->lights->chase();
-}
-
-void
-lights_on(lights_t *l)
-{
-    l->lights->on();
-}
-
-void
-lights_off(lights_t *l)
-{
-    l->lights->off();
-}
-
-void
-lights_select(lights_t *l, unsigned selected)
-{
-    l->lights->off();
-    wb_set(0, selected, 1);
-}
-
-void
-lights_blink(lights_t *l)
-{
-    l->lights->blink_all();
-}
-
-void
-lights_blink_one(lights_t *l, unsigned pin)
-{
-    l->lights->blink_one(l->outputs[pin - l->min_pin]);
 }

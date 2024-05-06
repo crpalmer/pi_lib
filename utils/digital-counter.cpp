@@ -21,12 +21,12 @@ usage:
 	exit(1);
      }
 
-     wb_init();
+     WeenBoard *wb = new WeenBoard();
 
      if (strcmp(argv[1], "wb") == 0) {
-	if (atoi(argv[2]) > 0) inc = wb_get_output(atoi(argv[2]));
-	if (atoi(argv[3]) > 0) dec = wb_get_output(atoi(argv[3]));
-	if (atoi(argv[4]) > 0) reset = wb_get_output(atoi(argv[4]));
+	if (atoi(argv[2]) > 0) inc = wb->get_output(1, atoi(argv[2]));
+	if (atoi(argv[3]) > 0) dec = wb->get_output(1, atoi(argv[3]));
+	if (atoi(argv[4]) > 0) reset = wb->get_output(1, atoi(argv[4]));
      } else if (strcmp(argv[1], "pca") == 0) {
 	PCA9685 *pca = new PCA9685();
 	if (atoi(argv[2]) > 0) inc = pca->get_output(atoi(argv[2]));
@@ -41,7 +41,7 @@ usage:
 	goto usage;
      }
 
-     digital_counter_t *dc = new digital_counter_t(inc, dec, reset);
+     DigitalCounter *dc = new DigitalCounter(inc, dec, reset);
 
      while (fgets(line, sizeof(line), stdin) != NULL) {
 	if (line[0] == '=') {

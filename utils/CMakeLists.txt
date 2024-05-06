@@ -32,7 +32,6 @@ else()
   util_c(nes-dump)
   util_cpp(st7735s)
   util_cpp(talking-skull-dump)
-  util_c(wb)
 endif()
 
 util_cpp(adc)

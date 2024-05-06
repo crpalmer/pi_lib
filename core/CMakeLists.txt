@@ -14,8 +14,6 @@ add_library(pi-core STATIC
   ssd1306.cpp
   string-utils.c
   random-utils.c
-  wb.c
-  ween-board.cpp
 )
 
 if("${PLATFORM}" STREQUAL "pico")
