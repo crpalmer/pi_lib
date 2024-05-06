@@ -93,6 +93,10 @@ C_DECL int file_scanf(file_t *file, const char *fmt, ...) {
 }
 #endif
 
+C_DECL bool file_gets(file_t *file, char *buf, int n_buf) {
+    return ff_fgets(buf, n_buf, (FF_FILE *) file) != NULL;
+}
+
 C_DECL size_t file_write(file_t *file, void *data, size_t n_data) {
    assert(is_init);
    return ff_fwrite(data, 1, n_data, (FF_FILE *) file);

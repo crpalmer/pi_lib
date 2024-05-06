@@ -29,6 +29,10 @@ int file_scanf(file_t *file, const char *fmt, ...) {
    return ret;
 }
 
+bool file_gets(file_t *file, char *buf, int n_buf) {
+    return fgets(buf, n_buf, file) != NULL;
+}
+
 size_t file_write(file_t *file, void *data, size_t n_data) { return fwrite(data, 1, n_data, file); }
 size_t file_read(file_t *file, void *data, size_t n_data) { return fread(data, 1, n_data, file); }
 

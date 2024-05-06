@@ -24,6 +24,8 @@ bool file_seek_rel(file_t *file, long delta);
 void file_printf(file_t *file, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
 int file_scanf(file_t *file, const char *fmt, ...) __attribute__ ((format (scanf, 2, 3)));
 
+bool file_gets(file_t *file, char *buf, int n_buf);
+
 void file_close(file_t *);
 
 bool file_is_eof(file_t *);
