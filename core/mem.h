@@ -7,6 +7,9 @@ extern "C" {
 
 #include <malloc.h>
 
+void mem_set_get_task_name(const char *(*fn)());
+void mem_check(void *ptr);
+
 void *fatal_malloc(size_t size);
 char *fatal_strdup(const char *str);
 void *fatal_realloc(void *, size_t);
