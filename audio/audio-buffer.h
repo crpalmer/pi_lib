@@ -23,7 +23,7 @@ public:
 
     virtual ~AudioBuffer() {
 	delete buffer;
-	free(block);
+	fatal_free(block);
     }
 
     virtual Buffer *get_buffer() { return buffer; }

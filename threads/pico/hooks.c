@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "pi.h"
+#include "mem.h"
 #include "pi-threads.h"
 
 void vApplicationStackOverflowHook(TaskHandle_t task, char *name )

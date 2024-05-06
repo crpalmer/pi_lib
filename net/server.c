@@ -34,20 +34,20 @@ connection_main(void *c_as_vp)
 	char *response = server->command(server->state, cmd, c->addr, c->size);
 
 	if (! strlen(response) || response[strlen(response)] != '\n') {
-	    char *response2 = malloc(strlen(response) + 2);
+	    char *response2 = fatal_malloc(strlen(response) + 2);
 	    sprintf(response2, "%s\n", response);
-	    free(response);
+	    fatal_free(response);
 	    response = response2;
 	}
 
 	if (send(fd, response, strlen(response), 0) != strlen(response)) {
 	    consoles_printf("Write failed.\n");
 	}
-	free(response);
+	fatal_free(response);
     }
     net_line_reader_destroy(reader);
     closesocket(fd);
-    free(c);
+    fatal_free(c);
 }
 
 void
@@ -81,7 +81,7 @@ server_thread_main(void *server_as_vp)
 		 inet_ntoa(clientname.sin_addr),
 	       ntohs(clientname.sin_port));
 
-	c = malloc(sizeof(*c));
+	c = fatal_malloc(sizeof(*c));
 	c->fd = fd;
 	c->server = server;
 	c->addr = (struct sockaddr_in *) fatal_malloc(size);

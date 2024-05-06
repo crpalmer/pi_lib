@@ -68,5 +68,5 @@ void
 call_every_destroy(call_every_t *e)
 {
     set_state(e, STOP);
-    free(e);
+    fatal_free(e);
 }

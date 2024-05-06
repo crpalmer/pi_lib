@@ -75,7 +75,7 @@ void AudioPlayer::main(void) {
 	    }
 	}
 
-	free(buf);
+	fatal_free(buf);
 
 	player_is_active = false;
 	stop_requested = false;

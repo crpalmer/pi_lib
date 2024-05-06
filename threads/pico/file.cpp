@@ -41,12 +41,23 @@ C_DECL void file_init(void) {
     init_lock = new PiMutex();
 }
 
+off_t file_size(const char *fname) {
+    off_t size = -1;
+    FF_Stat_t stat;
+
+    char *full_name = maprintf("/sd0/%s", fname);
+    if (ff_stat(fname, &stat) >= 0) size = stat.st_size;
+    fatal_free(full_name);
+
+    return size;
+}
+
 C_DECL file_t *file_open(const char *fname, const char *mode) {
     init_once();
 
     char *full_fname = maprintf("/sd0/%s", fname);
     file_t *file = ff_fopen(full_fname, mode);
-    free(full_fname);
+    fatal_free(full_fname);
 
     return file;
 }
@@ -67,7 +78,7 @@ C_DECL void file_printf(file_t *file, const char *fmt, ...) {
     va_end(va);
 
     file_write(file, buf, need);
-    free(buf);
+    fatal_free(buf);
 }
 
 #if 0

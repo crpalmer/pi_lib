@@ -32,3 +32,9 @@ fatal_realloc(void *ptr, size_t size)
 
     return ptr;
 }
+
+void
+fatal_free(void *ptr) {
+    free(ptr);
+}
+

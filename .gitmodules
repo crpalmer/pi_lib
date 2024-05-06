@@ -4,6 +4,7 @@
 	branch = master
 [submodule "tinyalsa/"]
 	branch = master
-[submodule "threads/pico/FreeRTOS-FAT-CLI-for-RPi-Pico"]
+[submodule "external/FreeRTOS-FAT-CLI-for-RPi-Pico"]
 	path = external/FreeRTOS-FAT-CLI-for-RPi-Pico
-	url = git@github.com:carlk3/FreeRTOS-FAT-CLI-for-RPi-Pico.git
+	url = git@github.com:crpalmer/FreeRTOS-FAT-CLI-for-RPi-Pico.git
+	branch = no-heap4

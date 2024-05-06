@@ -84,6 +84,6 @@ producer_consumer_destroy(producer_consumer_t *pc)
 {
     pi_mutex_destroy(pc->mutex);
     pi_cond_destroy(pc->cond);
-    free(pc->buffers);
-    free(pc);
+    fatal_free(pc->buffers);
+    fatal_free(pc);
 }

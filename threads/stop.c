@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <assert.h>
+#include "pi.h"
 #include "mem.h"
 #include "pi-threads.h"
 #include "stop.h"
@@ -77,7 +78,7 @@ stop_destroy(stop_t *stop)
 {
     pi_mutex_destroy(stop->lock);
     pi_cond_destroy(stop->cond);
-    free(stop);
+    fatal_free(stop);
 }
 
 bool

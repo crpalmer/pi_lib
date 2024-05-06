@@ -45,7 +45,7 @@ public:
     }
 
     ~GpioServoFactory() {
-	free(pins);
+	fatal_free(pins);
     }
 
     Servo *get_servo(unsigned id) override {

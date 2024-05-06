@@ -53,8 +53,8 @@ talker_auto_gain_new(double gain_target, double epsilon, int n_history)
 void
 talker_auto_gain_destroy(talker_auto_gain_t *t)
 {
-    free(t->history);
-    free(t);
+    fatal_free(t->history);
+    fatal_free(t);
 }
 
 double

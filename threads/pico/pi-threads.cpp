@@ -153,8 +153,18 @@ static const char *task_state_to_str(eTaskState state) {
     return NULL;
 }
 
-size_t pi_threads_get_free_ram() {
-    return (size_t) xPortGetFreeHeapSize();
+#include <malloc.h>
+
+static uint32_t getTotalHeap(void) {
+   extern char __StackLimit, __bss_end__;
+
+   return &__StackLimit  - &__bss_end__;
+}
+
+size_t pi_threads_get_free_ram(void) {
+   struct mallinfo m = mallinfo();
+
+   return getTotalHeap() - m.uordblks;
 }
 
 void
@@ -169,7 +179,7 @@ pi_threads_dump_state() {
     for (int i = 0; i < n_tasks; i++) {
 	consoles_printf("%3d %-16s %-5s %4d %4ld\n", status[i].xTaskNumber, status[i].pcTaskName, task_state_to_str(status[i].eCurrentState), status[i].uxCurrentPriority, status[i].usStackHighWaterMark);
     }
-    free(status);
+    fatal_free(status);
 }
 
 void

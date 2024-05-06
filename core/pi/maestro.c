@@ -250,7 +250,7 @@ maestro_new(void)
 	return NULL;
     }
 
-    m = malloc(sizeof(*m));
+    m = fatal_malloc(sizeof(*m));
     m->dev = dev;
     switch(dev->descriptor.idProduct) {
     case 0x89: m->n_servos = 6; break;
@@ -259,7 +259,7 @@ maestro_new(void)
     case 0x8c: m->n_servos = 24; break;
     default:
 	fprintf(stderr, "maestro: unknown product 0x%x\n", dev->descriptor.idProduct);
-	free(m);
+	fatal_free(m);
 	return NULL;
     }
 
@@ -293,10 +293,10 @@ retry_serial_mode:
 void
 maestro_destroy(maestro_t *m)
 {
-    free(m->c);
+    fatal_free(m->c);
     usb_close(m->handle);
     if (m->fd >= 0) close(m->fd);
-    free(m);
+    fatal_free(m);
 }
 
 int

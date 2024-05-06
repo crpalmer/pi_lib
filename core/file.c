@@ -21,7 +21,7 @@ media_file_open_read(const char *fname)
 	char *this_name;
 	this_name = maprintf("%s/%s", media_dirs[i], fname);
         f = file_open(this_name, "rb");
-        free(this_name);
+        fatal_free(this_name);
     }
 
     return f;

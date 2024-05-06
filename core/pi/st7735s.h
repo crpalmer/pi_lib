@@ -22,7 +22,7 @@ public:
     }
 
     ~ST7735S_Canvas() {
-	free(raw);
+	fatal_free(raw);
     }
 
     int get_width() { return w; }

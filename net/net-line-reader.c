@@ -22,7 +22,7 @@ net_line_reader_new(int fd)
     r->fd = fd;
     r->a_buf = 1024;
     r->n_buf = 0;
-    r->buf = malloc(r->a_buf);
+    r->buf = fatal_malloc(r->a_buf);
 
     return r;
 }
@@ -60,6 +60,6 @@ net_line_reader_read(net_line_reader_t *r)
 void
 net_line_reader_destroy(net_line_reader_t *r)
 {
-    free(r->buf);
-    free(r);
+    fatal_free(r->buf);
+    fatal_free(r);
 }

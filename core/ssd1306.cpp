@@ -65,7 +65,7 @@ public:
     }
 
     ~Page() {
-	free(raw);
+	fatal_free(raw);
     }
 
     RGB32 get_pixel(int x, int y) {

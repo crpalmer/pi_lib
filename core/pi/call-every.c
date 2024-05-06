@@ -103,5 +103,5 @@ call_every_destroy(call_every_t *e)
     pthread_join(e->thread, NULL);
     pthread_mutex_destroy(&e->lock);
     pthread_cond_destroy(&e->cond);
-    free(e);
+    fatal_free(e);
 }

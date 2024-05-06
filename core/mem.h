@@ -10,6 +10,7 @@ extern "C" {
 void *fatal_malloc(size_t size);
 char *fatal_strdup(const char *str);
 void *fatal_realloc(void *, size_t);
+void fatal_free(void *ptr);
 
 #ifdef __cplusplus
 };

@@ -8,7 +8,7 @@ class CanvasPNG : public Canvas {
 public:
     CanvasPNG(const char *fname);
 
-    ~CanvasPNG() { free(raw); }
+    ~CanvasPNG() { fatal_free(raw); }
 
     int is_valid() { return !had_error; }
 

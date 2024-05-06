@@ -5,8 +5,6 @@
 extern "C" {
 #endif
 
-#include <malloc.h>
-
 void set_consoles_lock();
 
 #ifdef __cplusplus

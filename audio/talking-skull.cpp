@@ -43,7 +43,7 @@ TalkingSkull::TalkingSkull(const char *thread_name, int bytes_per_op) : PiThread
 TalkingSkull::~TalkingSkull() {
     delete wait_lock;
     delete wait_cond;
-    free(ops);
+    fatal_free(ops);
 }
 
 void TalkingSkull::set_ops(TalkingSkullOps *skull_ops) {

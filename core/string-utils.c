@@ -34,8 +34,8 @@ maprintf(const char *fmt, ...)
 	    size *= 2;  /* twice the old size */
 	}
 
-	if ((np = realloc (p, size)) == NULL) {
-	    free(p);
+	if ((np = fatal_realloc (p, size)) == NULL) {
+	    fatal_free(p);
 	    return NULL;
 	} else {
 	    p = np;
