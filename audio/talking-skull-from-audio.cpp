@@ -40,3 +40,7 @@ bool TalkingSkullAudioOps::next(double *pos) {
 bool TalkingSkullAudioOps::reset() {
     return audio_buffer->reset();
 }
+
+int TalkingSkullAudioOps::get_n_ops() {
+    return audio_buffer->get_n_samples() / n_per_sample / n_to_avg;
+}

@@ -4,6 +4,13 @@
 
 #include "file.h"
 
+off_t file_size(const char *fname) {
+    struct stat statbuf;
+
+    if (stat(fname, &statbuf) < 0) return -1;
+    return statbuf.st_size;
+}
+
 file_t *file_open(const char *fname, const char *mode) { return fopen(fname, mode); }
 
 void file_printf(file_t *file, const char *fmt, ...) {

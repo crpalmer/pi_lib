@@ -6,9 +6,12 @@ extern "C" {
 #endif
 
 #include <stdbool.h>
+#include <sys/stat.h>
 #include "file-platform.h"
 
 file_t *media_file_open_read(const char *fname);
+
+off_t file_size(const char *fname);
 
 file_t *file_open(const char *fname, const char *mode);
 

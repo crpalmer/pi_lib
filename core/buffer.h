@@ -19,6 +19,7 @@ public:
 	return byte;
     }
     virtual Buffer *get_sub_buffer(size_t n) = 0;
+    virtual int get_n() = 0;
 };
 
 class BufferFile : public Buffer {
@@ -31,6 +32,11 @@ public:
     int seek_rel(long pos) override;
     const char *get_fname() override { return fname; }
     Buffer *get_sub_buffer(size_t n) override;
+
+    int get_n() override {
+	if (max_bytes >= 0) return max_bytes;
+	else return (int) file_size(fname);
+    }
 
 private:
     const char *fname;
@@ -50,7 +56,7 @@ public:
     Buffer *get_sub_buffer(size_t n) override;
 
     const void *get_data() { return buffer;}
-    size_t get_n_data() { return n; }
+    int get_n() override { return n; }
 
 private:
     const void *buffer;

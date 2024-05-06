@@ -10,6 +10,7 @@ public:
     virtual int get_usec_per_i() = 0;
     virtual bool next(double *pos) = 0;
     virtual bool reset() = 0;
+    virtual int get_n_ops() = 0;
 };
 
 class TalkingSkullFileOps : public TalkingSkullOps {
@@ -20,6 +21,7 @@ public:
     int get_usec_per_i() override { return usec_per_i; }
     bool next(double *pos) override;
     bool reset() override;
+    int get_n_ops() override;
 
 private:
     file_t *f;
@@ -48,7 +50,7 @@ protected:
 
     int bytes_per_op;
     uint8_t *ops;
-    size_t n_ops, a_ops;
+    int n_ops;
 
     uint32_t op_bits;
     unsigned usec_per_i;

@@ -16,6 +16,7 @@ public:
     int get_usec_per_i() override { return usec_per_i; };
     bool next(double *pos) override;
     bool reset() override;
+    int get_n_ops() override;
 
     static TalkingSkullAudioOps *open_wav(const char *fname, unsigned n_to_avg = 1) {
 	AudioBuffer *wav = wav_open(fname);

@@ -54,6 +54,10 @@ public:
     int get_rate() override { return rate; }
     int get_bytes_per_sample() { return bytes_per_sample; }
 
+    int get_n_samples() {
+	return buffer->get_n() / get_bytes_per_sample();
+    }
+
 private:
     Buffer *buffer;
     int num_channels;

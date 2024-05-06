@@ -29,7 +29,7 @@ public:
  	size_t need = vsnprintf(buf, have, fmt, va);
 	va_end(new_va);
 
-	if (need >= have) {
+	if (need+1 >= have) {
 	    have = (need + 1) * 2;
 	    buf = (char *) fatal_realloc(buf, have);
 

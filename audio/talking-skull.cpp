@@ -25,15 +25,19 @@ bool TalkingSkullFileOps::reset() {
     return file_seek_abs(f, 0);
 }
 
+int TalkingSkullFileOps::get_n_ops() {
+    consoles_fatal_printf("I have to implement this!\n");
+    return 0;
+}
+
 /* -------------------------------------------------------------- */
 
 TalkingSkull::TalkingSkull(const char *thread_name, int bytes_per_op) : PiThread(thread_name), bytes_per_op(bytes_per_op) {
     wait_lock = new PiMutex();
     wait_cond = new PiCond();
 
-    a_ops = 32;
     n_ops = 0;
-    ops = (uint8_t *) fatal_malloc(a_ops * bytes_per_op);
+    ops = NULL;
 
     op_bits = (1 << (8*bytes_per_op)) - 1;
 
@@ -50,19 +54,23 @@ void TalkingSkull::set_ops(TalkingSkullOps *skull_ops) {
     wait_lock->lock();
 
     usec_per_i = skull_ops->get_usec_per_i();
-    n_ops = 0;
+    n_ops = skull_ops->get_n_ops();
+    if (ops) fatal_free(ops);
+    ops = (uint8_t*) fatal_malloc(n_ops * bytes_per_op);
 
     double pos;
-    while (skull_ops->next(&pos)) {
-	if (n_ops >= a_ops) {
-	    if (a_ops < 1024) a_ops *= 2;
-	    else a_ops += 512;
-	    ops = (uint8_t *) realloc(ops, a_ops * bytes_per_op);
+    int n;
+
+    for (n = 0; skull_ops->next(&pos); n++) {
+	if (n >= n_ops) {
+	    consoles_fatal_printf("Too many ops, there are supposed to be %d\n", n_ops);
 	}
 	uint32_t encoded = pos / 100 * op_bits;
-	for (int i = 0; i < bytes_per_op; i++) ops[n_ops * bytes_per_op + i] = (encoded >> (8*i)) & 0xff;
- 	n_ops++;
+	for (int i = 0; i < bytes_per_op; i++) ops[n * bytes_per_op + i] = (encoded >> (8*i)) & 0xff;
     }
+
+    mem_check(ops);
+    assert(n == n_ops);
 
     wait_lock->unlock();
 }
@@ -87,7 +95,7 @@ TalkingSkull::main() {
 	struct timespec next;
 	nano_gettime(&next);
 
-	for (size_t i = 0; i < n_ops; i++) {
+	for (int i = 0; i < n_ops; i++) {
 	    struct timespec now;
 
 	    nano_gettime(&now);
