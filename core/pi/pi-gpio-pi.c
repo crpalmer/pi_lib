@@ -59,7 +59,6 @@ static struct gpiod_chip *try_chip(const char *name)
 
 void pi_gpio_init()
 {
-    assert(! chip);
     if (! chip) chip = try_chip("gpiochip0");
     if (! chip) chip = try_chip("gpiochip4");
     if (! chip) {
