@@ -13,7 +13,7 @@ public:
 	for (int i = 0; i < 8; i++) {
 	    this->inputs[i] = inputs[i];
 	    for (int j = 0; j < 2; j++) {
-		this->outputs[i][j] = outputs[i][j];
+		this->outputs[j][i] = outputs[j][i];
 	    }
 	}
     }
@@ -30,7 +30,7 @@ public:
     }
 	
 private:
-    int *inputs, *outputs[8];
+    int inputs[8], outputs[2][8];
 
     const int input_maps[2][8] = { { 14, 15, 18, 23, 22, 27, 17, 4 },
                                    { 23, 18, 15, 14, 22, 27, 17, 4 } };
