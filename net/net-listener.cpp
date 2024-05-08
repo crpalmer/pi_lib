@@ -9,8 +9,6 @@ void NetListener::main() {
     consoles_write_str("net: Starting.\n");
 
     while (1) {
-        uint16_t port = 4567;
-
 #ifdef PLATFORM_pico
 	while (! wifi_is_connected()) {
 	    consoles_printf("net: Waiting for WiFi to become available.\n");
