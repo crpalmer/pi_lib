@@ -47,8 +47,8 @@ void PiMutex::lock() {
     pthread_mutex_lock(&m);
 }
 
-int PiMutex::trylock() {
-    return pthread_mutex_trylock(&m);
+bool PiMutex::trylock() {
+    return pthread_mutex_trylock(&m) >= 0;
 }
 
 void PiMutex::unlock() {

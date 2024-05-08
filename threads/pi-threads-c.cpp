@@ -35,7 +35,7 @@ C_DECL void pi_mutex_lock(pi_mutex_t *m_vp)
     m->lock();
 }
 
-C_DECL int pi_mutex_trylock(pi_mutex_t *m_vp)
+C_DECL bool pi_mutex_trylock(pi_mutex_t *m_vp)
 {
     PiMutex *m = (PiMutex *) m_vp;
     return m->trylock();

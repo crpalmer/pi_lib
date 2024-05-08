@@ -1,6 +1,7 @@
 #ifndef __PI_THREADS_H__
 #define __PI_THREADS_H__
 
+#include <stdbool.h>
 #include <time.h>
 
 #ifdef __cplusplus
@@ -24,7 +25,7 @@ void pi_thread_create(const char *name, void (*thread_main)(void *arg), void *th
 
 pi_mutex_t *pi_mutex_new();
 void pi_mutex_lock(pi_mutex_t *);
-int pi_mutex_trylock(pi_mutex_t *);
+bool pi_mutex_trylock(pi_mutex_t *);
 void pi_mutex_unlock(pi_mutex_t *);
 void pi_mutex_destroy(pi_mutex_t *);
 

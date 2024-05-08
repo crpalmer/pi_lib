@@ -63,9 +63,8 @@ void PiMutex::lock() {
     xSemaphoreTake(m, portMAX_DELAY);
 }
 
-int PiMutex::trylock() {
-    if (xSemaphoreTake(m, 0)) return 0;
-    return -1;
+bool PiMutex::trylock() {
+    return xSemaphoreTake(m, 0);
 }
 
 void PiMutex::unlock() {

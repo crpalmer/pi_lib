@@ -34,7 +34,7 @@ public:
     PiMutex();
     ~PiMutex();
     void lock();
-    int trylock();
+    bool trylock();
     void unlock();
 
 private:
