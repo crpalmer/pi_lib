@@ -63,7 +63,7 @@ record_memory(void *p, size_t size) {
 static void check_padding(void *ptr) {
     if (! memory_check) return;
     uint8_t *p = (uint8_t *) ptr;
-    for (int i = 0; i < PAD_SIZE; i++) assert(p[i] == i % 0xff);
+    for (int i = 0; i < PAD_SIZE && p; i++) assert(p[i] == i % 0xff);
     strcpy(ptr, "*FREED*");
 }
 
