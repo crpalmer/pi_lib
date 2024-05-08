@@ -95,6 +95,7 @@ static void assert_state(unsigned gpio, unsigned state)
 	int ret = 0;
 	if (state == G_IN) ret = gpiod_line_request_input(line, "pi-gpio");
 	if (state == G_OUT) ret = gpiod_line_request_output(line, "pi-gpio", 0);
+	if (ret != 0) perror("gpiod_line_request_*");
 	assert(ret == 0);
     }
     assert(gpios[gpio].state == state);
