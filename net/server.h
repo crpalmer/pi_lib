@@ -1,25 +1,30 @@
 #ifndef __SERVER_H__
 #define __SERVER_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "mem.h"
+#include "net-reader.h"
+#include "net-writer.h"
+#include "pi-threads.h"
 
-#include "net.h"
+class ServerConnection : public PiThread {
+public:
+    ServerConnection(NetReader *r, NetWriter *w, const char *name = "server") : PiThread(name), r(r), w(w) { }
 
-typedef struct {
-    unsigned short port;
-    char *(*command)(void *state, const char *cmd, struct sockaddr_in *addr, size_t addrlen);
-    void *state;
-} server_args_t;
+    void main() override {
+	const char *line;
+	while ((line = r->readline()) != NULL) {
+	    char *response = process_cmd(line);
+	    for (size_t i = 0; response[i]; i++) if (response[i] == '\n') response[i] = ' ';
+	    w->printf("%s\n", response);
+	    fatal_free(response);
+	}
+    }
 
-#define SERVER_OK "ok"
+    virtual char *process_cmd(const char *cmd) = 0;
 
-void
-server_thread_main(void *);
-
-#ifdef __cplusplus
+private:
+    Reader *r;
+    Writer *w;
 };
-#endif
 
 #endif
