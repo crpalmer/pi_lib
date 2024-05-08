@@ -22,19 +22,19 @@ public:
         pi_gpio_set_direction(gpio, PI_INPUT);
     }
 
-    unsigned get_fast() {
+    unsigned get_fast() override {
 	return pi_gpio_get(gpio) == 0;
     }
 
-    void set_pullup_up() {
+    void set_pullup_up() override {
 	pi_gpio_set_pullup(gpio, PI_PUD_UP);
     }
 
-    void set_pullup_down() {
+    void set_pullup_down() override {
 	pi_gpio_set_pullup(gpio, PI_PUD_DOWN);
     }
 
-    void clear_pullup() {
+    void clear_pullup() override {
         pi_gpio_set_pullup(gpio, PI_PUD_OFF);
     }
 
