@@ -1,4 +1,5 @@
 include($ENV{FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
+target_compile_options(FreeRTOS+FAT+CLI INTERFACE -Wno-error)
 
 add_library(pi-threads-platform STATIC
   file.cpp
