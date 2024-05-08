@@ -49,4 +49,4 @@ bool file_seek_rel(file_t *file, long delta) { return fseek(file, delta, SEEK_CU
 
 void file_close(file_t *file) { fclose(file); }
 
-bool file_is_eof(file_t *file) { return feof(file) == 0; }
+bool file_is_eof(file_t *file) { return feof(file) != 0; }
