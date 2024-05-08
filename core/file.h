@@ -12,6 +12,7 @@ extern "C" {
 file_t *media_file_open_read(const char *fname);
 
 off_t file_size(const char *fname);
+bool file_exists(const char *fname);
 
 file_t *file_open(const char *fname, const char *mode);
 

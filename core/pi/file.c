@@ -11,6 +11,14 @@ off_t file_size(const char *fname) {
     return statbuf.st_size;
 }
 
+bool
+file_exists(const char *fname)
+{
+    struct stat s;
+
+    return stat(fname, &s) >= 0;
+}
+
 file_t *file_open(const char *fname, const char *mode) { return fopen(fname, mode); }
 
 void file_printf(file_t *file, const char *fmt, ...) {

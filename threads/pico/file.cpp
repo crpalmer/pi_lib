@@ -42,14 +42,18 @@ C_DECL void file_init(void) {
 }
 
 off_t file_size(const char *fname) {
-    off_t size = -1;
     FF_Stat_t stat;
 
-    char *full_name = maprintf("/sd0/%s", fname);
-    if (ff_stat(fname, &stat) >= 0) size = stat.st_size;
-    fatal_free(full_name);
+    if (ff_stat(fname, &stat) >= 0) return stat.st_size;
+    return -1;
+}
 
-    return size;
+bool
+file_exists(const char *fname)
+{
+    FF_Stat_t stat;
+
+    return ff_stat(fname, &stat) >= 0;
 }
 
 C_DECL file_t *file_open(const char *fname, const char *mode) {
