@@ -29,9 +29,9 @@ void i2c_config_gpios(int sda, int scl)
 
 int i2c_open(int bus, int addr)
 {
-    int fd = 0;
+    int fd;
 
-    while (fd < MAX_I2C && i2c_data[fd].addr == 0) {}
+    for (fd = 0; fd < MAX_I2C && i2c_data[fd].addr != 0; fd++) {}
     if (fd >= MAX_I2C) return -1;
 
     i2c_data[fd].bus = bus;
