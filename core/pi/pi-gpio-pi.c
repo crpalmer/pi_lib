@@ -8,6 +8,8 @@
 
 #define NUM_GPIOS 40
 
+static const char *aliases[NUM_GPIOS];
+
 typedef struct {
     unsigned gpio;
     struct gpiod_line *line;
@@ -25,6 +27,19 @@ static gpio_t gpios[NUM_GPIOS];
 
 static const char *chip_name = NULL;
 static struct gpiod_chip *chip = NULL;
+
+static void setup_aliases() {
+    aliases[2] = "ID_SDA";
+    aliases[3] = "ID_SCL";
+    aliases[4] = "GPIO_GCLK";
+    aliases[7] = "SPI_CE1_N";
+    aliases[8] = "SPI_CE0_N";
+    aliases[9] = "SPI_MISO";
+    aliases[10] = "SPI_MOSI";
+    aliases[11] = "SPI_SCLK";
+    aliases[14] = "TXD1";
+    aliases[15] = "RXD1";
+}
 
 static struct gpiod_chip *try_chip(const char *name)
 {
@@ -51,6 +66,7 @@ void pi_gpio_init()
 	fprintf(stderr, "Failed to find a gpiochip!\n");
 	exit(0);
     }
+    setup_aliases();
 }
 
 static struct gpiod_line *get_line(unsigned gpio)
@@ -65,6 +81,7 @@ static struct gpiod_line *get_line(unsigned gpio)
 
     sprintf(name, "GPIO%d", gpio);
     gpios[gpio].line = gpiod_chip_find_line(chip, name);
+    if (! gpios[gpio].line && aliases[gpio]) gpios[gpio].line = gpiod_chip_find_line(chip, aliases[gpio]);
     return gpios[gpio].line;
 }
 
