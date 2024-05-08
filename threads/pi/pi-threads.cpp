@@ -13,18 +13,25 @@ static std::list<PiThread *> active_threads;
 void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
     pi_init();
     main(argc, argv);
+    pthread_mutex_lock(&at_lock);
+    if (active_threads.empty()) {
+	fprintf(stderr, "All threads have exited.\n");
+	exit(0);
+    }
+    pthread_mutex_unlock(&at_lock);
+    while (1) { ms_sleep(10*1000); }
 }
 
 PiThread::PiThread(const char *name) : name(name) {
+    pthread_mutex_lock(&at_lock);
+    active_threads.push_back(this);
+    pthread_mutex_unlock(&at_lock);
 }
 
 PiThread *PiThread::start(int priority_unused) {
     if (pthread_create(&t, NULL, (void *(*)(void *)) PiThread::thread_entry, this)) {
+	pthread_setname_np(t, name);
         pthread_detach(t);
-
-	pthread_mutex_lock(&at_lock);
-	active_threads.push_back(this);
-	pthread_mutex_unlock(&at_lock);
     }
     return this;
 }
