@@ -317,6 +317,7 @@ maestro_set_servo_speed(maestro_t *m, servo_id_t id, unsigned ms_for_range)
 
     if (ms_for_range == 0) {
 	speed = 0;
+	actual_ms = 0;
     } else {
 	unsigned short total_us;
 	double total_units;
