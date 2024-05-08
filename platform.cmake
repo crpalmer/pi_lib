@@ -1,4 +1,5 @@
 if("${PLATFORM}" STREQUAL "pico")
+  set(PICO_BOARD pico_w)
   add_compile_definitions("WIFI_SSID=\"$ENV{WIFI_SSID}\"" "WIFI_PASSWORD=\"$ENV{WIFI_PASSWORD}\"")
   add_compile_definitions("PICO_MAX_SHARED_IRQ_HANDLERS=8")
   add_compile_definitions("LIB_PICO_MULTICORE=1")
