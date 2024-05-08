@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <list>
+#include <sys/prctl.h>
 #include "pi.h"
 #include "consoles.h"
 #include "time-utils.h"
@@ -30,10 +31,15 @@ PiThread::PiThread(const char *name) : name(name) {
 
 PiThread *PiThread::start(int priority_unused) {
     if (pthread_create(&t, NULL, (void *(*)(void *)) PiThread::thread_entry, this)) {
-	pthread_setname_np(t, name);
         pthread_detach(t);
     }
     return this;
+}
+
+void PiThread::thread_entry(void *vp) {
+    PiThread *t = (PiThread *) vp;
+    prctl(PR_SET_NAME, t->get_name());
+    t->main();
 }
 
 PiThread::~PiThread() {

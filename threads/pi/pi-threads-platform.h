@@ -13,10 +13,9 @@ public:
     PiThread *start(int priority = 1);
 
     virtual void main() = 0;
-    static void thread_entry(void *vp) {
-	PiThread *t = (PiThread *) vp;
-	t->main();
-    }
+    static void thread_entry(void *vp);
+
+    const char *get_name() { return name; }
 
 private:
     pthread_t t;
