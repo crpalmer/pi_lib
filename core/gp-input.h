@@ -6,8 +6,6 @@
 #include "io.h"
 #include "pi-gpio.h"
 
-static void on_change_wrapper(void *self, unsigned gpio_unused, unsigned events_unused);
-
 class GPInputNotifier {
 public:
     virtual void on_change(bool is_rising, bool is_falling) { on_change(); }
@@ -40,7 +38,13 @@ public:
 
     int set_notifier(GPInputNotifier *notifier) {
 	this->notifier = notifier;
-	return pi_gpio_set_irq_handler(gpio, on_change_wrapper, this);
+	return pi_gpio_set_irq_handler(gpio, GPInput::on_change_wrapper, this);
+    }
+
+private:
+    static void on_change_wrapper(void *self, unsigned gpio_unused, unsigned events) {
+	GPInput *input = (GPInput *) self;
+	input->forward_on_change((events & PI_GPIO_EVENT_RISING) != 0, (events & PI_GPIO_EVENT_FALLING) != 0);
     }
 
     void forward_on_change(bool is_rising, bool is_falling) {
@@ -51,11 +55,5 @@ private:
     unsigned gpio;
     GPInputNotifier *notifier;
 };
-
-static void on_change_wrapper(void *self, unsigned gpio_unused, unsigned events)
-{
-    GPInput *input = (GPInput *) self;
-    input->forward_on_change((events & PI_GPIO_EVENT_RISING) != 0, (events & PI_GPIO_EVENT_FALLING) != 0);
-}
 
 #endif
