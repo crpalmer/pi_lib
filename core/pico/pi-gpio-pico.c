@@ -12,8 +12,6 @@
 typedef struct {
    pi_gpio_irq_handler_t f;
    void *arg;
-   alarm_id_t alarm_id;
-   unsigned last_event;
 } irq_handler_state_t;
 
 typedef struct {
@@ -38,7 +36,6 @@ void pi_gpio_init()
 {
     for (int i = 0; i < NUM_GPIOS; i++) {
 	gpios[i].gpio = i;
-	gpios[i].irq_handler.alarm_id = -1;
     }
 
     for (int i = 0; i < N_PWM_SLICES; i++) {
@@ -78,8 +75,6 @@ int pi_gpio_set_direction(unsigned gpio, unsigned mode)
     return 0;
 }
 
-static bool irq_enabled = false;
-
 unsigned translate_events(uint32_t events)
 {
     unsigned new_events = 0;
@@ -90,27 +85,10 @@ unsigned translate_events(uint32_t events)
     return new_events;
 }
 
-static int64_t gpio_irq_alarm(alarm_id_t id, void *gpio_as_vp)
-{
-    gpio_t *gpio = (gpio_t *) gpio_as_vp;
-    irq_handler_state_t *irq = &gpio->irq_handler;
-
-    irq->alarm_id = -1;
-    irq->f(irq->arg, gpio->gpio, translate_events(irq->last_event));
-    return 0;
-}
-
 static void gpio_callback(uint gpio, uint32_t events) {
     irq_handler_state_t *irq = &gpios[gpio].irq_handler;
 
-    if (irq->f) {
-	if (irq->alarm_id >= 0) cancel_alarm(irq->alarm_id);
-	irq->last_event = events;
-	if ((irq->alarm_id = add_alarm_in_us(1000, gpio_irq_alarm, &gpios[gpio], true)) < 0) {
-	    fprintf(stderr, "pi-gpio irq_handler: Failed to create alarm for debouncing\n");
-            irq->f(irq->arg, gpio, translate_events(events));
-	}
-    }
+    if (irq->f) irq->f(irq->arg, gpio, translate_events(events));
 }
 
 int pi_gpio_set_irq_handler(unsigned gpio, pi_gpio_irq_handler_t irq_handler, void *irq_handler_arg)
@@ -120,12 +98,7 @@ int pi_gpio_set_irq_handler(unsigned gpio, pi_gpio_irq_handler_t irq_handler, vo
     irq->f = irq_handler;
     irq->arg = irq_handler_arg;
 
-    if (! irq_enabled) {
-	gpio_set_irq_enabled_with_callback(gpio, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &gpio_callback);
-	irq_enabled = true;
-    } else {
-	gpio_set_irq_enabled(gpio, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true);
-    }
+    gpio_set_irq_enabled_with_callback(gpio, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &gpio_callback);
 
     return 0;
 }
