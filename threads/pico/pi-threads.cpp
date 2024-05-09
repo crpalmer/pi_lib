@@ -19,12 +19,9 @@ static void init_with_threads(void *main_as_vp) {
     mem_set_get_task_name(get_task_name);
     pi_init_no_reboot();
     file_init();
-    ms_sleep(2000);
-
     char *argv = fatal_strdup("pico");
     pi_threads_main_t main = (pi_threads_main_t) main_as_vp;
     main(1, &argv);
-
     vTaskDelete(NULL);
 }
     
