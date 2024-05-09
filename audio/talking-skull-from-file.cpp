@@ -27,24 +27,3 @@ int TalkingSkullFileOps::get_n_ops() {
     consoles_fatal_printf("I have to implement this!\n");
     return 0;
 }
-
-int
-talking_skull_ops_to_filename(const char *fname, TalkingSkullOps *ops) {
-    file_t *f;
-
-    if ((f = file_open(fname, "rb")) == NULL) return -1;
-    int ret = talking_skull_ops_to_file(f, ops);
-    file_close(f);
-
-    return ret;
-}
-
-int
-talking_skull_ops_to_file(file_t *f, TalkingSkullOps *ops) {
-    file_printf(f, "%d", ops->get_usec_per_i());
-    double pos;
-    for (int i = 0; ops->next(&pos); i++) {
-	file_printf(f, "%c%g", i % 10 == 0 ? '\n' : ' ', pos);
-    }
-    return 0;
-}

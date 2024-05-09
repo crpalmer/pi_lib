@@ -20,7 +20,4 @@ private:
     int usec_per_i;
 };
 
-extern "C" int talking_skull_ops_to_filename(const char *fname, TalkingSkullOps *ops);
-extern "C" int talking_skull_ops_to_file(file_t *f, TalkingSkullOps *ops);
-
 #endif
