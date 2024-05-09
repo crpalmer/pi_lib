@@ -18,12 +18,12 @@ public:
 	}
     }
 
-    Input *get_input(int id) {
+    GPInput *get_input(int id) {
 	assert(id > 0 && id <= 8);
 	return new GPInput(inputs[id-1]);
     }
 
-    Output *get_output(int bank, int id) {
+    GPOutput *get_output(int bank, int id) {
 	assert(bank == 1 || bank == 2);
 	assert(id > 0 && id <= 8);
 	return new GPOutput(outputs[bank-1][id-1]);
