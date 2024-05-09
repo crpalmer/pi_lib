@@ -7,10 +7,8 @@
 #include "set-consoles-lock.h"
 #include "time-utils.h"
 
-static void
-rtos_sleep(unsigned ms) {
-    //vTaskDelay(pdMS_TO_TICKS(ms));
-    vTaskDelay(ms);
+static void rtos_sleep(unsigned ms) {
+    vTaskDelay(pdMS_TO_TICKS(ms));
 }
 
 const char *get_task_name() {
