@@ -38,12 +38,29 @@ void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
 PiThread::PiThread(const char *name) : name(name) {
 }
 
+PiThread::~PiThread() {
+}
+
 PiThread *PiThread::start(int priority) {
-    xTaskCreate(PiThread::thread_entry, name ? name : "pi-thread", STACK_SIZE, this, priority, NULL);
+    xTaskCreate(PiThread::thread_entry, name ? name : "pi-thread", STACK_SIZE, this, priority, &task);
     return this;
 }
 
-PiThread::~PiThread() {
+#define PI_THREAD_NOTIFY_INDEX 1
+
+void PiThread::pause() {
+    ulTaskNotifyTakeIndexed(PI_THREAD_NOTIFY_INDEX, true, portMAX_DELAY);
+}
+
+void PiThread::resume() {
+    xTaskNotifyGiveIndexed(task, PI_THREAD_NOTIFY_INDEX);
+}
+
+void PiThread::resume_from_isr() {
+    BaseType_t higher_priority_woken = false;
+
+    vTaskNotifyGiveIndexedFromISR(task, PI_THREAD_NOTIFY_INDEX, &higher_priority_woken);
+    portYIELD_FROM_ISR(higher_priority_woken);
 }
 
 PiMutex::PiMutex() {
@@ -82,62 +99,37 @@ static TickType_t abstime_to_ticks(const struct timespec *abstime) {
     return pdMS_TO_TICKS(ms);
 }
 
-SemaphoreHandle_t PiCond::add_to_wait_list() {
-    SemaphoreHandle_t waiting = xSemaphoreCreateBinary();
-
+bool PiCond::timedwait(PiMutex *m, const struct timespec *abstime) {
     lock->lock();
-    wait_list.push_back(waiting);
+    wait_list.push_back(xTaskGetCurrentTaskHandle());
     lock->unlock();
 
-    return waiting;
-}
-
-int PiCond::timedwait(PiMutex *m, const struct timespec *abstime) {
-    SemaphoreHandle_t waiting = add_to_wait_list();
-
     m->unlock();
-
-    int ret = xSemaphoreTake(waiting, abstime_to_ticks(abstime));
-    vSemaphoreDelete(waiting);
-
+    int ret = ulTaskNotifyTakeIndexed(PI_THREAD_NOTIFY_INDEX, true, abstime ? abstime_to_ticks(abstime) : portMAX_DELAY);
     m->lock();
 
-    if (ret) return 0;
-    else return -1;
+    return ret > 0;
 }
 
 void PiCond::wait(PiMutex *m) {
-    SemaphoreHandle_t waiting = add_to_wait_list();
+    PiCond::timedwait(m, NULL);
+}
 
-    m->unlock();
-
-    xSemaphoreTake(waiting, portMAX_DELAY);
-    vSemaphoreDelete(waiting);
-
-    m->lock();
+void PiCond::wake_one_locked() {
+    TaskHandle_t task = wait_list.front();
+    wait_list.pop_front();
+    xTaskNotifyGiveIndexed(task, PI_THREAD_NOTIFY_INDEX);
 }
 
 void PiCond::signal() {
     lock->lock();
-
-    if (! wait_list.empty()) {
-	SemaphoreHandle_t waiting = wait_list.front();
-	wait_list.pop_front();
-	xSemaphoreGive(waiting);
-    }
-
+    if (! wait_list.empty()) wake_one_locked();
     lock->unlock();
 }
 
 void PiCond::broadcast() {
     lock->lock();
-
-    while (! wait_list.empty()) {
-	SemaphoreHandle_t waiting = wait_list.front();
-	wait_list.pop_front();
-	xSemaphoreGive(waiting);
-    }
-
+    while (! wait_list.empty()) wake_one_locked();
     lock->unlock();
 }
 

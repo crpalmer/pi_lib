@@ -17,12 +17,17 @@ public:
     PiThread *start(int priority = 1);
 
     virtual void main() = 0;
+
     static void thread_entry(void *vp) {
 	PiThread *t = (PiThread *) vp;
 	t->main();
 	vTaskDelete(NULL);
 	delete t;
     }
+
+    void pause();
+    void resume();
+    void resume_from_isr();
 
 private:
     const char *name;
@@ -45,15 +50,15 @@ class PiCond {
 public:
     PiCond();
     ~PiCond();
-    int timedwait(PiMutex *m, const struct timespec *abstime);
+    bool timedwait(PiMutex *m, const struct timespec *abstime);
     void wait(PiMutex *m);
     void signal();
     void broadcast();
 
 private:
     PiMutex *lock;
-    std::list<SemaphoreHandle_t> wait_list;
-    SemaphoreHandle_t add_to_wait_list();
+    std::list<TaskHandle_t> wait_list;
+    void wake_one_locked();
 };
 
 extern "C" {

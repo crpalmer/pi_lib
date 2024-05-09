@@ -27,6 +27,8 @@ PiThread::PiThread(const char *name) : name(name) {
     pthread_mutex_lock(&at_lock);
     active_threads.push_back(this);
     pthread_mutex_unlock(&at_lock);
+    m_paused = new PiMutex();
+    c_paused = new PiCond();
 }
 
 PiThread *PiThread::start(int priority_unused) {
@@ -43,6 +45,9 @@ void PiThread::thread_entry(void *vp) {
 }
 
 PiThread::~PiThread() {
+    delete c_paused;
+    delete m_paused;
+
     pthread_mutex_lock(&at_lock);
     active_threads.remove(this);
     if (active_threads.empty()) {
@@ -50,6 +55,20 @@ PiThread::~PiThread() {
 	exit(0);
     }
     pthread_mutex_unlock(&at_lock);
+}
+
+void PiThread::pause() {
+    m_paused->lock();
+    while (! resumed) {
+	c_paused->wait(m_paused);
+    }
+    resumed = false;
+    m_paused->unlock();
+}
+
+void PiThread::resume() {
+    resumed = true;
+    c_paused->signal();
 }
     
 PiMutex::PiMutex() {

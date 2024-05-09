@@ -17,9 +17,16 @@ public:
 
     const char *get_name() { return name; }
 
+    void pause();
+    void resume();
+    void resume_from_isr() { resume(); }
+
 private:
     pthread_t t;
     const char *name;
+    class PiMutex *m_paused;
+    class PiCond *c_paused;
+    bool resumed = false;
 };
 
 class PiMutex {
