@@ -12,7 +12,7 @@ public:
     virtual void on_switch(bool pressed) { };
 };
 
-class RotaryEncoder : public GPInputNotifier {
+class RotaryEncoder : public InputNotifier {
 public:
     RotaryEncoder(unsigned gpio_A, unsigned gpio_B, int gpio_switch = -1) {
 	A = new GPInput(gpio_A);
@@ -83,7 +83,7 @@ public:
     }
 
 private:
-    GPInput *A, *B, *sw;
+    Input *A, *B, *sw;
     int min_value = -INT_MAX, max_value = INT_MAX;
     int value = 0;
     unsigned last_A;

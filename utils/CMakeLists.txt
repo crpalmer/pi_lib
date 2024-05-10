@@ -34,7 +34,7 @@ else()
 endif()
 
 util_cpp(adc)
-util_cpp(gp-input)
+util_cpp(input-notifier)
 util_cpp(life)
 util_cpp(mcp23017)
 util_cpp(rotary-encoder)

@@ -18,7 +18,7 @@ public:
 	}
     }
 
-    GPInput *get_input(int id) {
+    Input *get_input(int id) {
 	assert(id > 0 && id <= 8);
 	return new GPInput(inputs[id-1]);
     }

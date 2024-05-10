@@ -5,7 +5,7 @@
 #include "mcp23017.h"
 #include "pi.h"
 
-static char buf[100*1024];
+static char buf[1*1024];
 
 static MCP23017 *mcp;
 static Input *inputs[2][8];
@@ -30,10 +30,8 @@ main(int argc, char **argv)
 {
     pi_init();
 
-    i2c_init_bus(0);
+    i2c_init_bus(1);
     i2c_config_gpios(2, 3);
-
-    pi_gpio_init();
 
 #ifdef PLATFORM_pico
     if (0) {
