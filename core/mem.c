@@ -71,7 +71,7 @@ static void check_padding(void *ptr, void *user_ptr, mem_header_t *hdr, bool is_
     uint8_t *p = (uint8_t *) ptr;
     for (int i = 0; i < PAD_SIZE && p; i++) {
 	if (p[i] != i % 0xff) {
-	    fprintf(stderr, "%s: padding check failure: %p %d @ %d = %p\n", hdr->who, user_ptr, hdr->size, i, &p[i]);
+	    fprintf(stderr, "%s: padding check failure: %p %d @ %d = %p\n", hdr->who, user_ptr, (int) hdr->size, i, &p[i]);
 	    assert(0);
 	}
     }
