@@ -161,7 +161,7 @@ FAT16 and FAT32 are always enabled. */
 /* When writing and reading data, i/o becomes less efficient if sizes other
 than 512 bytes are being used.  When set to 1 each file handle will
 allocate a 512-byte character buffer to facilitate "unaligned access". */
-#define	ffconfigOPTIMISE_UNALIGNED_ACCESS	1
+#define	ffconfigOPTIMISE_UNALIGNED_ACCESS	0
 
 /* Input and output to a disk uses buffers that are only flushed at the
 following times:
