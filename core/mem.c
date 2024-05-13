@@ -12,6 +12,8 @@ static const bool memory_overwrite_new = false;
 
 #define PAD_SIZE 8
 
+const char *freed_str = "*FREED*";	/* note: 7 chars plus \0 */
+
 static const char *(*get_task_name_fn)() = NULL;
 
 static const char *get_task_name() {
@@ -60,27 +62,46 @@ record_memory(void *p, size_t size) {
     return p;
 }
 
-static void check_padding(void *ptr) {
+static void check_padding(void *ptr, void *user_ptr, mem_header_t *hdr, bool is_free) {
     if (! memory_check) return;
+    if (strncmp(ptr, freed_str, strlen(freed_str)) == 0) {
+	fprintf(stderr, "%s: double free of %p\n", hdr->who, user_ptr);
+	assert(0);
+    }
     uint8_t *p = (uint8_t *) ptr;
-    for (int i = 0; i < PAD_SIZE && p; i++) assert(p[i] == i % 0xff);
-    strcpy(ptr, "*FREED*");
+    for (int i = 0; i < PAD_SIZE && p; i++) {
+	if (p[i] != i % 0xff) {
+	    fprintf(stderr, "%s: padding check failure: %p %d @ %d = %p\n", hdr->who, user_ptr, hdr->size, i, &p[i]);
+	    assert(0);
+	}
+    }
+    if (is_free) strcpy(ptr, freed_str);
 }
 
 static void *
-check_memory(void *ptr) {
+check_memory(void *ptr, bool is_free) {
     if (memory_check) {
 	mem_header_t *hdr = (mem_header_t *) (ptr - sizeof(*hdr));
-	check_padding(hdr->pad);
-	check_padding(ptr + hdr->size);
+	check_padding(hdr->pad, ptr, hdr, is_free);
+	check_padding(ptr + hdr->size, ptr, hdr, is_free);
 	ptr = hdr;
     }
     return ptr;
 }
 
+static int
+get_size_if_available(void *ptr) {
+    if (memory_check) {
+	mem_header_t *hdr = (mem_header_t *) (ptr - sizeof(*hdr));
+	return hdr->size;
+    } else {
+	return -1;
+    }
+}
+
 void
 mem_check(void *ptr) {
-    check_memory(ptr);
+    check_memory(ptr, false);
 }
 
 void *
@@ -111,7 +132,7 @@ fatal_realloc(void *ptr, size_t size)
 {
     if (memory_trace) printf("%s: %p: realloc %d", get_task_name(), ptr, (int) size);
 
-    ptr = check_memory(ptr);
+    ptr = check_memory(ptr, true);
 
     if ((ptr = realloc(ptr, size + extra_bytes())) == NULL) {
 	consoles_fatal_printf("Failed to realloc %ld bytes.\n", (long) size);
@@ -126,8 +147,8 @@ fatal_realloc(void *ptr, size_t size)
 
 void
 fatal_free(void *ptr) {
-    if (memory_trace) printf("%s: %p: free\n", get_task_name(), ptr);
-    ptr = check_memory(ptr);
+    if (memory_trace) printf("%s: %p: free %d\n", get_task_name(), ptr, get_size_if_available(ptr));
+    ptr = check_memory(ptr, true);
     free(ptr);
 }
 
