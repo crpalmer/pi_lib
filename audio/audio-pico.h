@@ -9,10 +9,10 @@ public:
     /* Connect: VIN to +3.3V
                 GND and SCK to GND
                 LCK to 14 (SCK)
-                DIN to 12 (RX)
+                DIN to 15 (TX)
                 BCK to 13 (CS)
      */
-    AudioPico(int data_pin = 12, int clock_pin_base = 13, int dma_channel = 2, int sm = 0);
+    AudioPico(int data_pin = 15, int clock_pin_base = 13, int dma_channel = 2, int sm = 0);
     bool configure(AudioConfig *config) override;
     size_t get_recommended_buffer_size() override;
     bool play(void *buffer, size_t n) override;
