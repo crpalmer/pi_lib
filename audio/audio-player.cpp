@@ -56,7 +56,6 @@ void AudioPlayer::main(void) {
 	    start_cond->wait(mutex);
 	}
 
-	audio->configure(buffer);
         size_t n = audio->get_recommended_buffer_size();
         void *buf = fatal_malloc(n);
 
