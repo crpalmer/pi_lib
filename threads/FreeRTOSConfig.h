@@ -51,7 +51,7 @@
 #define configUSE_PASSIVE_IDLE_HOOK             0
 #define configUSE_TICK_HOOK                     0 // currently not needed
 #define configTICK_RATE_HZ                      ( ( TickType_t ) 1000 )
-#define configMAX_PRIORITIES                    4
+#define configMAX_PRIORITIES                    8
 #define configMINIMAL_STACK_SIZE                ( configSTACK_DEPTH_TYPE ) 256
 #define configUSE_16_BIT_TICKS                  0
 
@@ -73,15 +73,18 @@
 #define configMAX_TASK_NAME_LEN 		16
 #define configSTACK_DEPTH_TYPE                  uint32_t
 #define configMESSAGE_BUFFER_LENGTH_TYPE        size_t
+#define configUSE_EVENT_GROUPS    		1
+#define configUSE_STREAM_BUFFERS		0
 
 /* Memory allocation related definitions. */
 #define configSUPPORT_STATIC_ALLOCATION         1
 #define configSUPPORT_DYNAMIC_ALLOCATION        1
 #define configTOTAL_HEAP_SIZE                   (128*1024)
 #define configAPPLICATION_ALLOCATED_HEAP        0
+#define configHEAP_CLEAR_MEMORY_ON_FREE         0
 
 /* Hook function related definitions. */
-#define configCHECK_FOR_STACK_OVERFLOW          2
+#define configCHECK_FOR_STACK_OVERFLOW          1
 #define configUSE_MALLOC_FAILED_HOOK            1
 #define configUSE_DAEMON_TASK_STARTUP_HOOK      0
 
@@ -125,8 +128,14 @@
 #define configSUPPORT_PICO_TIME_INTEROP         1
 
 /* Define to trap errors during development. */
+#ifdef __cplusplus
+extern "C"
+#endif
 void pi_thread_asserted(const char *expr, const char *filename, int line);
 #define configASSERT(x)                         do { if (! (x)) pi_thread_asserted(#x, __FILE__, __LINE__); } while(0)
+
+/* ERRNO */
+#define configUSE_POSIX_ERRNO                  0
 
 /* Set the following definitions to 1 to include the API function, or zero
 to exclude the API function. */

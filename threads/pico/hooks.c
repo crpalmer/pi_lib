@@ -9,8 +9,8 @@ void vApplicationStackOverflowHook(TaskHandle_t task, char *name )
    pi_reboot_bootloader();
 }
 
-void vApplicationMallocFailedHook(TaskHandle_t task, char *name)
+void vApplicationMallocFailedHook()
 {
-   fprintf(stderr, "%s: malloc failed!\n", name);
+   fprintf(stderr, "malloc failed!\n");
    pi_reboot_bootloader();
 }
