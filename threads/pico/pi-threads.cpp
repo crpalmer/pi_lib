@@ -170,16 +170,25 @@ size_t pi_threads_get_free_ram(void) {
 
 void
 pi_threads_dump_state() {
+    //vTaskPreemptionDisable();
+
     int n_tasks = uxTaskGetNumberOfTasks() + 2;	// just in case somehow 2 get created between calls!
     TaskStatus_t *status = (TaskStatus_t *) fatal_malloc(sizeof(*status) * n_tasks);
     unsigned long total_run_time;
     n_tasks = uxTaskGetSystemState(status, n_tasks, &total_run_time);
 
-    consoles_printf(" #  Task Name        State Prio Stack\n");
-    consoles_printf("--- ---------------- ----- ---- -----\n");
+    consoles_printf(" #  Task Name        State Prio Stack Cores\n");
+    consoles_printf("--- ---------------- ----- ---- ----- -----\n");
     for (int i = 0; i < n_tasks; i++) {
-	consoles_printf("%3d %-16s %-5s %4d %4ld\n", status[i].xTaskNumber, status[i].pcTaskName, task_state_to_str(status[i].eCurrentState), status[i].uxCurrentPriority, status[i].usStackHighWaterMark);
+	UBaseType_t aff;
+
+	aff = vTaskCoreAffinityGet(status[i].xHandle);
+
+	consoles_printf("%3d %-16s %-5s %4d %4ld  %d%d\n", status[i].xTaskNumber, status[i].pcTaskName, task_state_to_str(status[i].eCurrentState), status[i].uxCurrentPriority, status[i].usStackHighWaterMark, aff&1, (aff>>1)&1);
     }
+
+    //vTaskPreemptionEnable();
+
     fatal_free(status);
 }
 
