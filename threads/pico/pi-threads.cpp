@@ -48,7 +48,13 @@ PiThread *PiThread::start(int priority) {
     return this;
 }
 
-#define PI_THREAD_NOTIFY_INDEX 1
+/* #0 is used internally by the sdk (?)
+   #1 is potentially used by the fat code (sdio)
+   #2 is potentially used by the fat code (spi)
+   #3 should be safe
+ */
+
+#define PI_THREAD_NOTIFY_INDEX 3
 
 void PiThread::pause() {
     ulTaskNotifyTakeIndexed(PI_THREAD_NOTIFY_INDEX, true, portMAX_DELAY);
