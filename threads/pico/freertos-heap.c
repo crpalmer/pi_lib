@@ -7,7 +7,7 @@
 
 #include "freertos-heap.h"
 
-#if 0
+#if 1
 static SemaphoreHandle_t malloc_lock;
 
 void malloc_lock_init() {
