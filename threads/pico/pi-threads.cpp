@@ -16,22 +16,24 @@ const char *get_task_name() {
 }
 
 static void init_with_threads(void *main_as_vp) {
-    mem_set_get_task_name(get_task_name);
     pi_init_no_reboot();
+    malloc_lock_init();
+    pico_set_sleep_fn(rtos_sleep);
+    set_consoles_lock();
+    mem_set_get_task_name(get_task_name);
     file_init();
+
     char *argv = fatal_strdup("pico");
     pi_threads_main_t main = (pi_threads_main_t) main_as_vp;
     main(1, &argv);
+
     vTaskDelete(NULL);
 }
     
 #define STACK_SIZE 1024
 
 void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
-    malloc_lock_init();
     xTaskCreate(init_with_threads, "main", STACK_SIZE, (void *) main, 1, NULL);
-    pico_set_sleep_fn(rtos_sleep);
-    set_consoles_lock();
     vTaskStartScheduler();
 }
 
