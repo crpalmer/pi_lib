@@ -15,6 +15,8 @@ TalkingSkullAudioOps::TalkingSkullAudioOps(AudioBuffer *audio_buffer, unsigned n
 
     double i_to_usec = 1000.0 * 1000 / audio_buffer->get_rate() / audio_buffer->get_num_channels();
     usec_per_i = i_to_usec * n_per_sample * n_to_avg;
+
+    audio_buffer->reset();
 }
 
 bool TalkingSkullAudioOps::next(double *pos) {
