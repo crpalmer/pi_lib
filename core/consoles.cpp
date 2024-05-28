@@ -4,6 +4,7 @@
 #include "consoles.h"
 #include "consoles-lock.h"
 #include "pi.h"
+#include "time-utils.h"
 
 class Consoles : public Writer {
 public:
@@ -67,6 +68,9 @@ void consoles_fatal_printf(const char *fmt, ...) {
    va_start(va, fmt);
    Consoles::get().printf_va(fmt, va);
    va_end(va);
+
+   fflush(stderr);	/* In case */
+   ms_sleep(5000);
 
    pi_abort();
 }
