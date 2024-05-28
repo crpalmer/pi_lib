@@ -103,7 +103,7 @@ PiCond::~PiCond() {
 static TickType_t abstime_to_ticks(const struct timespec *abstime) {
     struct timespec now;
     nano_gettime(&now);
-    int ms = nano_elapsed_ms(&now, abstime);
+    int ms = nano_elapsed_ms(abstime, &now);
     return pdMS_TO_TICKS(ms);
 }
 
