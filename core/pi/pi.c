@@ -18,9 +18,16 @@ pi_init_no_reboot(void)
 }
 
 void
+pi_abort(void)
+{
+    fprintf(stderr, "pi: fatal error, exiting.\n");
+    exit(0);
+}
+
+void
 pi_reboot_bootloader(void)
 {
-    fprintf(stderr, "pi: no bootloader available\n");
+    fprintf(stderr, "pi: no bootloader available.  Exiting instead.\n");
     exit(0);
 }
 

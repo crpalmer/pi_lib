@@ -197,5 +197,5 @@ pi_thread_asserted(const char *expr, const char *filename, int line)
 {
     printf("ASSERTION FAILED: %s @ %s : %d\n", expr, filename, line);
     fflush(stderr);
-    pi_reboot_bootloader();
+    pi_abort();
 }

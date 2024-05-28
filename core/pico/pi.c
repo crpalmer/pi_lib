@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pico/stdlib.h>
+#include <hardware/watchdog.h>
 #include <sys/time.h>
 #include "pi-gpio.h"
 #include "time-utils.h"
@@ -69,6 +70,13 @@ pi_reboot_bootloader()
 {
     fprintf(stderr, "rebooting to bootsel mode\n");
     reset_usb_boot(0, 0);
+}
+
+void
+pi_abort()
+{
+    watchdog_enable(1, 1);
+    while (1) {}
 }
 
 void

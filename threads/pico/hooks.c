@@ -6,7 +6,7 @@
 void vApplicationStackOverflowHook(TaskHandle_t task, char *name )
 {
    fprintf(stderr, "%s: stack overflow!\n", name);
-   pi_reboot_bootloader();
+   pi_abort();
 }
 
 void vApplicationMallocFailedHook()

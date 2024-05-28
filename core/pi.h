@@ -20,6 +20,7 @@ void pi_init_no_reboot();
 
 char *pi_readline(char *buf, size_t buflen);
 
+void pi_abort();
 void pi_reboot_bootloader();
 
 typedef void (*sleep_fn_t)(unsigned ms);

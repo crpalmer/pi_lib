@@ -13,6 +13,7 @@
 class ServoTalkingSkull : public TalkingSkull {
 public:
     ServoTalkingSkull(int gpio, int eyes_gpio) : TalkingSkull(), servo(new GpioServo(gpio)) {
+	servo->set_is_inverted(true);
 	if (eyes_gpio > 0) eyes = new GPOutput(eyes_gpio);
 	else eyes = NULL;
     }

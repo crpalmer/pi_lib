@@ -19,4 +19,5 @@ target_link_libraries(platform PUBLIC
     hardware_pio
     hardware_pwm
     hardware_rtc
+    hardware_watchdog
 )

@@ -68,7 +68,7 @@ void consoles_fatal_printf(const char *fmt, ...) {
    Consoles::get().printf_va(fmt, va);
    va_end(va);
 
-   pi_reboot_bootloader();
+   pi_abort();
 }
 
 void consoles_set_consoles_lock(ConsolesLock *l) {
