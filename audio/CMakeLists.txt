@@ -3,7 +3,7 @@ if("${PLATFORM}" STREQUAL "pico")
   )
   set(PLATFORM_LIBS
     pico_stdlib
-    pico_audio_i2s
+    hardware_pio
   )
 else()
   set(PLATFORM_SOURCE
@@ -21,6 +21,10 @@ add_library(pi-audio STATIC
   talking-skull-from-audio.cpp
   wav.cpp
 )
+
+if("${PLATFORM}" STREQUAL "pico")
+  pico_generate_pio_header(pi-audio ${CMAKE_CURRENT_LIST_DIR}/audio_i2s.pio)
+endif()
 
 target_include_directories(pi-audio PUBLIC ".")
 

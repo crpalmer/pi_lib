@@ -15,6 +15,8 @@ public:
     virtual bool configure(AudioConfig *config) = 0;
     virtual bool capture(void *buf, size_t n) { return false; }
     virtual bool play(void *buf, size_t n) { return false; }
+    virtual void disable() { }
+
     int get_num_channels() override = 0;
     int get_rate() override = 0;
     int get_bytes_per_sample() = 0;

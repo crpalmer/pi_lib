@@ -2,56 +2,143 @@
 #include <stdlib.h>
 #include "pi.h"
 #include "pico/stdlib.h"
+#include "hardware/clocks.h"
+#include "hardware/dma.h"
+#include "hardware/irq.h"
 #include "audio.h"
 #include "audio-buffer.h"
+#include "audio_i2s.pio.h"
 #include "consoles.h"
+#include "pi-threads.h"
 
 #include "audio-pico.h"
 
-#define SAMPLES_PER_BUFFER 256
+#define SAMPLES_PER_BUFFER 1024
 
-AudioPico::AudioPico(int data_pin, int clock_pin_base, int dma_channel, int sm) {
-    static audio_format_t audio_format = {
-            .sample_freq = 44100,
-            .format = AUDIO_BUFFER_FORMAT_PCM_S16,
-            .channel_count = 2,
-    };
+#define GPIO_FUNC_PIOx(pio) (pio == pio0 ? GPIO_FUNC_PIO0 : GPIO_FUNC_PIO1)
 
-    static struct audio_buffer_format producer_format = {
-            .format = &audio_format,
-            .sample_stride = 4,
-    };
+static uint8_t dma_channel = -1;
 
-    bytes_per_sample = 2 /* channels */ * 2 /* 16 bit signed format */;
+static PiThread *blocked_thread = NULL;
+static PiMutex *dma_mutex;
+static int dma_pending_n;
+static void *dma_pending = NULL;
+static bool dma_started = false;
+static uint32_t n_transfers[2];
 
-    producer_pool = audio_new_producer_pool(&producer_format, 3,
-                                                                      SAMPLES_PER_BUFFER); // todo correct size
-    bool __unused ok;
-    const struct audio_format *output_format;
-    struct audio_i2s_config config = {
-            .data_pin = (uint8_t) data_pin,
-            .clock_pin_base = (uint8_t) clock_pin_base,
-            .dma_channel = (uint8_t) dma_channel,
-            .pio_sm = (uint8_t) sm,
-    };
+static void dma_init() {
+    dma_mutex = new PiMutex();
+}
 
-    output_format = audio_i2s_setup(&audio_format, &config);
-    if (!output_format) {
-        panic("PicoAudio: Unable to open audio device.\n");
+static inline void dma_start_transfer() {
+    if (! dma_pending) {
+n_transfers[0]++;
+	static uint32_t zero[SAMPLES_PER_BUFFER] = {0, };
+	dma_channel_transfer_from_buffer_now(dma_channel, &zero, SAMPLES_PER_BUFFER);
+    } else {
+n_transfers[1]++;
+	dma_channel_transfer_from_buffer_now(dma_channel, dma_pending, dma_pending_n);
+	dma_pending = NULL;
     }
 
-    ok = audio_i2s_connect(producer_pool);
-    assert(ok);
-    audio_i2s_set_enabled(true);
+    if (blocked_thread) {
+	blocked_thread->resume_from_isr();
+	blocked_thread = NULL;
+    }
+}
+
+static void __isr __time_critical_func(dma_irq_handler)() {
+    if (dma_irqn_get_channel_status(0, dma_channel)) {
+        dma_irqn_acknowledge_channel(0, dma_channel);
+        dma_start_transfer();
+    }
+}
+
+static void dma_wait() {
+    PiThread *me = PiThread::self();
+    blocked_thread = me;
+    me->pause();
+}
+
+static void dma_enqueue_data_locked(void *data, int n) {
+    if (dma_pending) {
+	assert(! blocked_thread);
+	dma_wait();
+        assert(dma_pending == NULL);
+    }
+    dma_pending_n = n;
+    dma_pending = data;
+    if (! dma_started) {
+        irq_set_enabled(DMA_IRQ_0, true);
+	dma_start_transfer();
+	dma_started = true;
+    }
+}
+
+AudioPico::AudioPico(PIO pio, int data_pin, int clock_pin_base) : pio(pio) {
+    if (dma_channel != (uint8_t) -1) {
+	consoles_fatal_printf("May only create a single AudioPico instance (dma_channel = %d)!\n", dma_channel);
+    }
+
+    dma_init();
+    for (int i = 0; i < n_buffers; i++) buffers[i] = (uint8_t *) fatal_malloc(SAMPLES_PER_BUFFER * 4);
+
+    gpio_set_function(data_pin, GPIO_FUNC_PIOx(pio));
+    gpio_set_function(clock_pin_base + 0, GPIO_FUNC_PIOx(pio));
+    gpio_set_function(clock_pin_base + 1, GPIO_FUNC_PIOx(pio));
+
+    /* Set the PIO program */
+
+    sm = pio_claim_unused_sm(pio, true);
+    unsigned offset = pio_add_program(pio, &audio_i2s_program);
+
+    audio_i2s_program_init(pio, sm, offset, data_pin, clock_pin_base);
+
+    //__mem_fence_release();
+
+    /* Setup the DMA channel */
+
+    dma_channel = dma_claim_unused_channel(true);
+
+    dma_channel_config dma_config = dma_channel_get_default_config(dma_channel);
+    channel_config_set_dreq(&dma_config, pio_get_dreq(pio, sm, true));
+    channel_config_set_read_increment(&dma_config, true);
+    channel_config_set_transfer_data_size(&dma_config, DMA_SIZE_32);
+
+    dma_channel_configure(dma_channel, &dma_config, &pio->txf[sm], NULL, 0, false);
+
+    irq_add_shared_handler(DMA_IRQ_0, dma_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+    dma_irqn_set_channel_enabled(0, dma_channel, true);
+
+    /* Enable I2S */
+    config_clocks();
+    pio_sm_set_enabled(pio, sm, true);
 }
 
 bool AudioPico::configure(AudioConfig *config) {
     if (config->get_num_channels() != 2 || config->get_rate() != 44100 || config->get_bytes_per_sample() != 2) {
 	consoles_fatal_printf("Audio format is not currently compatible.  Must be 2 channels, 44100 hz, 16 bit signed.\n");
     }
+
+    int old_rate = get_rate();
+    int new_rate = config->get_rate();
+
     this->config = config;
     bytes_per_sample = config->get_num_channels() * config->get_bytes_per_sample();
+
+    if (old_rate != new_rate) {
+	config_clocks();
+    }
+
     return true;
+}
+
+void AudioPico::config_clocks() {
+    uint32_t clock_freq = clock_get_hz(clk_sys);
+    assert(clock_freq < 0x40000000);
+    uint32_t divider = clock_freq * 4 / get_rate();
+    assert(divider < 0x1000000);
+    pio_sm_set_clkdiv_int_frac(pio, sm, divider >> 8, divider & 0xff);
 }
 
 size_t AudioPico::get_recommended_buffer_size() {
@@ -61,20 +148,28 @@ size_t AudioPico::get_recommended_buffer_size() {
 bool AudioPico::play(void *data_vp, size_t n) {
     uint8_t *data = (uint8_t *) data_vp;
 
+    dma_mutex->lock();
+
     for (size_t i = 0; i < n; ) {
-        struct audio_buffer *buffer = take_audio_buffer(producer_pool, true);
-        uint8_t *bytes = (uint8_t *) buffer->buffer->bytes;
+	size_t n_to_copy = SAMPLES_PER_BUFFER > (n - i)/4 ? (n - i)/4 : SAMPLES_PER_BUFFER;
 
-	size_t bytes_per_buffer = buffer->max_sample_count * bytes_per_sample;
-	size_t n_to_copy = bytes_per_buffer > (n - i) ? (n - i) : bytes_per_buffer;
+	memcpy(buffers[next_buffer], &data[i], n_to_copy * 4);
+	dma_enqueue_data_locked(buffers[next_buffer], n_to_copy);
 
-	memcpy(bytes, &data[i], n_to_copy);
-
-        buffer->sample_count = n_to_copy / bytes_per_sample;
-        give_audio_buffer(producer_pool, buffer);
-
-	i += n_to_copy;
+	next_buffer = (next_buffer + 1) % n_buffers;
+	i += n_to_copy * 4;
     }
+
+    dma_mutex->unlock();
 
     return true;
 }
+
+void AudioPico::disable() {
+    dma_mutex->lock();
+    if (dma_pending) dma_wait();
+    irq_set_enabled(DMA_IRQ_0, false);
+    dma_started = false;
+    dma_mutex->unlock();
+}
+

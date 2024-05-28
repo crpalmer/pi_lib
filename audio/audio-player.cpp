@@ -101,6 +101,7 @@ void AudioPlayer::main(void) {
 
 	mutex->lock();
 
+	audio->disable();
 	player_is_active = false;
 	stop_requested = false;
 	buffer = NULL;
