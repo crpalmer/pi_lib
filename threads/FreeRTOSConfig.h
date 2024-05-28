@@ -27,10 +27,7 @@
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
 
-
-/* Needed by FAT */
-
-#define configTASK_NOTIFICATION_ARRAY_ENTRIES 4
+#define configTASK_NOTIFICATION_ARRAY_ENTRIES 8
 
 /*-----------------------------------------------------------
  * Application specific definitions.

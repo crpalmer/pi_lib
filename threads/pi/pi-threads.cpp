@@ -10,10 +10,14 @@
 
 static pthread_mutex_t at_lock = PTHREAD_MUTEX_INITIALIZER;
 static std::list<PiThread *> active_threads;
+static pthread_key_t pi_thread_local;
 
 void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
     pi_init();
+    pthread_key_create(&pi_thread_local, NULL);
+
     main(argc, argv);
+
     pthread_mutex_lock(&at_lock);
     if (active_threads.empty()) {
 	fprintf(stderr, "All threads have exited.\n");
@@ -41,7 +45,12 @@ PiThread *PiThread::start(int priority_unused) {
 void PiThread::thread_entry(void *vp) {
     PiThread *t = (PiThread *) vp;
     prctl(PR_SET_NAME, t->get_name());
+    pthread_setspecific(pi_thread_local, t);
     t->main();
+}
+
+PiThread *PiThread::self() {
+    return (PiThread *) pthread_getspecific(pi_thread_local);
 }
 
 PiThread::~PiThread() {

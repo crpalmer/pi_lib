@@ -21,6 +21,8 @@ public:
     void resume();
     void resume_from_isr() { resume(); }
 
+    static PiThread *self();
+
 private:
     pthread_t t;
     const char *name;
