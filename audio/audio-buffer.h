@@ -31,17 +31,21 @@ public:
 
     virtual const char *get_fname() { return buffer->get_fname(); }
 
-    virtual bool next(uint32_t *val) {
-	*val = 0;
-	for (int i = 0; i < bytes_per_sample; i++) {
-	    if (block_pos >= n_block) {
-		if ((n_block = buffer->read(block, a_block)) <= 0) return false;
-		block_pos = 0;
+    virtual bool next(uint32_t *l, uint32_t *r) {
+	for (int lr = 0; lr < num_channels; lr++) {
+	    uint32_t val = 0;
+	    for (int i = 0; i < bytes_per_sample; i++) {
+	        if (block_pos >= n_block) {
+		    if ((n_block = buffer->read(block, a_block)) <= 0) return false;
+		    block_pos = 0;
+	        }
+	        uint8_t byte = block[block_pos++];
+		val = val | (byte << 8*i);
 	    }
-	    uint8_t byte = block[block_pos++];
-	    *val = *val | (byte << 8*i);
+	    val = val << (8 * (4 - bytes_per_sample));
+	    if (lr == 0) *l = *r = val;
+	    else *r = val;
 	}
-	*val = *val << (8 * (4 - bytes_per_sample));
 	return true;
     }
 
@@ -56,7 +60,7 @@ public:
     int get_bytes_per_sample() { return bytes_per_sample; }
 
     int get_n_samples() {
-	return buffer->get_n() / get_bytes_per_sample();
+	return buffer->get_n() / num_channels / get_bytes_per_sample();
     }
 
     unsigned get_duration_ms() {

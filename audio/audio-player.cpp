@@ -67,18 +67,33 @@ void AudioPlayer::main(void) {
 	mutex->unlock();
 
         size_t n = audio->get_recommended_buffer_size();
-        void *buf = fatal_malloc(n);
+        uint8_t *buf = (uint8_t *) fatal_malloc(n);
 
 	buffer->reset();
-	Buffer *b = buffer->get_buffer();
 
-	while (! b->is_eof() && ! stop_requested) {
-	    size_t bytes = b->read(buf, n);
+	while (! stop_requested) {
+	    size_t bytes = 0;
+	    for (bytes = 0; bytes < n; ) {
+	 	uint32_t l, r;
+
+		if (! buffer->next(&l, &r)) break;
+
+		l >>= 16;
+		r >>= 16;
+
+		/* TODO: Is this the right order: r then l ? */
+		buf[bytes++] = r & 0xff;
+		buf[bytes++] = r>>8;
+		buf[bytes++] = l & 0xff;
+		buf[bytes++] = l>>8;
+ 	    }
+
 	    if (bytes < 0) {
 		consoles_printf("audio-player failed to read data, aborting stream.\n");
 		break;
 	    } else {
 		audio->play(buf, bytes);
+		if (bytes < n) break;
 	    }
 	}
 
