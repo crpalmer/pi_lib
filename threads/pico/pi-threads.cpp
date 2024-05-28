@@ -107,7 +107,7 @@ static TickType_t abstime_to_ticks(const struct timespec *abstime) {
     return pdMS_TO_TICKS(ms);
 }
 
-bool PiCond::timedwait(PiMutex *m, const struct timespec *abstime) {
+bool PiCond::wait(PiMutex *m, const struct timespec *abstime) {
     lock->lock();
     wait_list.push_back(xTaskGetCurrentTaskHandle());
     lock->unlock();
@@ -117,10 +117,6 @@ bool PiCond::timedwait(PiMutex *m, const struct timespec *abstime) {
     m->lock();
 
     return ret > 0;
-}
-
-void PiCond::wait(PiMutex *m) {
-    PiCond::timedwait(m, NULL);
 }
 
 void PiCond::wake_one_locked() {

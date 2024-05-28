@@ -62,7 +62,7 @@ C_DECL int pi_cond_timedwait(pi_cond_t *c_vp, pi_mutex_t *m_vp, const struct tim
     PiCond *c = (PiCond *) c_vp;
     PiMutex *m = (PiMutex *) m_vp;
 
-    return c->timedwait(m, abstime);
+    return c->wait(m, abstime);
 }
 
 C_DECL void pi_cond_wait(pi_cond_t *c_vp, pi_mutex_t *m_vp)

@@ -94,12 +94,10 @@ PiCond::PiCond() {
     pthread_cond_init(&c, &attr);
 }
 
-int PiCond::timedwait(PiMutex *m, const struct timespec *abstime) {
-    return pthread_cond_timedwait(&c, &m->m, abstime);
-}
-
-void PiCond::wait(PiMutex *m) {
+bool PiCond::wait(PiMutex *m, const struct timespec *abstime) {
+    if (abstime) return pthread_cond_timedwait(&c, &m->m, abstime) == 0;
     pthread_cond_wait(&c, &m->m);
+    return true;
 }
 
 void PiCond::signal() {

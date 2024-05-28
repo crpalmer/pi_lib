@@ -50,8 +50,7 @@ class PiCond {
 public:
     PiCond();
     ~PiCond();
-    bool timedwait(PiMutex *m, const struct timespec *abstime);
-    void wait(PiMutex *m);
+    bool wait(PiMutex *m, const struct timespec *abstime = NULL);
     void signal();
     void broadcast();
 
