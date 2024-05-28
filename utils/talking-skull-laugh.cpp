@@ -34,9 +34,10 @@ void talk_once(Audio *audio, AudioPlayer *player, TalkingSkull *skull) {
     skull->set_ops(ops);
     delete ops;
 
-    player->play(audio_buffer);
     skull->play();
-    player->wait_done();
+    if (! player->play_sync(audio_buffer)) {
+	consoles_fatal_printf("fatal: Audio player didn't complete playing the song.\n");
+    }
 
     delete audio_buffer;
 }

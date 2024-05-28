@@ -14,13 +14,17 @@ public:
 
     bool play(AudioBuffer *audio_buffer);
     void stop();
-    void wait_done();
+    void wait_all_done();
+    bool wait_current_done(const struct timespec *abstime = NULL);
 
     bool is_active() { return player_is_active; }
     bool play_sync(AudioBuffer *audio_buffer) {
 	if (! play(audio_buffer)) return false;
-	wait_done();
-	return true;
+	struct timespec abstime;
+	nano_gettime(&abstime);
+	nano_add_ms(&abstime, audio_buffer->get_duration_ms());
+	nano_add_ms(&abstime, 15*1000);
+	return wait_current_done(&abstime);
     }
 
     void main(void) override;

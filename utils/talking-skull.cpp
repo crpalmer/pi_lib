@@ -25,7 +25,7 @@ public:
     void update_pos(double pos) override {
 	servo->move_to(pos);
 	if (eyes) {
-	    bool new_eyes = (pos >= 50);
+	    bool new_eyes = (pos < 50);
 	    if (new_eyes != last_eyes) {
 		last_eyes = new_eyes;
 		eyes->set(new_eyes);
@@ -44,9 +44,11 @@ void talk_once(Audio *audio, AudioPlayer *player, TalkingSkull *skull, AudioBuff
     skull->set_ops(ops);
     delete ops;
 
-    player->play(audio_buffer);
     skull->play();
-    player->wait_done();
+    if (! player->play_sync(audio_buffer)) {
+	consoles_fatal_printf("fatal: Audio player didn't complete playing the song.\n");
+    }
+
     skull->update_pos(0);
 }
 
@@ -68,9 +70,13 @@ void threads_main(int argc, char **argv) {
         while (1) ms_sleep(1000);
     }
 
+    struct timespec start_time;
+    nano_gettime(&start_time);
+
     while (1) {
 	ms_sleep(1000);
-	printf("Starting to talk\n");
+	int ms = nano_elapsed_ms_now(&start_time);
+	printf("Starting to talk @ %d.%03d\n", ms / 1000, ms % 1000);
 	talk_once(audio, player, skull, audio_buffer);
 	pi_threads_dump_state();
 	printf("Free ram: %d\n", (int) pi_threads_get_free_ram());

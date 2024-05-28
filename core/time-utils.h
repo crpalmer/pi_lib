@@ -119,7 +119,7 @@ nano_elapsed_ms(const struct timespec *newer, const struct timespec *later)
     ms += (nsec - later->tv_nsec) / NANOSEC_PER_MS;
 
 #if 0
-    printf("%ld.%010ld - %ld.%010ld = %d * 1000\n", newer->tv_sec, newer->tv_nsec, later->tv_sec, later->tv_nsec, ms);
+    printf("%ld.%010ld - %ld.%010ld = %d * 1000\n", (long) newer->tv_sec, (long) newer->tv_nsec, (long) later->tv_sec, (long) later->tv_nsec, ms);
 #endif
 
     return ms;

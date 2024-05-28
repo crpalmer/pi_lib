@@ -43,10 +43,18 @@ void AudioPlayer::stop() {
     mutex->unlock();
 }
 
-void AudioPlayer::wait_done() {
+void AudioPlayer::wait_all_done() {
     mutex->lock();
     while (player_is_active) stop_cond->wait(mutex);
     mutex->unlock();
+}
+
+bool AudioPlayer::wait_current_done(const struct timespec *abstime) {
+    bool ret = true;
+    mutex->lock();
+    if (player_is_active) ret = stop_cond->wait(mutex, abstime);
+    mutex->unlock();
+    return ret;
 }
 
 void AudioPlayer::main(void) {
@@ -55,6 +63,8 @@ void AudioPlayer::main(void) {
 	while (! buffer) {
 	    start_cond->wait(mutex);
 	}
+
+	mutex->unlock();
 
         size_t n = audio->get_recommended_buffer_size();
         void *buf = fatal_malloc(n);
@@ -68,13 +78,13 @@ void AudioPlayer::main(void) {
 		consoles_printf("audio-player failed to read data, aborting stream.\n");
 		break;
 	    } else {
-		mutex->unlock();
 		audio->play(buf, bytes);
-		mutex->lock();
 	    }
 	}
 
 	fatal_free(buf);
+
+	mutex->lock();
 
 	player_is_active = false;
 	stop_requested = false;

@@ -33,7 +33,7 @@ void threads_main(int argc, char **argv) {
 
 	printf("Playing %s\n", audio_buffer->get_fname());
 	player->play(audio_buffer);
-	player->wait_done();
+	player->wait_all_done();
 
 	delete audio_buffer;
 

@@ -7,6 +7,7 @@ class AudioBuffer;
 #include "audio.h"
 #include "buffer.h"
 #include "mem.h"
+#include "time-utils.h"
 
 class AudioBuffer : public AudioConfig {
 public:
@@ -56,6 +57,15 @@ public:
 
     int get_n_samples() {
 	return buffer->get_n() / get_bytes_per_sample();
+    }
+
+    unsigned get_duration_ms() {
+	int n_frames = get_n_samples() / get_num_channels();
+	int rate = get_rate();
+	int sec = n_frames / rate;
+	int ms = ((1000*1000 / rate) * (n_frames % rate) + 999) / 1000;
+
+	return sec*1000 + ms;
     }
 
 private:
