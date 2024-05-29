@@ -74,12 +74,12 @@ void threads_main(int argc, char **argv) {
     nano_gettime(&start_time);
 
     while (1) {
-	ms_sleep(1000);
 	int ms = nano_elapsed_ms_now(&start_time);
 	printf("Starting to talk @ %d.%03d\n", ms / 1000, ms % 1000);
 	talk_once(audio, player, skull, audio_buffer);
 	pi_threads_dump_state();
 	printf("Free ram: %d\n", (int) pi_threads_get_free_ram());
+	ms_sleep(5000);
     }
 }
 
