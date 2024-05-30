@@ -1,15 +1,9 @@
-add_subdirectory("${PLATFORM}")
-target_include_directories(pi-threads-platform PUBLIC . )
+add_library(pi-threads STATIC)
 
-add_library(pi-threads STATIC
-  digital-counter.cpp
-  lights.cpp
-  pi-threads-c.cpp
-  producer-consumer.c
-  stop.c
-)
+include(core/core.cmake)
+include(${PLATFORM}/platform.cmake)
+include(net/net.cmake)
 
-target_link_libraries(pi-threads
+target_link_libraries(pi-threads PUBLIC
   pi-core
-  pi-threads-platform
 )

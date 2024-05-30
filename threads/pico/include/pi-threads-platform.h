@@ -19,7 +19,7 @@
 #define PI_THREAD_LOCAL_PI_THREAD 0
 
 typedef void *task_handle_t;
-typedef void *semaphore_t;
+typedef void *semaphore_handle_t;
 
 class PiThread {
 public:
@@ -50,7 +50,7 @@ public:
     void unlock();
 
 private:
-    semaphore_t m;
+    semaphore_handle_t m;
 };
 
 class PiCond {

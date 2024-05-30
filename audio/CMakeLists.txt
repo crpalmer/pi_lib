@@ -3,6 +3,7 @@ if("${PLATFORM}" STREQUAL "pico")
   )
   set(PLATFORM_LIBS
     pico_stdlib
+    hardware_dma
     hardware_pio
   )
 else()

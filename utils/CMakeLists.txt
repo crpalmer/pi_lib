@@ -1,6 +1,6 @@
 function(util_common targetName)
     platform_executable(${targetName})
-    target_link_libraries(${targetName}
+    target_link_libraries(${targetName} PRIVATE
       pi-core
       ${ARGN}
     )
@@ -18,12 +18,11 @@ function(util_cpp targetName)
 endfunction()
 
 if("${PLATFORM}" STREQUAL pico)
-  util_cpp(ble pi-net)
   util_cpp(light-sensor)
   util_cpp(neopixel-pico pi-threads)
   util_cpp(notes pi-audio)
   util_cpp(rtos-test pi-threads)
-  util_cpp(pico-rtc pi-net)
+  util_cpp(pico-rtc pi-threads)
 else()
   util_c(maestro)
   util_cpp(neopixel-pi)
@@ -41,6 +40,6 @@ util_cpp(rotary-encoder)
 util_cpp(talking-skull-laugh pi-audio)
 util_cpp(talking-skull pi-audio)
 util_cpp(servo)
-util_c(sntp pi-net)
+util_c(sntp pi-threads)
 util_cpp(ssd1306)
 util_cpp(wav-play pi-audio)

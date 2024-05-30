@@ -18,6 +18,5 @@ include(platform.cmake)
 
 add_subdirectory(audio)
 add_subdirectory(core)
-add_subdirectory(net)
 add_subdirectory(threads)
 add_subdirectory(utils)
