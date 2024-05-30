@@ -6,6 +6,9 @@
 #include "pi-threads.h"
 #include "set-consoles-lock.h"
 #include "time-utils.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
+#include "task.h"
 
 static void rtos_sleep(unsigned ms) {
     vTaskDelay(pdMS_TO_TICKS(ms));
@@ -44,8 +47,16 @@ PiThread::~PiThread() {
 }
 
 PiThread *PiThread::start(int priority) {
-    xTaskCreate(PiThread::thread_entry, name ? name : "pi-thread", STACK_SIZE, this, priority, &task);
+    xTaskCreate(PiThread::thread_entry, name ? name : "pi-thread", STACK_SIZE, this, priority, (TaskHandle_t *) &task);
     return this;
+}
+
+void PiThread::thread_entry(void *vp) {
+    PiThread *t = (PiThread *) vp;
+    vTaskSetThreadLocalStoragePointer(NULL, PI_THREAD_LOCAL_PI_THREAD, t);
+    t->main();
+    vTaskDelete(NULL);
+    delete t;
 }
 
 void PiThread::pause() {
@@ -53,34 +64,38 @@ void PiThread::pause() {
 }
 
 void PiThread::resume() {
-    xTaskNotifyGiveIndexed(task, PI_THREAD_NOTIFY_INDEX);
+    xTaskNotifyGiveIndexed((TaskHandle_t) task, PI_THREAD_NOTIFY_INDEX);
 }
 
 void PiThread::resume_from_isr() {
     BaseType_t higher_priority_woken = false;
 
-    vTaskNotifyGiveIndexedFromISR(task, PI_THREAD_NOTIFY_INDEX, &higher_priority_woken);
+    vTaskNotifyGiveIndexedFromISR((TaskHandle_t) task, PI_THREAD_NOTIFY_INDEX, &higher_priority_woken);
     portYIELD_FROM_ISR(higher_priority_woken);
 }
 
+PiThread *PiThread::self() {
+    return (PiThread *) pvTaskGetThreadLocalStoragePointer(NULL, PI_THREAD_LOCAL_PI_THREAD);
+}
+
 PiMutex::PiMutex() {
-    m = xSemaphoreCreateMutex();
+    m = (SemaphoreHandle_t) xSemaphoreCreateMutex();
 }
 
 PiMutex::~PiMutex() {
-    vSemaphoreDelete(m);
+    vSemaphoreDelete((SemaphoreHandle_t) m);
 }
 
 void PiMutex::lock() {
-    xSemaphoreTake(m, portMAX_DELAY);
+    xSemaphoreTake((SemaphoreHandle_t) m, portMAX_DELAY);
 }
 
 bool PiMutex::trylock() {
-    return xSemaphoreTake(m, 0);
+    return xSemaphoreTake((SemaphoreHandle_t) m, 0);
 }
 
 void PiMutex::unlock() {
-    xSemaphoreGive(m);
+    xSemaphoreGive((SemaphoreHandle_t) m);
 }
 
 PiCond::PiCond() {
@@ -112,7 +127,7 @@ bool PiCond::wait(PiMutex *m, const struct timespec *abstime) {
 }
 
 void PiCond::wake_one_locked() {
-    TaskHandle_t task = wait_list.front();
+    TaskHandle_t task = (TaskHandle_t) wait_list.front();
     wait_list.pop_front();
     xTaskNotifyGiveIndexed(task, PI_THREAD_NOTIFY_INDEX);
 }
