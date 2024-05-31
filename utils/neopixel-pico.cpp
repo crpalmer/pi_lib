@@ -1,13 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <tusb.h>
-#include "pico/stdio_uart.h"
-#include "pico/stdio_usb.h"
 #include "neopixel-pico.h"
 #include "pi.h"
-#include "stdio-driver-reader.h"
-#include "stdio-driver-writer.h"
+#include "uart-reader.h"
+#include "uart-writer.h"
+#include "usb-reader.h"
+#include "usb-writer.h"
 #include "threads-console.h"
 #include "time-utils.h"
 
@@ -71,7 +70,7 @@ fade_out(Console *c, NeoPixelPico *neo, int r, int g, int b)
 
 class CommandLineThread : public PiThread, public ThreadsConsole {
 public:
-    CommandLineThread(stdio_driver_t *driver, const char *name) : PiThread(name), ThreadsConsole(new StdioDriverReader(driver, 1024), new StdioDriverWriter(driver)) {
+    CommandLineThread(Reader *r, Writer *w, const char *name) : PiThread(name), ThreadsConsole(r, w) {
 	start();
     }
 
@@ -145,8 +144,8 @@ public:
 
 static void threads_main(int argc, char **argv) {
     neo = new NeoPixelPico(0);
-    new CommandLineThread(&stdio_uart, "uart-cmd");
-    new CommandLineThread(&stdio_usb,  "usb-cmd");
+    new CommandLineThread(new UartReader(1024), new UartWriter(), "uart-cmd");
+    new CommandLineThread(new USBReader(1024), new USBWriter(),  "usb-cmd");
 }
 
 int

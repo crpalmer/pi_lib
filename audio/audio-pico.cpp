@@ -5,6 +5,7 @@
 #include "hardware/clocks.h"
 #include "hardware/dma.h"
 #include "hardware/irq.h"
+#include "hardware/pio.h"
 #include "audio.h"
 #include "audio-buffer.h"
 #include "audio_i2s.pio.h"
@@ -13,9 +14,10 @@
 
 #include "audio-pico.h"
 
-#define SAMPLES_PER_BUFFER 1024
+#define SAMPLES_PER_BUFFER 256
 
-#define GPIO_FUNC_PIOx(pio) (pio == pio0 ? GPIO_FUNC_PIO0 : GPIO_FUNC_PIO1)
+static inline PIO PIOx(int pio) { return pio == 0 ? pio0 : pio1; }
+static inline gpio_function GPIO_FUNC_PIOx(int pio) { return pio == 0 ? GPIO_FUNC_PIO0 : GPIO_FUNC_PIO1; }
 
 static uint8_t dma_channel = -1;
 
@@ -75,7 +77,7 @@ static void dma_enqueue_data_locked(void *data, int n) {
     }
 }
 
-AudioPico::AudioPico(PIO pio, int data_pin, int clock_pin_base) : pio(pio) {
+AudioPico::AudioPico(int pio, int data_pin, int clock_pin_base) : pio(pio) {
     if (dma_channel != (uint8_t) -1) {
 	consoles_fatal_printf("May only create a single AudioPico instance (dma_channel = %d)!\n", dma_channel);
     }
@@ -89,10 +91,10 @@ AudioPico::AudioPico(PIO pio, int data_pin, int clock_pin_base) : pio(pio) {
 
     /* Set the PIO program */
 
-    sm = pio_claim_unused_sm(pio, true);
-    unsigned offset = pio_add_program(pio, &audio_i2s_program);
+    sm = pio_claim_unused_sm(PIOx(pio), true);
+    unsigned offset = pio_add_program(PIOx(pio), &audio_i2s_program);
 
-    audio_i2s_program_init(pio, sm, offset, data_pin, clock_pin_base);
+    audio_i2s_program_init(PIOx(pio), sm, offset, data_pin, clock_pin_base);
 
     //__mem_fence_release();
 
@@ -101,18 +103,18 @@ AudioPico::AudioPico(PIO pio, int data_pin, int clock_pin_base) : pio(pio) {
     dma_channel = dma_claim_unused_channel(true);
 
     dma_channel_config dma_config = dma_channel_get_default_config(dma_channel);
-    channel_config_set_dreq(&dma_config, pio_get_dreq(pio, sm, true));
+    channel_config_set_dreq(&dma_config, pio_get_dreq(PIOx(pio), sm, true));
     channel_config_set_read_increment(&dma_config, true);
     channel_config_set_transfer_data_size(&dma_config, DMA_SIZE_32);
 
-    dma_channel_configure(dma_channel, &dma_config, &pio->txf[sm], NULL, 0, false);
+    dma_channel_configure(dma_channel, &dma_config, &PIOx(pio)->txf[sm], NULL, 0, false);
 
     irq_add_shared_handler(DMA_IRQ_0, dma_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
     dma_irqn_set_channel_enabled(0, dma_channel, true);
 
     /* Enable I2S */
     config_clocks();
-    pio_sm_set_enabled(pio, sm, true);
+    pio_sm_set_enabled(PIOx(pio), sm, true);
 }
 
 bool AudioPico::configure(AudioConfig *config) {
@@ -138,7 +140,7 @@ void AudioPico::config_clocks() {
     assert(clock_freq < 0x40000000);
     uint32_t divider = clock_freq * 4 / get_rate();
     assert(divider < 0x1000000);
-    pio_sm_set_clkdiv_int_frac(pio, sm, divider >> 8, divider & 0xff);
+    pio_sm_set_clkdiv_int_frac(PIOx(pio), sm, divider >> 8, divider & 0xff);
 }
 
 size_t AudioPico::get_recommended_buffer_size() {
