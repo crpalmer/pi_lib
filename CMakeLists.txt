@@ -20,7 +20,7 @@ add_library(lib-pi STATIC)
 target_compile_definitions(lib-pi PRIVATE LIB_PI_INTERNAL)
 
 if(${PLATFORM} STREQUAL pico)
-  target_link_libraries(lib-pi INTERFACE pico_runtime)
+  target_link_libraries(lib-pi INTERFACE pico_stdio pico_stdio_usb)
 endif()
 
 target_include_directories(lib-pi
