@@ -143,7 +143,7 @@ public:
 };
 
 static void threads_main(int argc, char **argv) {
-    neo = new NeoPixelPico(0);
+    neo = new NeoPixelPico(4);
     new CommandLineThread(new UartReader(1024), new UartWriter(), "uart-cmd");
     new CommandLineThread(new USBReader(1024), new USBWriter(),  "usb-cmd");
 }
