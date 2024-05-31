@@ -20,7 +20,27 @@ add_library(lib-pi STATIC)
 target_compile_definitions(lib-pi PRIVATE LIB_PI_INTERNAL)
 
 if(${PLATFORM} STREQUAL pico)
-  target_link_libraries(lib-pi INTERFACE pico_stdio pico_stdio_usb)
+  SDK_INTERFACE_LIBS(lib-pi
+    pico_runtime
+    pico_stdio
+    pico_stdio_uart
+    pico_stdio_usb
+    hardware_watchdog
+    pico_binary_info
+  )
+  target_link_libraries(lib-pi PRIVATE
+    pico_stdlib
+    pico_cyw43_arch_lwip_sys_freertos
+    hardware_adc
+    hardware_dma
+    hardware_i2c
+    hardware_pio
+    hardware_pio
+    hardware_pwm
+    hardware_rtc
+  )
+else()
+  target_link_libraries(lib-pi PUBLIC pthread usb rt pthread png16 gpiod pigpio)
 endif()
 
 target_include_directories(lib-pi

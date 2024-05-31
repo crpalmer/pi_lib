@@ -10,10 +10,4 @@ target_sources(lib-pi PRIVATE
 
 if("${PLATFORM}" STREQUAL "pico")
   pico_generate_pio_header(lib-pi ${CMAKE_CURRENT_LIST_DIR}/audio_i2s.pio)
-
-  target_link_libraries(lib-pi PRIVATE
-      pico_stdlib
-      hardware_dma
-      hardware_pio
-  )
 endif()

@@ -15,15 +15,3 @@ target_sources(lib-pi PRIVATE
 )
 
 pico_generate_pio_header(lib-pi ${CMAKE_CURRENT_LIST_DIR}/neopixel.pio)
-
-target_link_libraries(lib-pi
-  PRIVATE
-    pico_stdlib
-    pico_stdio_usb
-    hardware_adc
-    hardware_i2c
-    hardware_pio
-    hardware_pwm
-    hardware_rtc
-    hardware_watchdog
-)

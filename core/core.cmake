@@ -13,10 +13,3 @@ target_sources(lib-pi PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/string-utils.c
   ${CMAKE_CURRENT_LIST_DIR}/random-utils.c
 )
-
-if("${PLATFORM}" STREQUAL "pico")
-    target_link_libraries(lib-pi PRIVATE pico_stdlib)
-else()
-    target_link_libraries(lib-pi PUBLIC usb rt pthread png16 gpiod pigpio)
-endif()
-

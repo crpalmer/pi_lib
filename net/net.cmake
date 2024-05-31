@@ -4,9 +4,6 @@ if("${PLATFORM}" STREQUAL "pico")
   target_sources(lib-pi PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/wifi.c
   )
-  target_link_libraries(lib-pi PRIVATE
-    pico_cyw43_arch_lwip_sys_freertos
-  )
 endif()
 
 target_include_directories(lib-pi PRIVATE ${CMAKE_CURRENT_LIST_DIR})
