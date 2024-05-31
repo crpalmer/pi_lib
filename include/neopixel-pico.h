@@ -12,7 +12,7 @@ typedef struct {
 
 class NeoPixelPico {
 public:
-    NeoPixelPico(int pin, bool use_gamma = false);
+    NeoPixelPico(int pin, bool use_gamma = true);
 
     void set_mode(neopixel_mode_t new_mode);
     void set_n_leds(int new_n_leds);
