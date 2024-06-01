@@ -37,7 +37,7 @@ static struct {
 static void
 threads_main(int argc, char **argv)
 {
-    wifi_init();
+    wifi_init(CYW43_HOST_NAME);
     wifi_wait_for_connection();
 
     m = pi_mutex_new();

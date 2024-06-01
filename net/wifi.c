@@ -13,6 +13,8 @@ static pi_cond_t *c_connection;
 static const char *ssid = WIFI_SSID;
 static const char *password = WIFI_PASSWORD;
 
+const char *external_cyw43_host_name = "external-host-name";
+
 static void connect_to_wifi(void *unused)
 {
     printf("WiFi: trying to connect.\n");
@@ -38,8 +40,10 @@ static void connect_to_wifi(void *unused)
 }
 
 void
-wifi_init()
+wifi_init(const char *hostname)
 {
+    external_cyw43_host_name = hostname;
+
     m_connection = pi_mutex_new();
     c_connection = pi_cond_new();
 

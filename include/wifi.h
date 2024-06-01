@@ -7,13 +7,13 @@ extern "C" {
 
 #ifdef PLATFORM_pico
 
-void wifi_init();
+void wifi_init(const char *hostname);
 bool wifi_is_connected();
 void wifi_wait_for_connection();
 
 #else
 
-static inline void wifi_init() { }
+static inline void wifi_init(const char *hostname) { }
 static inline bool wifi_is_connected() { return true; }
 static inline void wifi_wait_for_connection() {}
 

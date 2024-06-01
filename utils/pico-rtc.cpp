@@ -84,7 +84,7 @@ static void
 threads_main(int argc, char **argv)
 {
     new ConsoleThread(new StdinReader(), new StdoutWriter());
-    wifi_init();
+    wifi_init(CYW43_HOST_NAME);
     wifi_wait_for_connection();
     new NetThread(4567);
     new SNTPThread();
