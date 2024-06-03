@@ -17,6 +17,7 @@ function(util_cpp targetName)
 endfunction()
 
 if("${PLATFORM}" STREQUAL pico)
+  util_cpp(httpd)
   util_cpp(light-sensor)
   util_cpp(neopixel-pico)
   util_cpp(notes pi-audio)
