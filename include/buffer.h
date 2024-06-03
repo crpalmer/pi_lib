@@ -2,6 +2,7 @@
 #define __BUFFER_H__
 
 #include <stdint.h>
+#include <string.h>
 
 class BufferBuffer;
 
@@ -47,6 +48,7 @@ private:
 class BufferBuffer : public Buffer {
 public:
     BufferBuffer(const void *buffer, size_t n) : buffer(buffer), n(n), at(0) {}
+    BufferBuffer(const char *text) : buffer(text), n(strlen(text)), at(0) {}
     ~BufferBuffer() override;
     bool is_eof() override { return at == n; }
     size_t read(void *buf, size_t buf_size) override;

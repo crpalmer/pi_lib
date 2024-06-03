@@ -8,16 +8,22 @@
 
 #include "time-utils.h"
 
-class RootFile : public HttpdFileHandler {
-    Buffer *open() override {
-	return new BufferBuffer("hello", 5);
+class HelloFile : public HttpdFileHandler {
+    HttpdResponse *open() override {
+	return new HttpdResponse(new BufferBuffer("hello!\n"));
     }
 };
-    
+
+class SecretFile : public HttpdFileHandler {
+    HttpdResponse *open() override {
+	return new HttpdResponse(new BufferBuffer("HTTP/1.0 200 OK\nContent-Type: text/plain\n\nThis is my secret!\n"), true);
+    }
+};
+
 class TestCgiHandler : public CgiHandler {
 public:
     const char *handle_request(cgi_params_t &params) {
-	return get_response_filename(new BufferBuffer("cgi: Hello!", 11), ".txt");
+	return get_response_filename(new BufferBuffer("cgi: Hello!"), ".txt");
     }
 };
 
@@ -29,7 +35,8 @@ threads_main(int argc, char **argv)
 
     HttpdServer *httpd = HttpdServer::get();
     httpd->add_cgi_handler("/cgi-bin/test", new TestCgiHandler());
-    httpd->add_file_handler("/hello.html", new RootFile());
+    httpd->add_file_handler("/hello.html", new HelloFile());
+    httpd->add_file_handler("/secret", new SecretFile());
     httpd->start();
 }
 

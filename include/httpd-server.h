@@ -10,12 +10,29 @@ typedef std::map<std::string, std::string> cgi_params_t;
 
 extern "C" int fs_open_custom(struct fs_file *file, const char *name);
 
+class HttpdResponse {
+public:
+    HttpdResponse(Buffer *buffer, bool has_headers = false) : buffer(buffer), buffer_has_headers(has_headers) {
+    }
+    ~HttpdResponse() { delete buffer; }
+
+    int read(void *buf, int n) { return buffer->read(buf, n); }
+    int get_n() { return buffer->get_n(); }
+    bool has_headers() { return buffer_has_headers; }
+
+private:
+    Buffer *buffer;
+    bool buffer_has_headers;
+};
+
 class CgiHandler {
 public:
     virtual ~CgiHandler() { }
     virtual const char *handle_request(cgi_params_t &params) = 0;
 
-    const char *get_response_filename(Buffer *b, const char *extension = NULL);
+    const char *get_response_filename(HttpdResponse *response, const char *extension = NULL);
+    const char *get_response_filename(Buffer *buffer, const char *extension = NULL);
+    const char *get_response_filename(const char *text, const char *extension = ".txt");
 
 private:
     char *lwip_filename;
@@ -24,7 +41,7 @@ private:
 class HttpdFileHandler {
 public:
     virtual ~HttpdFileHandler() { }
-    virtual Buffer *open() = 0;
+    virtual HttpdResponse *open() = 0;
     virtual bool try_prefixes() { return false; }
 };
 
@@ -44,7 +61,7 @@ public:
 
 private:
     std::map<std::string, CgiHandler *> cgi_handlers;
-    std::map<CgiHandler *, Buffer *> cgi_active_buffers;
+    std::map<CgiHandler *, HttpdResponse *> cgi_active_responses;
     std::map<std::string, HttpdFileHandler *> file_handlers;
     struct httpd_internal_stateS *state;
 
@@ -55,10 +72,10 @@ private:
 
 protected:
     const char *cgi_handler(int handler_index, cgi_params_t &params);
-    void store_response_buffer(CgiHandler *handler, Buffer *buffeR);
-    Buffer *claim_response_buffer(std::string name); 
+    void store_response(CgiHandler *handler, HttpdResponse *response);
+    HttpdResponse *claim_response(std::string name); 
 
-    friend const char *CgiHandler::get_response_filename(Buffer *b, const char *extension);
+    friend const char *CgiHandler::get_response_filename(HttpdResponse *response, const char *extension);
 
     friend int fs_open_custom(struct fs_file *file, const char *name);
     friend const char *cgi_handler_proxy(int handler_index, int n_params, char *names[], char *values[]);

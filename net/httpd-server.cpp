@@ -20,18 +20,19 @@ HttpdServer::HttpdServer() {
 }
 
 extern "C" int fs_open_custom(fs_file *file, const char *name) {
-    Buffer *b = instance->claim_response_buffer(name);
-    if (b) {
+    HttpdResponse *response = instance->claim_response(name);
+    if (response) {
 	file->flags |= FS_FILE_FLAGS_CUSTOM;
-	file->pextension = b;
-	file->len = b->get_n();
+	if (response->has_headers()) file->flags |= FS_FILE_FLAGS_HEADER_INCLUDED;
+	file->pextension = response;
+	file->len = response->get_n();
 	return true;
     }
     return false;
 }
 
 extern "C" int fs_read_custom(fs_file *file, char *buffer, int count) {
-    if (((Buffer *) file->pextension)->read(buffer, count)) {
+    if (((HttpdResponse *) file->pextension)->read(buffer, count)) {
 	return count;
     } else {
 	return FS_READ_EOF;
@@ -39,7 +40,7 @@ extern "C" int fs_read_custom(fs_file *file, char *buffer, int count) {
 }
 
 extern "C" void fs_close_custom(fs_file *file) {
-    if (file->pextension) delete ((Buffer *) file->pextension);
+    if (file->pextension) delete ((HttpdResponse *) file->pextension);
 }
 
 
@@ -105,28 +106,36 @@ void HttpdServer::start(int port) {
     }
 }
 
-void HttpdServer::store_response_buffer(CgiHandler *cgi_handler, Buffer *buffer) {
-    if (cgi_active_buffers[cgi_handler]) delete cgi_active_buffers[cgi_handler];
-    cgi_active_buffers[cgi_handler] = buffer;
+void HttpdServer::store_response(CgiHandler *cgi_handler, HttpdResponse *response) {
+    if (cgi_active_responses[cgi_handler]) delete cgi_active_responses[cgi_handler];
+    cgi_active_responses[cgi_handler] = response;
 }
 
-const char *CgiHandler::get_response_filename(Buffer *b, const char *extension) {
-    HttpdServer::get()->store_response_buffer(this, b);
+const char *CgiHandler::get_response_filename(HttpdResponse *response, const char *extension) {
+    HttpdServer::get()->store_response(this, response);
 
     if (lwip_filename) free(lwip_filename);
-    lwip_filename = maprintf("%p%s%s", this, extension && extension[0] != '.' ? "." : "", extension ? extension : "");
+    lwip_filename = maprintf("%p%s%s", this, extension[0] == '.' ? "" : ".", extension ? extension : "");
     return lwip_filename;
 }
 
-Buffer *HttpdServer::claim_response_buffer(std::string fname) {
+const char *CgiHandler::get_response_filename(Buffer *buffer, const char *extension) {
+    return get_response_filename(new HttpdResponse(buffer), extension);
+}
+
+const char *CgiHandler::get_response_filename(const char *text, const char *extension) {
+    return get_response_filename(new HttpdResponse(new BufferBuffer(text)), extension);
+}
+
+HttpdResponse *HttpdServer::claim_response(std::string fname) {
     // Check for any active cgi responses that are pending
 
     if (fname[0] != '/') {
 	CgiHandler *cgi_handler = (CgiHandler *) stoul(fname, 0, 16);
-	if (cgi_active_buffers[cgi_handler]) {
-	    Buffer *b = cgi_active_buffers[cgi_handler];
-	    cgi_active_buffers[cgi_handler] = NULL;
-	    return b;
+	if (cgi_active_responses[cgi_handler]) {
+	    HttpdResponse *response = cgi_active_responses[cgi_handler];
+	    cgi_active_responses[cgi_handler] = NULL;
+	    return response;
 	}
     }
 
