@@ -1,6 +1,7 @@
 #ifndef __BUFFER_H__
 #define __BUFFER_H__
 
+#include <string>
 #include <stdint.h>
 #include <string.h>
 
@@ -65,6 +66,6 @@ private:
     size_t n, at;
 };
 
-BufferFile *buffer_file_open(const char *fname);
+BufferFile *buffer_file_open(std::string fname);
 
 #endif

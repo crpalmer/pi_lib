@@ -80,11 +80,11 @@ Buffer *BufferBuffer::get_sub_buffer(size_t size) {
 BufferBuffer::~BufferBuffer() {
 }
 
-BufferFile *buffer_file_open(const char *fname) {
+BufferFile *buffer_file_open(std::string fname) {
     file_t *f;
-    if ((f = media_file_open_read(fname)) == NULL) {
-        consoles_printf("Failed to open %s\n", fname);
+    if ((f = media_file_open_read(fname.c_str())) == NULL) {
+        consoles_printf("Failed to open %s\n", fname.c_str());
 	return NULL;
     }
-    return new BufferFile(fname, 0, -1, f);
+    return new BufferFile(fname.c_str(), 0, -1, f);
 }
