@@ -145,9 +145,23 @@ HttpdResponse *HttpdServer::claim_response(std::string fname) {
 	return file_handlers[fname]->open();
     }
 
-    // Check for any hierarchy handlers
-    // TODO
+    // Check for any prefix handlers
+    std::string prefix = fname;
+    while (true) {
+	size_t last_slash = prefix.find_last_of("/");
+
+	if (last_slash == std::string::npos) {
+	    break;
+	}
+
+	prefix = prefix.substr(0, last_slash);
+
+	if (prefix_handlers[prefix]) {
+	    std::string suffix = fname.substr(prefix.length()+1);
+	    HttpdResponse *response = prefix_handlers[prefix]->open(suffix);
+	    if (response) return response;
+	}
+    }
 
     return NULL;
 }
-

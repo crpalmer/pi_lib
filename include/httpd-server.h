@@ -45,6 +45,12 @@ public:
     virtual bool try_prefixes() { return false; }
 };
 
+class HttpdPrefixHandler {
+public:
+    virtual ~HttpdPrefixHandler() { }
+    virtual HttpdResponse *open(std::string fname) = 0;
+};
+
 class HttpdServer {
 public:
     void add_cgi_handler(const char *path, CgiHandler *handler) {
@@ -55,6 +61,10 @@ public:
 	file_handlers[path] = handler;
     }
 
+    void add_prefix_handler(const char *prefix, HttpdPrefixHandler *handler) {
+	prefix_handlers[prefix] = handler;
+    }
+
     void start(int port = 80);
 
     static HttpdServer *get();
@@ -63,6 +73,7 @@ private:
     std::map<std::string, CgiHandler *> cgi_handlers;
     std::map<CgiHandler *, HttpdResponse *> cgi_active_responses;
     std::map<std::string, HttpdFileHandler *> file_handlers;
+    std::map<std::string, HttpdPrefixHandler *> prefix_handlers;
     struct httpd_internal_stateS *state;
 
 private:
