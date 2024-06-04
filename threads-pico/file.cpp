@@ -20,6 +20,25 @@
 static PiMutex *init_lock;
 static bool is_init = false;
 
+static char *filename_to_sd_filename(const char *fname) {
+    char *full_fname;
+
+    if (fname[0] == '/') full_fname = maprintf("/sd0%s", fname);
+    else full_fname = strdup(fname);
+
+    int j = 1;
+    for (int i = 1; full_fname[i]; i++) {
+	if (full_fname[j-1] == '/' && full_fname[i] == '/') {
+	    // We have // skip the second slash
+	} else {
+	    full_fname[j++] = full_fname[i];
+	}
+    }
+    full_fname[j] = '\0';
+
+    return full_fname;
+}
+
 static void init_once() {
     if (is_init) return;
     init_lock->lock();
@@ -43,9 +62,14 @@ C_DECL void file_init(void) {
 
 off_t file_size(const char *fname) {
     FF_Stat_t stat;
+    off_t size;
+    char *full_fname = filename_to_sd_filename(fname);
 
-    if (ff_stat(fname, &stat) >= 0) return stat.st_size;
-    return -1;
+    if (ff_stat(full_fname, &stat) >= 0) size = stat.st_size;
+    else size = -1;
+
+    fatal_free(full_fname);
+    return size;
 }
 
 bool
@@ -59,7 +83,7 @@ file_exists(const char *fname)
 C_DECL file_t *file_open(const char *fname, const char *mode) {
     init_once();
 
-    char *full_fname = maprintf("/sd0/%s", fname);
+    char *full_fname = filename_to_sd_filename(fname);
     file_t *file = ff_fopen(full_fname, mode);
     fatal_free(full_fname);
 
