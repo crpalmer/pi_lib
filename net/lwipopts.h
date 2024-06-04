@@ -54,10 +54,12 @@
 
 /* Httpd */
 
+extern int global_httpd_server_port;
+
 #define LWIP_HTTPD_CGI                         1
 #define LWIP_HTTPD_SUPPORT_POST                0 // TODO we'll eventually want this
 #define HTTPD_SERVER_AGENT                     "pi-lib / lwIP/" LWIP_VERSION_STRING
-#define HTTPD_SERVER_PORT                      80 // TODO: Let me override this
+#define HTTPD_SERVER_PORT                      global_httpd_server_port
 #define LWIP_HTTPD_SUPPORT_EXTSTATUS           1  // shows pages on errors
 #define LWIP_HTTPD_SUPPORT_11_KEEPALIVE        1
 #define LWIP_HTTPD_MAX_REQUEST_URI_LEN         256

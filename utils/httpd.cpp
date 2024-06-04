@@ -75,7 +75,7 @@ threads_main(int argc, char **argv)
     httpd->add_prefix_handler("/www/wave", new HttpdFilesystemHandler("/2121_wave_cafe"));
     httpd->add_prefix_handler("/wave", new HttpdFilesystemHandler("/wavecafe"));
     httpd->add_prefix_handler("/2121", new HttpdFilesystemHandler("/2121_wave_cafe"));
-    httpd->start();
+    httpd->start(9999);
 }
 
 int

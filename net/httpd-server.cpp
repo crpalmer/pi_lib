@@ -7,6 +7,8 @@
 #include "pi-threads.h"
 #include "string-utils.h"
 
+int global_httpd_server_port = 80;
+
 typedef struct httpd_internal_stateS {
     tCGI *cgi;
 } state_t;
@@ -92,6 +94,7 @@ const char *HttpdServer::cgi_handler(int handler_index, cgi_params_t &params) {
 }
 
 void HttpdServer::start(int port) {
+    global_httpd_server_port = port;
     httpd_init();
 
     if (cgi_handlers.size() > 0) {
