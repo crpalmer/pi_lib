@@ -7,6 +7,7 @@ target_sources(lib-pi PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/sd-hw-config.c
   ${CMAKE_CURRENT_LIST_DIR}/hooks.c
   ${CMAKE_CURRENT_LIST_DIR}/pi-threads.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/pi-threads-queue.cpp
   ${CMAKE_CURRENT_LIST_DIR}/set-consoles-lock.cpp
 )
 
