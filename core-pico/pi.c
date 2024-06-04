@@ -75,6 +75,7 @@ pi_reboot_bootloader()
 void
 pi_abort()
 {
+    assert(0);
     watchdog_enable(1, 1);
     while (1) {}
 }
