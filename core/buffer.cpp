@@ -4,7 +4,7 @@
 
 #include "buffer.h"
 
-BufferFile::BufferFile(const char *fname, long start, long max_bytes, file_t *user_f) : fname(fname), at(0), start(start), max_bytes(max_bytes) {
+BufferFile::BufferFile(const char *fname, long start, long max_bytes, file_t *user_f) : fname(fatal_strdup(fname)), at(0), start(start), max_bytes(max_bytes) {
     if (user_f) {
 	f = user_f;
     } else if ((f = media_file_open_read(fname)) == NULL) {
@@ -30,6 +30,7 @@ int BufferFile::seek_rel(long pos) {
 
 BufferFile::~BufferFile() {
     file_close(f);
+    fatal_free(fname);
 }
 
 size_t BufferFile::read(void *buf, size_t n) {

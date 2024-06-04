@@ -40,7 +40,7 @@ public:
     }
 
 private:
-    const char *fname;
+    char *fname;
     long at, start, max_bytes;
     file_t *f;
 };
