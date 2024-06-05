@@ -52,24 +52,6 @@
 #define TCP_SND_BUF                   (8 * TCP_MSS)
 #define TCP_SND_QUEUELEN              ((4 * (TCP_SND_BUF) + (TCP_MSS - 1)) / (TCP_MSS))
 
-/* Httpd */
-
-extern int global_httpd_server_port;
-
-#define LWIP_HTTPD_CGI                         1
-#define LWIP_HTTPD_SUPPORT_POST                0 // TODO we'll eventually want this
-#define HTTPD_SERVER_AGENT                     "pi-lib / lwIP/" LWIP_VERSION_STRING
-#define HTTPD_SERVER_PORT                      global_httpd_server_port
-#define LWIP_HTTPD_SUPPORT_EXTSTATUS           1  // shows pages on errors
-#define LWIP_HTTPD_SUPPORT_11_KEEPALIVE        1
-#define LWIP_HTTPD_MAX_REQUEST_URI_LEN         256
-#define LWIP_HTTPD_POST_MAX_RESPONSE_URI_LEN   256
-#define LWIP_HTTPD_DYNAMIC_HEADERS             1
-#define LWIP_HTTPD_FILE_EXTENSION              1
-#define LWIP_HTTPD_CUSTOM_FILES                1
-#define LWIP_HTTPD_DYNAMIC_FILE_READ           1
-#define HTTPD_LIMIT_SENDING_TO_2MSS            0
-
 /* Debugging */
 
 #ifndef NDEBUG

@@ -1,50 +1,28 @@
 #include <memory.h>
 #include "pi.h"
-#include "lwip/apps/httpd.h"
-#include "lwip/apps/fs.h"
-#include "httpd-server.h"
+#define NOT_IN_MONGOOSE_C
+#include "mongoose.h"
+#include "consoles.h"
 #include "mem.h"
 #include "pi-threads.h"
 #include "string-utils.h"
-
-int global_httpd_server_port = 80;
+#include "httpd-server.h"
 
 typedef struct httpd_internal_stateS {
-    tCGI *cgi;
+    struct mg_mgr mgr;
 } state_t;
 
 static PiMutex *lock;
 static HttpdServer *instance;
 
+struct mg_str guess_content_type(struct mg_str path, const char *extra) {
+    return ptr_to_guess_content_type(path, extra);
+}
+
 HttpdServer::HttpdServer() {
     state = (state_t *) fatal_malloc(sizeof(*state));
     memset(state, 0, sizeof(*state));
 }
-
-extern "C" int fs_open_custom(fs_file *file, const char *name) {
-    HttpdResponse *response = instance->claim_response(name);
-    if (response) {
-	file->flags |= FS_FILE_FLAGS_CUSTOM;
-	if (response->has_headers()) file->flags |= FS_FILE_FLAGS_HEADER_INCLUDED;
-	file->pextension = response;
-	file->len = response->get_n();
-	return true;
-    }
-    return false;
-}
-
-extern "C" int fs_read_custom(fs_file *file, char *buffer, int count) {
-    if (((HttpdResponse *) file->pextension)->read(buffer, count)) {
-	return count;
-    } else {
-	return FS_READ_EOF;
-    }
-}
-
-extern "C" void fs_close_custom(fs_file *file) {
-    if (file->pextension) delete ((HttpdResponse *) file->pextension);
-}
-
 
 /* TODO
  *
@@ -81,67 +59,39 @@ HttpdServer *HttpdServer::get() {
     return instance;
 }
 
-const char *HttpdServer::cgi_handler_proxy(int handler_index, int n_params, char *names[], char *values[]) {
-    cgi_params_t params;
-
-    for (int i = 0; i < n_params; i++) params[names[i]] = values[i];
-    return instance->cgi_handler(handler_index, params);
-}
-
-const char *HttpdServer::cgi_handler(int handler_index, cgi_params_t &params) {
-    CgiHandler *cgi_handler = cgi_handlers[state->cgi[handler_index].pcCGIName];
-    return cgi_handler->handle_request(params);
-}
-
 void HttpdServer::start(int port) {
-    global_httpd_server_port = port;
-    httpd_init();
-
-    if (cgi_handlers.size() > 0) {
-	state->cgi = (tCGI *) fatal_malloc(sizeof(*state->cgi) * cgi_handlers.size());
-	int i = 0;
-	for (std::pair<std::string, CgiHandler *> p : cgi_handlers) {
-	    state->cgi[i].pcCGIName = fatal_strdup(p.first.c_str());
-	    state->cgi[i].pfnCGIHandler = cgi_handler_proxy;
-	    i++;
-	}
-	http_set_cgi_handlers(state->cgi, cgi_handlers.size());
+    mg_log_set(MG_LL_DEBUG);
+    mg_mgr_init(&state->mgr);
+    if (mg_http_listen(&state->mgr, "http://0.0.0.0:9999", (mg_event_handler_t) HttpdServer::mongoose_callback_proxy, &state->mgr) == NULL) {
+	consoles_fatal_printf("Couldn't start the web server.\n");
     }
+    while (true) mg_mgr_poll(&state->mgr, 1000);
 }
 
-void HttpdServer::store_response(CgiHandler *cgi_handler, HttpdResponse *response) {
-    if (cgi_active_responses[cgi_handler]) delete cgi_active_responses[cgi_handler];
-    cgi_active_responses[cgi_handler] = response;
-}
+void HttpdServer::mongoose_callback(struct mg_connection *c, int ev, void *ev_data) {
+    if (ev == MG_EV_HTTP_MSG) {
+	struct mg_http_message *hm = (struct mg_http_message *) ev_data;
+	std::string uri = std::string(hm->uri.buf, hm->uri.len);
+	HttpdResponse *response = get(uri);
 
-const char *CgiHandler::get_response_filename(HttpdResponse *response, const char *extension) {
-    HttpdServer::get()->store_response(this, response);
+	printf("Got request: %s %p\n", uri.c_str(), response);
+	if (! response) {
+	    mg_http_reply(c, 404, "", "File not found.\n");
+	} else {
+	    struct mg_str ct = guess_content_type(hm->uri, NULL);
 
-    if (lwip_filename) free(lwip_filename);
-    lwip_filename = maprintf("%p%s%s", this, extension[0] == '.' ? "" : ".", extension ? extension : "");
-    return lwip_filename;
-}
-
-const char *CgiHandler::get_response_filename(Buffer *buffer, const char *extension) {
-    return get_response_filename(new HttpdResponse(buffer), extension);
-}
-
-const char *CgiHandler::get_response_filename(const char *text, const char *extension) {
-    return get_response_filename(new HttpdResponse(new BufferBuffer(text)), extension);
-}
-
-HttpdResponse *HttpdServer::claim_response(std::string fname) {
-    // Check for any active cgi responses that are pending
-
-    if (fname[0] != '/') {
-	CgiHandler *cgi_handler = (CgiHandler *) stoul(fname, 0, 16);
-	if (cgi_active_responses[cgi_handler]) {
-	    HttpdResponse *response = cgi_active_responses[cgi_handler];
-	    cgi_active_responses[cgi_handler] = NULL;
-	    return response;
+	    mg_printf(c, "%.*s 200 OK\r\nContent-Type: %.*s\r\nContent-Length: %d\r\n\r\n", hm->proto.len, hm->proto.buf, ct.len, ct.buf, response->get_n());
+	    while (! response->is_eof()) {
+		static char *buffer[1024];
+		int n = response->read(buffer, sizeof(buffer));
+		mg_send(c, buffer, n);
+	    }
+	    c->is_resp = 0;
 	}
     }
+}
 
+HttpdResponse *HttpdServer::get(std::string fname) {
     // Check for any registered full filenmae
 
     if (file_handlers[fname]) {

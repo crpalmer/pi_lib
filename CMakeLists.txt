@@ -30,7 +30,6 @@ if(${PLATFORM} STREQUAL pico)
   )
   target_link_libraries(lib-pi PRIVATE
     pico_stdlib
-    pico_lwip_http
     pico_cyw43_arch_lwip_sys_freertos
     hardware_adc
     hardware_dma

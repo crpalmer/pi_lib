@@ -44,13 +44,6 @@ public:
     }
 };
 
-class TestCgiHandler : public CgiHandler {
-public:
-    const char *handle_request(cgi_params_t &params) {
-	return get_response_filename(new BufferBuffer("cgi: Hello!"), ".txt");
-    }
-};
-
 class MyConsole : public PiThread, public ThreadsConsole {
 public:
     MyConsole() : PiThread("console"), ThreadsConsole(new StdinReader(), new StdoutWriter()) { start(); }
@@ -66,15 +59,12 @@ threads_main(int argc, char **argv)
     wifi_wait_for_connection();
 
     HttpdServer *httpd = HttpdServer::get();
-    httpd->add_cgi_handler("/cgi-bin/test", new TestCgiHandler());
     httpd->add_file_handler("/hello.html", new HelloFile());
     httpd->add_file_handler("/secret", new SecretFile());
     httpd->add_file_handler("/audio/laugh.wav", new FilesystemFileHandler("/laugh.wav"));
     httpd->add_prefix_handler("/www", new HttpdFilesystemHandler("/www"));
+    httpd->add_prefix_handler("/tmp/wave", new HttpdFilesystemHandler("/tmp/2121_wave_cafe"));
     httpd->add_prefix_handler("/www/wave", new HttpdFilesystemHandler("/2121_wave_cafe"));
-    httpd->add_prefix_handler("/www/wave", new HttpdFilesystemHandler("/2121_wave_cafe"));
-    httpd->add_prefix_handler("/wave", new HttpdFilesystemHandler("/wavecafe"));
-    httpd->add_prefix_handler("/2121", new HttpdFilesystemHandler("/2121_wave_cafe"));
     httpd->start(9999);
 }
 
