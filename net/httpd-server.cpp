@@ -13,9 +13,6 @@ typedef struct httpd_internal_stateS {
     struct mg_mgr mgr;
 } state_t;
 
-static PiMutex *lock;
-static HttpdServer *instance;
-
 struct mg_str guess_content_type(struct mg_str path, const char *extra) {
     return ptr_to_guess_content_type(path, extra);
 }
@@ -50,7 +47,7 @@ public:
 	assert(response == NULL);
 	response = new_response;
 	enqueue_is_active = true;
-	if (response) instance->loader_enqueue(this);
+	if (response) HttpdServer::get().loader_enqueue(this);
     }
 
     int get_id() { return c->id; }
@@ -67,7 +64,7 @@ public:
 	cond->signal();
 	lock->unlock();
 
-	instance->wakeup(this);
+	HttpdServer::get().wakeup(this);
     }
 
     bool is_eof() {
@@ -101,7 +98,7 @@ public:
 	    } else {
 		assert(! enqueue_is_active);
 		enqueue_is_active = true;
-		instance->loader_enqueue(this);
+		HttpdServer::get().loader_enqueue(this);
 	    }
 	}
 
@@ -170,41 +167,6 @@ HttpdServer::HttpdServer() {
     loader = new HttpdResponseLoader();
 }
 
-/* TODO
- *
- * Add a global pi_threads_singleton lock that is always initialized and then this can be
- * if (! lock)
- *     lock singleton lock
- *     double check lock
- * ...
- * and avoid what I think are some race conditions in there.
- *
- * TODO
- *
- * Go one further and add a template Singleton generator that does all this for you?
- */
-
-HttpdServer *HttpdServer::get() {
-    if (! lock) {
-        PiMutex *new_lock = new PiMutex();
-	lock = new_lock;
-	lock->lock();
-	if (lock != new_lock) {
-	    // Someone else beat me to creating the lock, try again
-	    delete new_lock;
-	}
-    } else {
-	lock->lock();
-    }
-
-    if (! instance) {
-        instance = new HttpdServer();
-    }
-
-    lock->unlock();
-    return instance;
-}
-
 void HttpdServer::start(int port) {
     mg_log_set(MG_LL_INFO);
     mg_mgr_init(&state->mgr);
@@ -221,7 +183,7 @@ void HttpdServer::mongoose_callback(struct mg_connection *c, int ev, void *ev_da
 	MG_DEBUG(("callback: ev-msg"));
 	struct mg_http_message *hm = (struct mg_http_message *) ev_data;
 	std::string uri = std::string(hm->uri.buf, hm->uri.len);
-	HttpdResponse *response = get(uri);
+	HttpdResponse *response = get_uri(uri);
 
 	if (! response) {
 	    mg_http_reply(c, 404, "", "File not found.\n");
@@ -275,7 +237,7 @@ void HttpdServer::mongoose_callback(struct mg_connection *c, int ev, void *ev_da
     if (connections[c->id]) connections[c->id]->send_if_possible();
 }
 
-HttpdResponse *HttpdServer::get(std::string fname) {
+HttpdResponse *HttpdServer::get_uri(std::string fname) {
     // Check for any registered full filenmae
 
     if (file_handlers[fname]) {

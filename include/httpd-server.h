@@ -41,6 +41,11 @@ public:
 
 class HttpdServer {
 public:
+    static HttpdServer &get() {
+	static HttpdServer instance;
+	return instance;
+    }
+
     void add_file_handler(const char *path, HttpdFileHandler *handler) {
 	file_handlers[path] = handler;
     }
@@ -51,9 +56,8 @@ public:
 
     void start(int port = 80);
 
-    static HttpdServer *get();
     static void mongoose_callback_proxy(struct mg_connection *c, int ev, void *ev_data) {
-	get()->mongoose_callback(c, ev, ev_data);
+	get().mongoose_callback(c, ev, ev_data);
     }
 
 protected:
@@ -72,7 +76,7 @@ private:
 private:
     HttpdServer();
     void mongoose_callback(struct mg_connection *c, int ev, void *ev_data);
-    HttpdResponse *get(std::string uri);
+    HttpdResponse *get_uri(std::string uri);
 };
 
 #endif
