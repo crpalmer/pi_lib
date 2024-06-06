@@ -3,12 +3,19 @@
 
 #include <alloca.h>
 #undef MG_ARCH
+
 #ifdef PLATFORM_pico
+
 #define MG_ARCH MG_ARCH_RP2040
+#define MG_SOCK_LISTEN_BACKLOG_SIZE 8
+
 #include "net.h"
 #include <fcntl.h>
+
 #else
+
 #define MG_ARCH MG_ARCH_UNIX
+
 #endif
 
 /* Expose some internal functions we want */

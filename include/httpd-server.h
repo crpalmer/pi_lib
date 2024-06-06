@@ -19,6 +19,8 @@ public:
     bool is_eof() { return buffer->is_eof(); }
     bool has_headers() { return buffer_has_headers; }
 
+    const void *get_raw_data() { return buffer->get_raw_data(); }
+
 private:
     Buffer *buffer;
     bool buffer_has_headers;
@@ -63,6 +65,7 @@ private:
     HttpdServer();
     void mongoose_callback(struct mg_connection *c, int ev, void *ev_data);
     HttpdResponse *get(std::string uri);
+    class HttpdResponseLoader *loader;
 };
 
 #endif

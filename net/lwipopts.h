@@ -12,11 +12,13 @@
 
 /* Library modules enabled */
 
+#define LWIP_NETIF_LOOPBACK       1
 #define LWIP_NETIF_HOSTNAME       1
-#define LWIP_NETCONN              0
+#define LWIP_NETCONN              1
 
 #define LWIP_DHCP                 1
 #define LWIP_DNS                  1
+#define TCP_LISTEN_BACKLOG        1
 
 /* API Features */
 
@@ -36,6 +38,8 @@
 /* Threading options */
 
 #define LWIP_TCPIP_CORE_LOCKING_INPUT 1
+// TODO: Figure this out #define LWIP_NETCONN_SEM_PER_THREAD 1
+
 #define TCPIP_THREAD_STACKSIZE        1024
 #define DEFAULT_THREAD_STACKSIZE      1024
 
@@ -46,7 +50,10 @@
 
 /* Buffer sizes */
 
-#define MEMP_NUM_TCP_SEG              32
+#define MEMP_NUM_NETCONN	      32
+#define MEMP_NUM_TCP_PCB	      32
+#define MEMP_NUM_TCP_SEG	      (MEMP_NUM_TCP_PCB*2)
+#define MEMP_NUM_UDP_PCB	      8
 #define TCP_MSS                       1460
 #define TCP_WND                       (8 * TCP_MSS)
 #define TCP_SND_BUF                   (8 * TCP_MSS)
