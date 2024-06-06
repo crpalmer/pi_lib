@@ -56,16 +56,23 @@ public:
 	get()->mongoose_callback(c, ev, ev_data);
     }
 
+protected:
+    void loader_enqueue(HttpdConnection *connection);
+    void wakeup(HttpdConnection *connection);
+
+    friend class HttpdConnection;
+
 private:
     std::map<std::string, HttpdFileHandler *> file_handlers;
     std::map<std::string, HttpdPrefixHandler *> prefix_handlers;
+    std::map<int, HttpdConnection *> connections;
     struct httpd_internal_stateS *state;
+    class HttpdResponseLoader *loader;
 
 private:
     HttpdServer();
     void mongoose_callback(struct mg_connection *c, int ev, void *ev_data);
     HttpdResponse *get(std::string uri);
-    class HttpdResponseLoader *loader;
 };
 
 #endif

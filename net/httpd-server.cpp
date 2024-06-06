@@ -21,54 +21,111 @@ struct mg_str guess_content_type(struct mg_str path, const char *extra) {
 }
 
 #ifdef PLATFORM_pico
-const int buffer_size = 1*1024;
+const int buffer_size = 2*1024;
 #else
-const int buffer_size = 10*1024;
+const int buffer_size = 32*1024;
 #endif
 
-class HttpdResponseBuffer {
+class HttpdConnection {
 public:
-    HttpdResponseBuffer(struct mg_mgr *mgr, struct mg_connection *c, HttpdResponse *response, int size = buffer_size) : mgr(mgr), c(c), response(response), size(size) {
+    HttpdConnection(struct mg_connection *c, int size = buffer_size) : c(c), size(size) {
 	buffer = fatal_malloc(size);
-	n  = 0;
+	lock = new PiMutex();
+	cond = new PiCond();
+	response = NULL;
+	n = 0;
+	enqueue_is_active = false;
     }
 
-    ~HttpdResponseBuffer() {
+    ~HttpdConnection() {
+	wait_for_no_enqueues();
+
+	delete lock;
 	free(buffer);
     }
 
+    void new_response(HttpdResponse *new_response) {
+	wait_for_no_enqueues();
+
+	assert(response == NULL);
+	response = new_response;
+	enqueue_is_active = true;
+	if (response) instance->loader_enqueue(this);
+    }
+
+    int get_id() { return c->id; }
+
     void read() {
-	n = response->read(buffer, size);
+	assert(n == 0);
+	assert(response);
+
+	int n_read = response->read(buffer, size);
+
+	lock->lock();
+	n = n_read;
+	enqueue_is_active = false;
+	cond->signal();
+	lock->unlock();
+
+	instance->wakeup(this);
     }
 
     bool is_eof() {
 	return response->is_eof();
     }
 
-    void wakeup() {
-	if (! mg_wakeup(mgr, c->id, this, sizeof(this))) {
-	    MG_INFO(("httpd-response-buffer: failed to wakeup"));
-        } else {
-	    MG_DEBUG(("httpd-response-buffer: triggered wakeup"));
+    bool send_if_possible() {
+	bool res = false;
+
+	lock->lock();
+
+	if (c->send.len >= size*2) {
+	    // Don't overflow the buffer, wait for it to drain
+	} else if (n > 0 && ! c->is_closing) {
+            MG_DEBUG(("httpd-response-buffer: sending data"));
+
+	    lock->unlock();
+	    res = mg_send(c, buffer, n);
+	    lock->lock();
+
+	    n = 0;
+
+	    if (! res) {
+		MG_INFO(("failed to send %d bytes", n));
+		c->is_resp = 0;
+		response = NULL;
+	    } else if (response->is_eof()) {
+		c->is_resp = 0;
+		delete response;
+		response = NULL;
+	    } else {
+		assert(! enqueue_is_active);
+		enqueue_is_active = true;
+		instance->loader_enqueue(this);
+	    }
 	}
-    }
 
-    bool connection_send() {
-        MG_DEBUG(("httpd-resppnse-buffer: sending data"));
-	if (c->is_closing) return false;
+	lock->unlock();
 
-	bool res = mg_send(c, buffer, n);
-	if (! res || response->is_eof()) c->is_resp = 0;
 	return res;
     }
 
 private:
-    struct mg_mgr *mgr;
+    void wait_for_no_enqueues() {
+	lock->lock();
+	while (enqueue_is_active) cond->wait(lock);
+	lock->unlock();
+    }
+
+private:
+    PiMutex *lock;
+    PiCond *cond;
     struct mg_connection *c;
     HttpdResponse *response;
     void *buffer;
-    int n;
-    int size;
+    size_t n;
+    size_t size;
+    bool enqueue_is_active;
 };
 
 class HttpdResponseLoader : public PiThread {
@@ -83,33 +140,19 @@ public:
 	while (true) {
 	    lock->lock();
 	    while (waiting.size() == 0) cond->wait(lock);
-	    HttpdResponseBuffer *hrb = waiting.front();
+	    HttpdConnection *connection = waiting.front();
+	    MG_DEBUG(("httpd-response-loader loading connection %d\n", connection->get_id()));
 	    waiting.pop_front();
 	    lock->unlock();
 
-	    hrb->read();
-
+	    connection->read();
 	    MG_DEBUG(("httpd-response-loader: completed background read"));
-	    lock->lock();
-	    ready.push_back(hrb);
-	    hrb->wakeup();
-	    lock->unlock();
 	}
     }
 
-    HttpdResponseBuffer *get_ready_response() {
-    	lock->lock();
-	HttpdResponseBuffer *hrb = ready.front();
-	if (hrb) ready.pop_front();
-	lock->unlock();
-
-	if (hrb) MG_DEBUG(("httpd-response-buffer: giving up a got ready response"));
-	return hrb;
-    }
-
-    void enqueue(HttpdResponseBuffer *hrb) {
+    void enqueue(HttpdConnection *connection) {
 	lock->lock();
-	waiting.push_back(hrb);
+	waiting.push_back(connection);
 	cond->signal();
 	lock->unlock();
 	MG_DEBUG(("httpd-response-loader: enqueued a new read request"));
@@ -118,8 +161,7 @@ public:
 private:
     PiMutex *lock;
     PiCond *cond;
-    std::list<HttpdResponseBuffer *> ready;
-    std::list<HttpdResponseBuffer *> waiting;
+    std::list<HttpdConnection *> waiting;
 };
 
 HttpdServer::HttpdServer() {
@@ -164,7 +206,7 @@ HttpdServer *HttpdServer::get() {
 }
 
 void HttpdServer::start(int port) {
-    mg_log_set(MG_LL_DEBUG);
+    mg_log_set(MG_LL_INFO);
     mg_mgr_init(&state->mgr);
     mg_wakeup_init(&state->mgr);
     if (mg_http_listen(&state->mgr, "http://0.0.0.0:9999", (mg_event_handler_t) HttpdServer::mongoose_callback_proxy, &state->mgr) == NULL) {
@@ -185,18 +227,31 @@ void HttpdServer::mongoose_callback(struct mg_connection *c, int ev, void *ev_da
 	    mg_http_reply(c, 404, "", "File not found.\n");
 	} else {
 	    struct mg_str ct = guess_content_type(hm->uri, NULL);
-
 	    mg_printf(c, "%.*s 200 OK\r\nContent-Type: %.*s\r\nContent-Length: %d\r\n\r\n", hm->proto.len, hm->proto.buf, ct.len, ct.buf, response->get_n());
+
 	    const void *raw = response->get_raw_data();
 	    if (raw) {
 		mg_send(c, raw, response->get_n());
 	        c->is_resp = 0;
 	    } else {
-		loader->enqueue(new HttpdResponseBuffer(&state->mgr, c, response));
+		if (connections[c->id] == NULL) {
+		    connections[c->id] = new HttpdConnection(c);
+		}
+		connections[c->id]->new_response(response);
 	    }
 	}
 	break;
     }
+
+    case MG_EV_WRITE:
+	MG_DEBUG(("callback: ev-write"));
+	break;
+
+    case MG_EV_CLOSE:
+	MG_DEBUG(("callback: ev-close"));
+	delete connections[c->id];
+	connections.erase(c->id);
+	break;
 
     case MG_EV_ERROR: MG_DEBUG(("callback: ev-error")); break;
     case MG_EV_OPEN: MG_DEBUG(("callback: ev-open")); break;
@@ -206,8 +261,6 @@ void HttpdServer::mongoose_callback(struct mg_connection *c, int ev, void *ev_da
     case MG_EV_ACCEPT: MG_DEBUG(("callback: ev-accept")); break;
     case MG_EV_TLS_HS: MG_DEBUG(("callback: ev-tls-hs")); break;
     case MG_EV_READ: MG_DEBUG(("callback: ev-read")); break;
-    case MG_EV_WRITE: MG_DEBUG(("callback: ev-write")); break;
-    case MG_EV_CLOSE: MG_DEBUG(("callback: ev-close")); break;
     case MG_EV_HTTP_HDRS: MG_DEBUG(("callback: ev-http-hdrs")); break;
     case MG_EV_WS_OPEN: MG_DEBUG(("callback: ev-ws-open")); break;
     case MG_EV_WS_MSG: MG_DEBUG(("callback: ev-ws-msg")); break;
@@ -219,14 +272,7 @@ void HttpdServer::mongoose_callback(struct mg_connection *c, int ev, void *ev_da
     case MG_EV_WAKEUP: MG_DEBUG(("callback: ev-wakeup")); break;
     }
 
-    HttpdResponseBuffer *rb;
-    while ((rb = loader->get_ready_response()) != NULL) {
-	if (rb->connection_send() && ! rb->is_eof()) {
-	    loader->enqueue(rb);
-	} else {
-	    delete rb;
-	}
-    }
+    if (connections[c->id]) connections[c->id]->send_if_possible();
 }
 
 HttpdResponse *HttpdServer::get(std::string fname) {
@@ -255,4 +301,18 @@ HttpdResponse *HttpdServer::get(std::string fname) {
     }
 
     return NULL;
+}
+
+void HttpdServer::loader_enqueue(HttpdConnection *connection) {
+    loader->enqueue(connection);
+}
+
+void HttpdServer::wakeup(HttpdConnection *connection) {
+    int id = connection->get_id();
+
+    if (! mg_wakeup(&state->mgr, id, NULL, 0)) {
+	MG_INFO(("failed to wakeup connection %d", id));
+    } else {
+	MG_DEBUG(("triggered wakeup connection %d", id));
+    }
 }
