@@ -22,6 +22,7 @@ public:
     }
     virtual Buffer *get_sub_buffer(size_t n) = 0;
     virtual int get_n() = 0;
+    virtual const void *get_raw_data() { return NULL; }
 };
 
 class BufferFile : public Buffer {
@@ -60,6 +61,8 @@ public:
 
     const void *get_data() { return buffer;}
     int get_n() override { return n; }
+
+    const void *get_raw_data() override { return buffer; }
 
 private:
     const void *buffer;
