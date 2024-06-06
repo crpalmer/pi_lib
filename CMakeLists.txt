@@ -15,6 +15,8 @@ endif()
 
 include(platform.cmake)
 
+set(EXTERNAL_DIR "${CMAKE_CURRENT_LIST_DIR}/external")
+
 add_library(lib-pi STATIC)
 
 target_compile_definitions(lib-pi PRIVATE LIB_PI_INTERNAL)

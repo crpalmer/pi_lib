@@ -1,4 +1,4 @@
-include($ENV{FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
+include(${EXTERNAL_DIR}/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
 target_compile_options(FreeRTOS+FAT+CLI INTERFACE -Wno-error)
 
 target_sources(lib-pi PRIVATE

@@ -11,3 +11,6 @@
 [submodule "mongoose"]
 	path = external/mongoose
 	url = https://github.com/cesanta/mongoose
+[submodule "external/FreeRTOS-Kernel"]
+	path = external/FreeRTOS-Kernel
+	url = git@github.com:crpalmer/FreeRTOS-Kernel.git

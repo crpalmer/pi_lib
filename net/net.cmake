@@ -10,7 +10,7 @@ endif()
 
 target_include_directories(lib-pi PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
-  ${CMAKE_CURRENT_LIST_DIR}/../external/mongoose/
+  ${EXTERNAL_DIR}/mongoose/
 )
 
 
@@ -24,5 +24,5 @@ target_sources(lib-pi PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/net-reader.cpp
   ${CMAKE_CURRENT_LIST_DIR}/net-writer.cpp
   ${CMAKE_CURRENT_LIST_DIR}/sntp.c
-  ${CMAKE_CURRENT_LIST_DIR}/../external/mongoose/mongoose.c
+  ${EXTERNAL_DIR}/mongoose/mongoose.c
 )
