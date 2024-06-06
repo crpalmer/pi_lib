@@ -19,6 +19,10 @@
 
 static PiMutex *init_lock;
 static bool is_init = false;
+static PiMutex *ff_lock;
+
+static inline void lock() { if (ff_lock) ff_lock->lock(); }
+static inline void unlock() { if (ff_lock) ff_lock->unlock(); }
 
 static char *filename_to_sd_filename(const char *fname) {
     char *full_fname;
@@ -42,6 +46,7 @@ static char *filename_to_sd_filename(const char *fname) {
 static void init_once() {
     if (is_init) return;
     init_lock->lock();
+    ff_lock = new PiMutex();
     if (! is_init) {
 	is_init = true;
 
@@ -65,8 +70,10 @@ off_t file_size(const char *fname) {
     off_t size;
     char *full_fname = filename_to_sd_filename(fname);
 
+    lock();
     if (ff_stat(full_fname, &stat) >= 0) size = stat.st_size;
     else size = -1;
+    unlock();
 
     fatal_free(full_fname);
     return size;
@@ -77,14 +84,19 @@ file_exists(const char *fname)
 {
     FF_Stat_t stat;
 
-    return ff_stat(fname, &stat) >= 0;
+    lock();
+    bool ret = ff_stat(fname, &stat) >= 0;
+    unlock();
+    return ret;
 }
 
 C_DECL file_t *file_open(const char *fname, const char *mode) {
     init_once();
 
     char *full_fname = filename_to_sd_filename(fname);
+    lock();
     file_t *file = ff_fopen(full_fname, mode);
+    unlock();
     fatal_free(full_fname);
 
     return file;
@@ -114,7 +126,9 @@ C_DECL int file_scanf(file_t *file, const char *fmt, ...) {
    assert(is_init);
    va_list va;
    va_start(va, fmt);
+   lock();
    int ret = ff_vfscanf(file, fmt, va);
+   unlock();
    va_end(va);
 
    return 0;
@@ -122,36 +136,56 @@ C_DECL int file_scanf(file_t *file, const char *fmt, ...) {
 #endif
 
 C_DECL bool file_gets(file_t *file, char *buf, int n_buf) {
-    return ff_fgets(buf, n_buf, (FF_FILE *) file) != NULL;
+    lock();
+    bool ret = ff_fgets(buf, n_buf, (FF_FILE *) file) != NULL;
+    unlock();
+    return ret;
 }
 
 C_DECL size_t file_write(file_t *file, void *data, size_t n_data) {
    assert(is_init);
-   return ff_fwrite(data, 1, n_data, (FF_FILE *) file);
+   lock();
+   size_t ret = ff_fwrite(data, 1, n_data, (FF_FILE *) file);
+   unlock();
+   return ret;
 }
 
 C_DECL size_t file_read(file_t *file, void *data, size_t n_data) {
    assert(is_init);
-   return ff_fread(data, 1, n_data, (FF_FILE *) file);
+   lock();
+   size_t ret = ff_fread(data, 1, n_data, (FF_FILE *) file);
+   unlock();
+   return ret;
 }
 
 
 C_DECL bool file_seek_abs(file_t *file, unsigned long pos) {
    assert(is_init);
-   return ff_fseek((FF_FILE *) file, (long) pos, SEEK_SET);
+   lock();
+   size_t ret = ff_fseek((FF_FILE *) file, (long) pos, SEEK_SET);
+   unlock();
+   return ret;
 }
 
 C_DECL bool file_seek_rel(file_t *file, long delta) {
    assert(is_init);
-   return ff_fseek((FF_FILE *) file, (long) delta, SEEK_CUR);
+   lock();
+   bool ret = ff_fseek((FF_FILE *) file, (long) delta, SEEK_CUR);
+   unlock();
+   return ret;
 }
 
 C_DECL void file_close(file_t *file) {
    assert(is_init);
+   lock();
    ff_fclose((FF_FILE *) file);
+   unlock();
 }
 
 C_DECL bool file_is_eof(file_t *file) {
    assert(is_init);
-   return ff_feof((FF_FILE *) file);
+   lock();
+   bool ret = ff_feof((FF_FILE *) file);
+   unlock();
+   return ret;
 }
