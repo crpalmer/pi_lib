@@ -8,22 +8,22 @@
 
 typedef std::map<std::string, std::string> cgi_params_t;
 
+class HttpdConnection;
+
 class HttpdResponse {
 public:
-    HttpdResponse(Buffer *buffer, bool has_headers = false) : buffer(buffer), buffer_has_headers(has_headers) {
+    HttpdResponse(Buffer *buffer) : buffer(buffer) {
     }
     ~HttpdResponse() { delete buffer; }
 
     int read(void *buf, int n) { return buffer->read(buf, n); }
     int get_n() { return buffer->get_n(); }
     bool is_eof() { return buffer->is_eof(); }
-    bool has_headers() { return buffer_has_headers; }
 
     const void *get_raw_data() { return buffer->get_raw_data(); }
 
 private:
     Buffer *buffer;
-    bool buffer_has_headers;
 };
 
 class HttpdFileHandler {

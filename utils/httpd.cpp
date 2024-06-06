@@ -37,13 +37,6 @@ private:
     std::string path;
 };
 
-class SecretFile : public HttpdFileHandler {
-public:
-    HttpdResponse *open() override {
-	return new HttpdResponse(new BufferBuffer("HTTP/1.0 200 OK\nContent-Type: text/plain\n\nThis is my secret!\n"), true);
-    }
-};
-
 class MyConsole : public PiThread, public ThreadsConsole {
 public:
     MyConsole() : PiThread("console"), ThreadsConsole(new StdinReader(), new StdoutWriter()) { start(); }
@@ -60,7 +53,6 @@ threads_main(int argc, char **argv)
 
     HttpdServer *httpd = HttpdServer::get();
     httpd->add_file_handler("/hello.html", new HelloFile());
-    httpd->add_file_handler("/secret", new SecretFile());
     httpd->add_file_handler("/audio/laugh.wav", new FilesystemFileHandler("/laugh.wav"));
     httpd->add_prefix_handler("/www", new HttpdFilesystemHandler("/www"));
     httpd->add_prefix_handler("/tmp/wave", new HttpdFilesystemHandler("/tmp/2121_wave_cafe"));
