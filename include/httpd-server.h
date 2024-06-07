@@ -12,10 +12,22 @@ class HttpdConnection;
 
 class HttpdResponse {
 public:
-    HttpdResponse(Buffer *buffer) : buffer(buffer) {
-    }
+    HttpdResponse(Buffer *buffer) : buffer(buffer) { }
     HttpdResponse(std::string string) : HttpdResponse(new StrdupBuffer(string)) { }
+
     ~HttpdResponse() { delete buffer; }
+
+    void set_status(int status) {
+	this->status = status;
+    }
+
+    void add_header(std::string header) {
+	headers += header;
+    }
+
+    void set_content_type(std::string content_type) {
+	this->content_type = content_type;
+    }
 
     int read(void *buf, int n) { return buffer->read(buf, n); }
     int get_n() { return buffer->get_n(); }
@@ -23,8 +35,15 @@ public:
 
     const void *get_raw_data() { return buffer->get_raw_data(); }
 
+    auto get_status() { return status; }
+    auto get_content_type() { return content_type; }
+    auto get_headers() { return headers; }
+
 private:
     Buffer *buffer;
+    int status = 200;
+    std::string content_type;
+    std::string headers;
 };
 
 class HttpdFileHandler {
@@ -52,11 +71,11 @@ public:
 	return &instance;
     }
 
-    void add_file_handler(const char *path, HttpdFileHandler *handler) {
+    void add_file_handler(std::string path, HttpdFileHandler *handler) {
 	file_handlers[path] = handler;
     }
 
-    void add_prefix_handler(const char *prefix, HttpdPrefixHandler *handler) {
+    void add_prefix_handler(std::string prefix, HttpdPrefixHandler *handler) {
 	prefix_handlers[prefix] = handler;
     }
 
