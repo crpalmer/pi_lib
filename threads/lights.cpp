@@ -16,7 +16,7 @@ public:
 
 class BlinkOneAction : public Action {
 public:
-    BlinkOneAction(Output *light) : light(light), state(1)
+    BlinkOneAction(Light *light) : light(light), state(1)
     {}
 
     void step() {
@@ -25,8 +25,8 @@ public:
     }
 
 private:
-    Output *light;
-    int      state;
+    Light *light;
+    int    state;
 };
 
 class BlinkAllAction : public Action {
@@ -41,8 +41,8 @@ public:
 
 private:
     Lights *lights;
-    Output *light;
-    int      state;
+    Light  *light;
+    int     state;
 };
 
 class BlinkRandomAction : public Action {
@@ -51,8 +51,8 @@ public:
     {
 	n = 0;
 
-	l = new Output*[lights->lights.size()];
-	for (Output *&o : lights->lights) {
+	l = new Light*[lights->lights.size()];
+	for (Light *&o : lights->lights) {
 	    l[n++] = o;
 	}
     }
@@ -65,14 +65,14 @@ public:
 
 private:
     Lights *lights;
-    Output **l;
-    Output *picked;
+    Light  **l;
+    Light  *picked;
     unsigned n;
 };
 
 class ChaseAction : public Action {
 public:
-    ChaseAction(std::list<Output *> lights) : lights(lights), last(NULL)
+    ChaseAction(std::list<Light *> lights) : lights(lights), last(NULL)
     {
 	it = this->lights.begin();
     }
@@ -88,13 +88,13 @@ public:
     }
 
 private:
-    std::list<Output *> lights;
-    std::list<Output *>::iterator it;
-    Output *last;
+    std::list<Light *> lights;
+    std::list<Light *>::iterator it;
+    Light *last;
 };
 
 void
-Lights::add(Output *light)
+Lights::add(Light *light)
 {
     assert(light);
     lights.push_back(light);
@@ -103,7 +103,7 @@ Lights::add(Output *light)
 void
 Lights::set_all(unsigned value)
 {
-    std::list<Output *> :: iterator it;
+    std::list<Light *> :: iterator it;
 
     for (it = lights.begin(); it != lights.end(); it++) {
 	(*it)->set(value);
@@ -156,7 +156,7 @@ Lights::blink_all()
 }
 
 void
-Lights::blink_one(Output *l)
+Lights::blink_one(Light *l)
 {
     set_action(new BlinkOneAction(l));
 }
