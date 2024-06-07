@@ -171,7 +171,8 @@ void HttpdServer::start(int port) {
     mg_log_set(MG_LL_INFO);
     mg_mgr_init(&state->mgr);
     mg_wakeup_init(&state->mgr);
-    if (mg_http_listen(&state->mgr, "http://0.0.0.0:9999", (mg_event_handler_t) HttpdServer::mongoose_callback_proxy, &state->mgr) == NULL) {
+    std::string listen_url = "http://0.0.0.0:" + std::to_string(port);
+    if (mg_http_listen(&state->mgr, listen_url.c_str(), (mg_event_handler_t) HttpdServer::mongoose_callback_proxy, &state->mgr) == NULL) {
 	consoles_fatal_printf("Couldn't start the web server.\n");
     }
     while (true) mg_mgr_poll(&state->mgr, 10000);
