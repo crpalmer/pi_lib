@@ -14,6 +14,7 @@ class HttpdResponse {
 public:
     HttpdResponse(Buffer *buffer) : buffer(buffer) {
     }
+    HttpdResponse(std::string string) : HttpdResponse(new StrdupBuffer(string)) { }
     ~HttpdResponse() { delete buffer; }
 
     int read(void *buf, int n) { return buffer->read(buf, n); }
@@ -36,7 +37,12 @@ public:
 class HttpdPrefixHandler {
 public:
     virtual ~HttpdPrefixHandler() { }
-    virtual HttpdResponse *open(std::string fname) = 0;
+    virtual HttpdResponse *open(std::string path) = 0;
+};
+
+class HttpdDebugHandler : public HttpdPrefixHandler {
+public:
+    HttpdResponse *open(std::string path) override;
 };
 
 class HttpdServer {

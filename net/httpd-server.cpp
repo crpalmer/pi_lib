@@ -278,3 +278,9 @@ void HttpdServer::wakeup(HttpdConnection *connection) {
 	MG_DEBUG(("triggered wakeup connection %d", id));
     }
 }
+
+HttpdResponse *HttpdDebugHandler::open(std::string path) {
+    if (path == "threads") return new HttpdResponse(pi_threads_get_state());
+    if (path == "free") return new HttpdResponse(std::to_string(pi_threads_get_free_ram()));
+    return new HttpdResponse("Invalid request [" + path + "]");
+}
