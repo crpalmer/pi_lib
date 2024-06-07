@@ -66,6 +66,7 @@ void AudioPlayer::main(void) {
 
 	mutex->unlock();
 
+	audio->configure(buffer);
         size_t n = audio->get_recommended_buffer_size();
         uint8_t *buf = (uint8_t *) fatal_malloc(n);
 
