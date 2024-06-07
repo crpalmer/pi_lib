@@ -124,3 +124,7 @@ size_t pi_threads_get_free_ram() {
 void pi_threads_dump_state() {
     consoles_printf("No state dump available for the Pi\n");
 }
+
+std::string pi_threads_get_state() {
+    return "No state dump available for the Pi\n";
+}

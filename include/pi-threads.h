@@ -37,7 +37,11 @@ void pi_cond_broadcast(pi_cond_t *cond);
 void pi_cond_destroy(pi_cond_t *cond);
 
 #ifdef __cplusplus
+
 };
+
+#include <string>
+std::string pi_threads_get_state();
 
 #endif
 

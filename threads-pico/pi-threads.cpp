@@ -187,12 +187,40 @@ pi_threads_dump_state() {
 
 	aff = vTaskCoreAffinityGet(status[i].xHandle);
 
-	consoles_printf("%3d %-16s %-5s %4d %4ld  %d%d\n", status[i].xTaskNumber, status[i].pcTaskName, task_state_to_str(status[i].eCurrentState), status[i].uxCurrentPriority, status[i].usStackHighWaterMark, aff&1, (aff>>1)&1);
+	consoles_printf("%3d %-16s %-5s %4d %4d  %d%d\n", (int) status[i].xTaskNumber, status[i].pcTaskName, task_state_to_str(status[i].eCurrentState), (int) status[i].uxCurrentPriority, (int) status[i].usStackHighWaterMark, (int) (aff&1), (int) ((aff>>1)&1));
     }
 
     //vTaskPreemptionEnable();
 
     fatal_free(status);
+}
+
+std::string
+pi_threads_get_state() {
+    //vTaskPreemptionDisable();
+
+    int n_tasks = uxTaskGetNumberOfTasks() + 2;	// just in case somehow 2 get created between calls!
+    TaskStatus_t *status = (TaskStatus_t *) fatal_malloc(sizeof(*status) * n_tasks);
+    unsigned long total_run_time;
+    n_tasks = uxTaskGetSystemState(status, n_tasks, &total_run_time);
+
+    std::string response = " #  Task Name        State Prio Stack Cores\n";
+    response +=            "--- ---------------- ----- ---- ----- -----\n";
+    for (int i = 0; i < n_tasks; i++) {
+	UBaseType_t aff;
+	char buffer[100];
+
+	aff = vTaskCoreAffinityGet(status[i].xHandle);
+
+	snprintf(buffer, sizeof(buffer), "%3d %-16s %-5s %4d %4d  %d%d\n", (int) status[i].xTaskNumber, status[i].pcTaskName, task_state_to_str(status[i].eCurrentState), (int) status[i].uxCurrentPriority, (int) status[i].usStackHighWaterMark, (int) (aff&1), (int) ((aff>>1)&1));
+	response += buffer;
+    }
+
+    //vTaskPreemptionEnable();
+
+    fatal_free(status);
+
+    return response;
 }
 
 void
