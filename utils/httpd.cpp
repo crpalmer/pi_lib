@@ -11,30 +11,11 @@
 #include "stdout-writer.h"
 #include "threads-console.h"
 
-class HelloFile : public HttpdFileHandler {
+class HelloFile : public HttpdFilenameHandler {
 public:
     HttpdResponse *open() override {
 	return new HttpdResponse(new BufferBuffer("hello!\n"));
     }
-};
-
-class FilesystemFileHandler : public HttpdFileHandler {
-public:
-    FilesystemFileHandler(std::string path) : path(path) { }
-
-    HttpdResponse *open() override {
-	Buffer *b = buffer_file_open(path);
-	if (! b) {
-	    fprintf(stderr, "Failed to open: %s\n", path.c_str());
-	    return NULL;
-	}
-
-printf("returning %s: %d\n", path.c_str(), b->get_n());
-	return new HttpdResponse(b);
-    }
-
-private:
-    std::string path;
 };
 
 class MyConsole : public PiThread, public ThreadsConsole {
@@ -53,7 +34,7 @@ threads_main(int argc, char **argv)
 
     auto httpd = HttpdServer::get();
     httpd->add_file_handler("/hello.html", new HelloFile());
-    httpd->add_file_handler("/audio/laugh.wav", new FilesystemFileHandler("/laugh.wav"));
+    httpd->add_file_handler("/audio/laugh.wav", new HttpdFileHandler("/laugh.wav"));
     httpd->add_prefix_handler("/www", new HttpdFilesystemHandler("/www"));
     httpd->add_prefix_handler("/tmp/wave", new HttpdFilesystemHandler("/tmp/2121_wave_cafe"));
     httpd->add_prefix_handler("/www/wave", new HttpdFilesystemHandler("/2121_wave_cafe"));

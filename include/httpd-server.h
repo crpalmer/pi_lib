@@ -46,11 +46,24 @@ private:
     std::string headers;
 };
 
-class HttpdFileHandler {
+class HttpdFilenameHandler {
 public:
-    virtual ~HttpdFileHandler() { }
+    virtual ~HttpdFilenameHandler() { }
     virtual HttpdResponse *open() = 0;
-    virtual bool try_prefixes() { return false; }
+};
+
+class HttpdFileHandler : public HttpdFilenameHandler {
+public:
+    HttpdFileHandler(std::string filename) : filename(filename) { }
+
+    virtual HttpdResponse *open() {
+	BufferFile *buffer = buffer_file_open(filename);
+	if (buffer) return new HttpdResponse(buffer);
+	else return NULL;
+    }
+
+private:
+    std::string filename;
 };
 
 class HttpdPrefixHandler {
@@ -71,7 +84,7 @@ public:
 	return &instance;
     }
 
-    void add_file_handler(std::string path, HttpdFileHandler *handler) {
+    void add_file_handler(std::string path, HttpdFilenameHandler *handler) {
 	file_handlers[path] = handler;
     }
 
@@ -92,7 +105,7 @@ protected:
     friend class HttpdConnection;
 
 private:
-    std::map<std::string, HttpdFileHandler *> file_handlers;
+    std::map<std::string, HttpdFilenameHandler *> file_handlers;
     std::map<std::string, HttpdPrefixHandler *> prefix_handlers;
     std::map<int, HttpdConnection *> connections;
     struct httpd_internal_stateS *state;
