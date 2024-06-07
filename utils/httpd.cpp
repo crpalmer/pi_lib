@@ -51,13 +51,13 @@ threads_main(int argc, char **argv)
     wifi_init(CYW43_HOST_NAME);
     wifi_wait_for_connection();
 
-    HttpdServer &httpd = HttpdServer::get();
-    httpd.add_file_handler("/hello.html", new HelloFile());
-    httpd.add_file_handler("/audio/laugh.wav", new FilesystemFileHandler("/laugh.wav"));
-    httpd.add_prefix_handler("/www", new HttpdFilesystemHandler("/www"));
-    httpd.add_prefix_handler("/tmp/wave", new HttpdFilesystemHandler("/tmp/2121_wave_cafe"));
-    httpd.add_prefix_handler("/www/wave", new HttpdFilesystemHandler("/2121_wave_cafe"));
-    httpd.start(9999);
+    auto httpd = HttpdServer::get();
+    httpd->add_file_handler("/hello.html", new HelloFile());
+    httpd->add_file_handler("/audio/laugh.wav", new FilesystemFileHandler("/laugh.wav"));
+    httpd->add_prefix_handler("/www", new HttpdFilesystemHandler("/www"));
+    httpd->add_prefix_handler("/tmp/wave", new HttpdFilesystemHandler("/tmp/2121_wave_cafe"));
+    httpd->add_prefix_handler("/www/wave", new HttpdFilesystemHandler("/2121_wave_cafe"));
+    httpd->start(9999);
 }
 
 int

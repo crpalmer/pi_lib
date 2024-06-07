@@ -47,9 +47,9 @@ public:
 
 class HttpdServer {
 public:
-    static HttpdServer &get() {
+    static HttpdServer *get() {
 	static HttpdServer instance;
-	return instance;
+	return &instance;
     }
 
     void add_file_handler(const char *path, HttpdFileHandler *handler) {
@@ -63,7 +63,7 @@ public:
     void start(int port = 80);
 
     static void mongoose_callback_proxy(struct mg_connection *c, int ev, void *ev_data) {
-	get().mongoose_callback(c, ev, ev_data);
+	get()->mongoose_callback(c, ev, ev_data);
     }
 
 protected:

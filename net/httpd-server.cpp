@@ -47,7 +47,7 @@ public:
 	assert(response == NULL);
 	response = new_response;
 	enqueue_is_active = true;
-	if (response) HttpdServer::get().loader_enqueue(this);
+	if (response) HttpdServer::get()->loader_enqueue(this);
     }
 
     int get_id() { return c->id; }
@@ -64,7 +64,7 @@ public:
 	cond->signal();
 	lock->unlock();
 
-	HttpdServer::get().wakeup(this);
+	HttpdServer::get()->wakeup(this);
     }
 
     bool is_eof() {
@@ -98,7 +98,7 @@ public:
 	    } else {
 		assert(! enqueue_is_active);
 		enqueue_is_active = true;
-		HttpdServer::get().loader_enqueue(this);
+		HttpdServer::get()->loader_enqueue(this);
 	    }
 	}
 
