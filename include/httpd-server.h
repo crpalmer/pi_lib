@@ -23,6 +23,7 @@ public:
 
     void add_header(std::string header) {
 	headers += header;
+	headers += "\r\n";
     }
 
     void set_content_type(std::string content_type) {
@@ -73,6 +74,21 @@ public:
 
 private:
     std::string filename;
+};
+
+class HttpdRedirectHandler : public HttpdFilenameHandler {
+public:
+    HttpdRedirectHandler(std::string destination) : destination(destination) { }
+
+    virtual HttpdResponse *open() {
+	HttpdResponse *response = new HttpdResponse("");
+	response->set_status(302);
+	response->add_header("Location: " + destination);
+	return response;
+    }
+
+private:
+    std::string destination;
 };
 
 class HttpdPrefixHandler {
