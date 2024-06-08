@@ -39,6 +39,15 @@ public:
     auto get_content_type() { return content_type; }
     auto get_headers() { return headers; }
 
+    const char *get_status_str() {
+	switch(status) {
+	case 302: return "FOUND";
+	case 404: return "Not Found";
+	case 500: return "Internal Server Error";
+	default: return "OK";
+	}
+    }
+
 private:
     Buffer *buffer;
     int status = 200;

@@ -194,7 +194,7 @@ void HttpdServer::mongoose_callback(struct mg_connection *c, int ev, void *ev_da
 		struct mg_str mg_ct = guess_content_type(hm->uri, NULL);
 		ct = std::string(mg_ct.buf, mg_ct.len);
 	    }
-	    mg_printf(c, "%.*s %d OK\r\nContent-Type: %s\r\nContent-Length: %d\r\n%s\r\n", hm->proto.len, hm->proto.buf, response->get_status(), ct.c_str(), response->get_n(), response->get_headers().c_str());
+	    mg_printf(c, "%.*s %d %s\r\nContent-Type: %s\r\nContent-Length: %d\r\n%s\r\n", hm->proto.len, hm->proto.buf, response->get_status(), response->get_status_str(), ct.c_str(), response->get_n(), response->get_headers().c_str());
 
 	    const void *raw = response->get_raw_data();
 	    if (raw) {
