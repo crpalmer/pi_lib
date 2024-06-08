@@ -26,7 +26,7 @@ private:
 };
 
 void talk_once(Audio *audio, AudioPlayer *player, TalkingSkull *skull) {
-    Buffer *buffer = new BufferBuffer(laugh_wav, laugh_wav_len);
+    Buffer *buffer = new MemoryBuffer(laugh_wav, laugh_wav_len);
     AudioBuffer *audio_buffer = wav_open(buffer);
     delete buffer;
 

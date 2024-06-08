@@ -57,7 +57,7 @@ public:
     HttpdFileHandler(std::string filename) : filename(filename) { }
 
     virtual HttpdResponse *open() {
-	BufferFile *buffer = buffer_file_open(filename);
+	FileBuffer *buffer = file_buffer_open(filename);
 	if (buffer) return new HttpdResponse(buffer);
 	else return NULL;
     }

@@ -73,7 +73,7 @@ AudioBuffer *wav_open(Buffer *b) {
 }
 
 AudioBuffer *wav_open(const char *fname) {
-    BufferFile *b = buffer_file_open(fname);
+    FileBuffer *b = file_buffer_open(fname);
     if (! b) return NULL;
     AudioBuffer *wav = wav_open(b);
     delete b;

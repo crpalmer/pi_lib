@@ -6,7 +6,7 @@
 #include <string.h>
 #include "mem.h"
 
-class BufferBuffer;
+class MemoryBuffer;
 
 class Buffer {
 public:
@@ -26,10 +26,10 @@ public:
     virtual const void *get_raw_data() { return NULL; }
 };
 
-class BufferFile : public Buffer {
+class FileBuffer : public Buffer {
 public:
-    BufferFile(const char *fname, long start = 0, long max_bytes = -1, file_t *f = NULL);
-    ~BufferFile() override;
+    FileBuffer(const char *fname, long start = 0, long max_bytes = -1, file_t *f = NULL);
+    ~FileBuffer() override;
     bool is_eof() override;
     size_t read(void *buf, size_t n) override;
     int seek_abs(long pos) override;
@@ -48,11 +48,11 @@ private:
     file_t *f;
 };
 
-class BufferBuffer : public Buffer {
+class MemoryBuffer : public Buffer {
 public:
-    BufferBuffer(const void *buffer, size_t n) : buffer(buffer), n(n), at(0) {}
-    BufferBuffer(std::string text) : buffer(text.c_str()), n(text.length()), at(0) {}
-    ~BufferBuffer() override;
+    MemoryBuffer(const void *buffer, size_t n) : buffer(buffer), n(n), at(0) {}
+    MemoryBuffer(std::string text) : buffer(text.c_str()), n(text.length()), at(0) {}
+    ~MemoryBuffer() override;
     bool is_eof() override { return at == n; }
     size_t read(void *buf, size_t buf_size) override;
     int seek_abs(long pos) override;
@@ -70,12 +70,12 @@ protected:
     size_t n, at;
 };
 
-class StrdupBuffer : public BufferBuffer {
+class StrdupBuffer : public MemoryBuffer {
 public:
-    StrdupBuffer(std::string string) : BufferBuffer(fatal_strdup(string.c_str()), string.length()) { }
+    StrdupBuffer(std::string string) : MemoryBuffer(fatal_strdup(string.c_str()), string.length()) { }
     ~StrdupBuffer() override { fatal_free((void *) buffer); }
 };
 
-BufferFile *buffer_file_open(std::string fname);
+FileBuffer *file_buffer_open(std::string fname);
 
 #endif

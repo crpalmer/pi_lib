@@ -23,7 +23,7 @@ void threads_main(int argc, char **argv) {
 
 	pi_readline(buf, sizeof(buf));
 	if (strcmp(buf, "fanfare") == 0) {
-	    Buffer *buffer = new BufferBuffer(fanfare_wav, fanfare_wav_len);
+	    Buffer *buffer = new MemoryBuffer(fanfare_wav, fanfare_wav_len);
 	    audio_buffer = wav_open(buffer);
 	    delete buffer;
 	} else {

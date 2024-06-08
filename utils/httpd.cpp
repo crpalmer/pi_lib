@@ -14,7 +14,7 @@
 class HelloFile : public HttpdFilenameHandler {
 public:
     HttpdResponse *open() override {
-	return new HttpdResponse(new BufferBuffer("hello!\n"));
+	return new HttpdResponse(new MemoryBuffer("hello!\n"));
     }
 };
 
