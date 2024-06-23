@@ -5,6 +5,7 @@ int btstack_main(int argc, const char * argv[]);
 
 void thread_main(int argc, char **argv) {
     btstack_main(0, NULL);
+    while (1) ms_sleep(1000000);
 }
 
 int main(int argc, char **argv) {
