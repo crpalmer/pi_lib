@@ -5,6 +5,7 @@ add_compile_definitions("MG_ARCH=MG_ARCH_CUSTOM")
 if("${PLATFORM}" STREQUAL "pico")
   target_sources(lib-pi PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/bluetooth/a2dp-sink.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/bluetooth/bluetooth.cpp
     ${CMAKE_CURRENT_LIST_DIR}/wifi.c
   )
 endif()

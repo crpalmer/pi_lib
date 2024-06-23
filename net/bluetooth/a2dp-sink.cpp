@@ -94,8 +94,6 @@
 static btstack_sample_rate_compensation_t sample_rate_compensation;
 #endif
 
-static btstack_packet_callback_registration_t hci_event_callback_registration;
-
 static uint8_t  sdp_avdtp_sink_service_buffer[150];
 static uint8_t  sdp_avrcp_target_service_buffer[150];
 static uint8_t  sdp_avrcp_controller_service_buffer[200];
@@ -192,7 +190,6 @@ static a2dp_sink_demo_avrcp_connection_t a2dp_sink_demo_avrcp_connection;
  *
  * @text The Listing MainConfiguration shows how to set up AD2P Sink and AVRCP services.
  * Besides calling init() method for each service, you'll also need to register several packet handlers:
- * - hci_packet_handler - handles legacy pairing, here by using fixed '0000' pin code.
  * - a2dp_sink_packet_handler - handles events on stream connection status (established, released), the media codec configuration, and, the status of the stream itself (opened, paused, stopped).
  * - handle_l2cap_media_data_packet - used to receive streaming data. If STORE_TO_WAV_FILE directive (check btstack_config.h) is used, the SBC decoder will be used to decode the SBC data into PCM frames. The resulting PCM frames are then processed in the SBC Decoder callback.
  * - avrcp_packet_handler - receives AVRCP connect/disconnect event.
@@ -210,7 +207,6 @@ static a2dp_sink_demo_avrcp_connection_t a2dp_sink_demo_avrcp_connection;
  */
 
 /* LISTING_START(MainConfiguration): Setup Audio Sink and AVRCP services */
-static void hci_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
 static void a2dp_sink_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * packet, uint16_t event_size);
 static void handle_l2cap_media_data_packet(uint8_t seid, uint8_t *packet, uint16_t size);
 static void avrcp_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
@@ -218,15 +214,6 @@ static void avrcp_controller_packet_handler(uint8_t packet_type, uint16_t channe
 static void avrcp_target_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
 
 static int setup_demo(void){
-
-    // init protocols
-    l2cap_init();
-    sdp_init();
-#ifdef ENABLE_BLE
-    // Initialize LE Security Manager. Needed for cross-transport key derivation
-    sm_init();
-#endif
-
     // Init profiles
     a2dp_sink_init();
     avrcp_init();
@@ -304,11 +291,6 @@ static int setup_demo(void){
     // - Allow for role switch on outgoing connections
     //   - This allows A2DP Source, e.g. smartphone, to become master when we re-connect to it.
     gap_set_allow_role_switch(true);
-
-
-    // Register for HCI events
-    hci_event_callback_registration.callback = &hci_packet_handler;
-    hci_add_event_handler(&hci_event_callback_registration);
 
     // Inform about audio playback / test options
 #ifdef HAVE_POSIX_FILE_IO
@@ -609,18 +591,6 @@ static void dump_sbc_configuration(media_codec_configuration_sbc_t * configurati
     printf("    - allocation_method: %d\n", configuration->allocation_method);
     printf("    - bitpool_value [%d, %d] \n", configuration->min_bitpool_value, configuration->max_bitpool_value);
     printf("\n");
-}
-
-static void hci_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
-    UNUSED(channel);
-    UNUSED(size);
-    if (packet_type != HCI_EVENT_PACKET) return;
-    if (hci_event_packet_get_type(packet) == HCI_EVENT_PIN_CODE_REQUEST) {
-        bd_addr_t address;
-        printf("Pin code request - using '0000'\n");
-        hci_event_pin_code_request_get_bd_addr(packet, address);
-        gap_pin_code_response(address, "0000");
-    }
 }
 
 static void avrcp_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
@@ -960,36 +930,11 @@ static void a2dp_sink_packet_handler(uint8_t packet_type, uint16_t channel, uint
     }
 }
 
-static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
-    UNUSED(size);
-    UNUSED(channel);
-    bd_addr_t local_addr;
-    if (packet_type != HCI_EVENT_PACKET) return;
-    switch(hci_event_packet_get_type(packet)){
-        case BTSTACK_EVENT_STATE:
-            if (btstack_event_state_get_state(packet) != HCI_STATE_WORKING) return;
-            gap_local_bd_addr(local_addr);
-            printf("BTstack up and running on %s.\n", bd_addr_to_str(local_addr));
-            break;
-        default:
-            break;
-    }
-}
-
-static void init(void) {
-    net_platform_init();
-
-    // inform about BTstack state
-    hci_event_callback_registration.callback = &packet_handler;
-    hci_add_event_handler(&hci_event_callback_registration);
-}
-
 int btstack_main(int argc, const char * argv[]);
 int btstack_main(int argc, const char * argv[]){
     UNUSED(argc);
     (void)argv;
 
-    init();
     setup_demo();
 
     // turn on!
