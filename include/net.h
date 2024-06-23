@@ -34,6 +34,8 @@ int net_listen(uint16_t port);
 
 int net_get_sntp_time(const char *host, struct timespec *now);
 
+void net_platform_init();
+
 #ifdef __cplusplus
 };
 #endif

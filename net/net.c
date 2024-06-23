@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#ifdef PLATFORM_pico
+#include "pico/cyw43_arch.h"
+#endif
 #include "pi.h"
 #include "consoles.h"
 #include "net.h"
@@ -114,4 +117,17 @@ net_listen(uint16_t port)
     consoles_printf("%s: on socket %d port %d\n", __func__, sock, port);
 
     return sock;
+}
+
+void net_platform_init() {
+    // Potential race condition but it's not supposed to be called with concurrency!
+    static bool init = false;
+    if (init) return;
+    init = true;
+
+#ifdef PLATFORM_pico
+    if (cyw43_arch_init()) {
+        consoles_fatal_printf("failed to initialise cyw43_arch\n");
+    }
+#endif
 }

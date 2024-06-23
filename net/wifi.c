@@ -47,10 +47,7 @@ wifi_init(const char *hostname)
     m_connection = pi_mutex_new();
     c_connection = pi_cond_new();
 
-    if (cyw43_arch_init()) {
-        printf("failed to initialise\n");
-        exit(1);
-    }
+    net_platform_init();
 
     cyw43_arch_enable_sta_mode();
     cyw43_wifi_pm(&cyw43_state, cyw43_pm_value(CYW43_NO_POWERSAVE_MODE, 20, 1, 1, 1));

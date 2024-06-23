@@ -62,8 +62,8 @@
 // *****************************************************************************
 
 #include "pi.h"
-#include "pico/cyw43_arch.h"
 #include "consoles.h"
+#include "net.h"
 
 #include <inttypes.h>
 #include <stdint.h>
@@ -977,9 +977,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 }
 
 static void init(void) {
-    if (cyw43_arch_init()) {
-        consoles_fatal_printf("failed to initialise cyw43_arch\n");
-    }
+    net_platform_init();
 
     // inform about BTstack state
     hci_event_callback_registration.callback = &packet_handler;
