@@ -33,6 +33,10 @@ if(${PLATFORM} STREQUAL pico)
   target_link_libraries(lib-pi PRIVATE
     pico_stdlib
     pico_cyw43_arch_lwip_sys_freertos
+    pico_btstack_ble
+    pico_btstack_classic
+    pico_btstack_cyw43
+    pico_btstack_sbc_decoder
     hardware_adc
     hardware_dma
     hardware_i2c

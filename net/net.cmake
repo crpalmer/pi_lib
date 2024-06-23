@@ -4,12 +4,14 @@ add_compile_definitions("MG_ARCH=MG_ARCH_CUSTOM")
 
 if("${PLATFORM}" STREQUAL "pico")
   target_sources(lib-pi PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/bluetooth/a2dp-sink.cpp
     ${CMAKE_CURRENT_LIST_DIR}/wifi.c
   )
 endif()
 
 target_include_directories(lib-pi PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
+  ${CMAKE_CURRENT_LIST_DIR}/bluetooth
   ${EXTERNAL_DIR}/mongoose/
 )
 
