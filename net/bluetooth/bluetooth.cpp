@@ -27,6 +27,10 @@ void bluetooth_init(void) {
     hci_event_callback_registration.callback = &packet_handler;
     hci_add_event_handler(&hci_event_callback_registration);
 
+    // When using freertos this seems to deadlock when trying to write a connection
+    // key to flash memory.  Turning off bondable_mode seems to fix that.
+    gap_set_bondable_mode(false);
+
     // init protocols
     l2cap_init();
     sdp_init();
