@@ -960,11 +960,38 @@ static void a2dp_sink_packet_handler(uint8_t packet_type, uint16_t channel, uint
     }
 }
 
+static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
+    UNUSED(size);
+    UNUSED(channel);
+    bd_addr_t local_addr;
+    if (packet_type != HCI_EVENT_PACKET) return;
+    switch(hci_event_packet_get_type(packet)){
+        case BTSTACK_EVENT_STATE:
+            if (btstack_event_state_get_state(packet) != HCI_STATE_WORKING) return;
+            gap_local_bd_addr(local_addr);
+            printf("BTstack up and running on %s.\n", bd_addr_to_str(local_addr));
+            break;
+        default:
+            break;
+    }
+}
+
+static void init(void) {
+    if (cyw43_arch_init()) {
+        consoles_fatal_printf("failed to initialise cyw43_arch\n");
+    }
+
+    // inform about BTstack state
+    hci_event_callback_registration.callback = &packet_handler;
+    hci_add_event_handler(&hci_event_callback_registration);
+}
+
 int btstack_main(int argc, const char * argv[]);
 int btstack_main(int argc, const char * argv[]){
     UNUSED(argc);
     (void)argv;
 
+    init();
     setup_demo();
 
     // turn on!
