@@ -79,8 +79,6 @@
 #include "btstack_sample_rate_compensation.h"
 #endif
 
-#include "btstack_ring_buffer.h"
-
 static void C_a2dp_sink_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * packet, uint16_t event_size);
 static void C_handle_l2cap_media_data_packet(uint8_t seid, uint8_t *packet, uint16_t size);
 
@@ -199,27 +197,9 @@ static uint8_t media_sbc_codec_capabilities[] = {
 static btstack_sbc_decoder_state_t state;
 static btstack_sbc_mode_t mode = SBC_MODE_STANDARD;
 
-// ring buffer for SBC Frames
-// below 30: add samples, 30-40: fine, above 40: drop samples
-#define OPTIMAL_FRAMES_MIN 60
-#define OPTIMAL_FRAMES_MAX 80
-#define ADDITIONAL_FRAMES  30
-static uint8_t sbc_frame_storage[(OPTIMAL_FRAMES_MAX + ADDITIONAL_FRAMES) * MAX_SBC_FRAME_SIZE];
-static btstack_ring_buffer_t sbc_frame_ring_buffer;
-static unsigned int sbc_frame_size;
-
-// overflow buffer for not fully used sbc frames, with additional frames for resampling
-static uint8_t decoded_audio_storage[(128+16) * BYTES_PER_FRAME];
-static btstack_ring_buffer_t decoded_audio_ring_buffer;
-
 #ifdef HAVE_BTSTACK_AUDIO_EFFECTIVE_SAMPLERATE
 static int l2cap_stream_started;
 #endif
-static btstack_resample_t resample_instance;
-
-// temp storage of lower-layer request for audio samples
-static int16_t * request_buffer;
-static int       request_frames;
 
 // sink state
 static int volume_percentage = 0;
@@ -340,113 +320,25 @@ static int setup_demo(void){
 }
 /* LISTING_END */
 
-
-static void playback_handler(int16_t * buffer, uint16_t num_audio_frames){
-    // called from lower-layer but guaranteed to be on main thread
-    if (sbc_frame_size == 0){
-        memset(buffer, 0, num_audio_frames * BYTES_PER_FRAME);
-        return;
-    }
-
-    // first fill from resampled audio
-    uint32_t bytes_read;
-    btstack_ring_buffer_read(&decoded_audio_ring_buffer, (uint8_t *) buffer, num_audio_frames * BYTES_PER_FRAME, &bytes_read);
-    buffer          += bytes_read / NUM_CHANNELS;
-    num_audio_frames   -= bytes_read / BYTES_PER_FRAME;
-
-    // then start decoding sbc frames using request_* globals
-    request_buffer = buffer;
-    request_frames = num_audio_frames;
-    while (request_frames && btstack_ring_buffer_bytes_available(&sbc_frame_ring_buffer) >= sbc_frame_size){
-        // decode frame
-        uint8_t sbc_frame[MAX_SBC_FRAME_SIZE];
-        btstack_ring_buffer_read(&sbc_frame_ring_buffer, sbc_frame, sbc_frame_size, &bytes_read);
-        btstack_sbc_decoder_process_data(&state, 0, sbc_frame, sbc_frame_size);
-    }
-}
-
-static void handle_pcm_data(int16_t * data, int num_audio_frames, int num_channels, int sample_rate, void * context){
-    UNUSED(sample_rate);
-    UNUSED(context);
-    UNUSED(num_channels);   // must be stereo == 2
-
-    const btstack_audio_sink_t * audio_sink = btstack_audio_sink_get_instance();
-    if (!audio_sink){
-#ifdef STORE_TO_WAV_FILE
-        audio_frame_count += num_audio_frames;
-        wav_writer_write_int16(num_audio_frames * NUM_CHANNELS, data);
-#endif
-        return;
-    }
-
-    // resample into request buffer - add some additional space for resampling
-    int16_t  output_buffer[(128+16) * NUM_CHANNELS]; // 16 * 8 * 2
-    uint32_t resampled_frames = btstack_resample_block(&resample_instance, data, num_audio_frames, output_buffer);
-
-    // store data in btstack_audio buffer first
-    int frames_to_copy = btstack_min(resampled_frames, request_frames);
-    memcpy(request_buffer, output_buffer, frames_to_copy * BYTES_PER_FRAME);
-    request_frames  -= frames_to_copy;
-    request_buffer  += frames_to_copy * NUM_CHANNELS;
-
-    // and rest in ring buffer
-    int frames_to_store = resampled_frames - frames_to_copy;
-    if (frames_to_store){
-        int status = btstack_ring_buffer_write(&decoded_audio_ring_buffer, (uint8_t *)&output_buffer[frames_to_copy * NUM_CHANNELS], frames_to_store * BYTES_PER_FRAME);
-        if (status){
-            printf("Error storing samples in PCM ring buffer!!!\n");
-        }
-    }
+static void handle_pcm_data(int16_t * data, int num_audio_frames, int num_channels, int sample_rate, void * context) {
+    extern void play_buffer(int16_t *data, int n_bytes);
+    play_buffer(data, num_audio_frames * NUM_CHANNELS * 2);	// TODO use configuration
 }
 
 void SBCDecoder::media_init() {
     btstack_sbc_decoder_init(&state, mode, handle_pcm_data, NULL);
-
-    btstack_ring_buffer_init(&sbc_frame_ring_buffer, sbc_frame_storage, sizeof(sbc_frame_storage));
-    btstack_ring_buffer_init(&decoded_audio_ring_buffer, decoded_audio_storage, sizeof(decoded_audio_storage));
-    btstack_resample_init(&resample_instance, num_channels);
-
-    // setup audio playback
-    const btstack_audio_sink_t * audio = btstack_audio_sink_get_instance();
-    if (audio){
-        audio->init(NUM_CHANNELS, sampling_frequency, &playback_handler);
-    }
-
     audio_stream_started = false;
     media_initialized = true;
 }
 
 void SBCDecoder::start() {
     if (! media_initialized) return;
-
-#ifdef HAVE_BTSTACK_AUDIO_EFFECTIVE_SAMPLERATE
-    btstack_sample_rate_compensation_reset( &sample_rate_compensation, btstack_run_loop_get_time_ms() );
-#endif
-
-    // setup audio playback
-    const btstack_audio_sink_t * audio = btstack_audio_sink_get_instance();
-    if (audio){
-        audio->start_stream();
-    }
     audio_stream_started = true;
 }
 
 void SBCDecoder::pause(void) {
     if (! media_initialized) return;
-
-    // stop audio playback
     audio_stream_started = false;
-#ifdef HAVE_BTSTACK_AUDIO_EFFECTIVE_SAMPLERATE
-    l2cap_stream_started = 0;
-#endif
-
-    const btstack_audio_sink_t * audio = btstack_audio_sink_get_instance();
-    if (audio){
-        audio->stop_stream();
-    }
-    // discard pending data
-    btstack_ring_buffer_reset(&decoded_audio_ring_buffer);
-    btstack_ring_buffer_reset(&sbc_frame_ring_buffer);
 }
 
 void SBCDecoder::media_close() {
@@ -454,17 +346,6 @@ void SBCDecoder::media_close() {
 
     media_initialized = 0;
     audio_stream_started = 0;
-    sbc_frame_size = 0;
-#ifdef HAVE_BTSTACK_AUDIO_EFFECTIVE_SAMPLERATE
-    l2cap_stream_started = 0;
-#endif
-
-    // stop audio playback
-    const btstack_audio_sink_t * audio = btstack_audio_sink_get_instance();
-    if (audio){
-        printf("close stream\n");
-        audio->close();
-    }
 }
 
 /* @section Handle Media Data Packet 
@@ -500,55 +381,7 @@ void SBCDecoder::packet_handler(uint8_t seid, uint8_t *packet, uint16_t size) {
     int packet_length = size-pos;
     uint8_t *packet_begin = packet+pos;
 
-    const btstack_audio_sink_t * audio = btstack_audio_sink_get_instance();
-    // process data right away if there's no audio implementation active, e.g. on posix systems to store as .wav
-    if (!audio){
-        btstack_sbc_decoder_process_data(&state, 0, packet_begin, packet_length);
-        return;
-    }
-
-
-    // store sbc frame size for buffer management
-    sbc_frame_size = packet_length / sbc_header.num_frames;
-    int status = btstack_ring_buffer_write(&sbc_frame_ring_buffer, packet_begin, packet_length);
-    if (status != ERROR_CODE_SUCCESS){
-        printf("Error storing samples in SBC ring buffer!!!\n");
-    }
-
-    // decide on audio sync drift based on number of sbc frames in queue
-    int sbc_frames_in_buffer = btstack_ring_buffer_bytes_available(&sbc_frame_ring_buffer) / sbc_frame_size;
-#ifdef HAVE_BTSTACK_AUDIO_EFFECTIVE_SAMPLERATE
-    if( !l2cap_stream_started && audio_stream_started ) {
-        l2cap_stream_started = 1;
-        btstack_sample_rate_compensation_init( &sample_rate_compensation, btstack_run_loop_get_time_ms(), a2dp_sink_demo_a2dp_connection.sbc_configuration.sampling_frequency, FLOAT_TO_Q15(1.f) );
-    }
-    // update sample rate compensation
-    if( audio_stream_started && (audio != NULL)) {
-        uint32_t resampling_factor = btstack_sample_rate_compensation_update( &sample_rate_compensation, btstack_run_loop_get_time_ms(), sbc_header.num_frames*128, audio->get_samplerate() );
-        btstack_resample_set_factor(&resample_instance, resampling_factor);
-//        printf("sbc buffer level :            %d\n", btstack_ring_buffer_bytes_available(&sbc_frame_ring_buffer));
-    }
-#else
-    uint32_t resampling_factor;
-
-    // nominal factor (fixed-point 2^16) and compensation offset
-    uint32_t nominal_factor = 0x10000;
-    uint32_t compensation   = 0x00100;
-
-    if (sbc_frames_in_buffer < OPTIMAL_FRAMES_MIN){
-    	resampling_factor = nominal_factor - compensation;    // stretch samples
-    } else if (sbc_frames_in_buffer <= OPTIMAL_FRAMES_MAX){
-    	resampling_factor = nominal_factor;                   // nothing to do
-    } else {
-    	resampling_factor = nominal_factor + compensation;    // compress samples
-    }
-
-    btstack_resample_set_factor(&resample_instance, resampling_factor);
-#endif
-    // start stream if enough frames buffered
-    if (!audio_stream_started && sbc_frames_in_buffer >= OPTIMAL_FRAMES_MIN){
-        start();
-    }
+    btstack_sbc_decoder_process_data(&state, 0, packet_begin, packet_length);
 }
 
 static int read_sbc_header(uint8_t * packet, int size, int * offset, avdtp_sbc_codec_header_t * sbc_header){
@@ -638,6 +471,7 @@ static void avrcp_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t 
 
             avrcp_target_support_event(connection->avrcp_cid, AVRCP_NOTIFICATION_EVENT_VOLUME_CHANGED);
             avrcp_target_support_event(connection->avrcp_cid, AVRCP_NOTIFICATION_EVENT_BATT_STATUS_CHANGED);
+            avrcp_target_support_event(connection->avrcp_cid, AVRCP_NOTIFICATION_EVENT_NOW_PLAYING_CONTENT_CHANGED);
             avrcp_target_battery_status_changed(connection->avrcp_cid, battery_status);
         
             // query supported events:
@@ -888,7 +722,7 @@ void A2DPSink::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *pa
     if (packet_type != HCI_EVENT_PACKET) return;
     if (hci_event_packet_get_type(packet) != HCI_EVENT_A2DP_META) return;
 
-switch (packet[2]){
+    switch (packet[2]){
     case A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_OTHER_CONFIGURATION:
 	printf("A2DP  Sink      : Received non SBC codec - not implemented\n");
 	break;
@@ -947,6 +781,7 @@ switch (packet[2]){
 	break;
     
     default:
+printf("a2dp: %02x\n", packet[2]);
 	break;
     }
 }
