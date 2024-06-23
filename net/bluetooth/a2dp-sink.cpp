@@ -176,11 +176,6 @@ void A2DPSink::initialize() {
 
 }
 
-#ifdef HAVE_POSIX_FILE_IO
-#include "wav_util.h"
-#define STORE_TO_WAV_FILE
-#endif
-
 #define NUM_CHANNELS 2
 #define BYTES_PER_FRAME     (2*NUM_CHANNELS)
 #define MAX_SBC_FRAME_SIZE 120
@@ -199,12 +194,6 @@ static uint8_t media_sbc_codec_capabilities[] = {
     0xFF,//(AVDTP_SBC_BLOCK_LENGTH_16 << 4) | (AVDTP_SBC_SUBBANDS_8 << 2) | AVDTP_SBC_ALLOCATION_METHOD_LOUDNESS,
     2, 53
 };
-
-// WAV File
-#ifdef STORE_TO_WAV_FILE
-static uint32_t audio_frame_count = 0;
-static char * wav_filename = "a2dp_sink_demo.wav";
-#endif
 
 // SBC Decoder for WAV file or live playback
 static btstack_sbc_decoder_state_t state;
@@ -347,29 +336,12 @@ static int setup_demo(void){
     //   - This allows A2DP Source, e.g. smartphone, to become master when we re-connect to it.
     gap_set_allow_role_switch(true);
 
-    // Inform about audio playback / test options
-#ifdef HAVE_POSIX_FILE_IO
-    if (!btstack_audio_sink_get_instance()){
-        printf("No audio playback.\n");
-    } else {
-        printf("Audio playback supported.\n");
-    }
-#ifdef STORE_TO_WAV_FILE 
-   printf("Audio will be stored to \'%s\' file.\n",  wav_filename);
-#endif
-#endif
     return 0;
 }
 /* LISTING_END */
 
 
 static void playback_handler(int16_t * buffer, uint16_t num_audio_frames){
-
-#ifdef STORE_TO_WAV_FILE
-    int       wav_samples = num_audio_frames * NUM_CHANNELS;
-    int16_t * wav_buffer  = buffer;
-#endif
-    
     // called from lower-layer but guaranteed to be on main thread
     if (sbc_frame_size == 0){
         memset(buffer, 0, num_audio_frames * BYTES_PER_FRAME);
@@ -391,11 +363,6 @@ static void playback_handler(int16_t * buffer, uint16_t num_audio_frames){
         btstack_ring_buffer_read(&sbc_frame_ring_buffer, sbc_frame, sbc_frame_size, &bytes_read);
         btstack_sbc_decoder_process_data(&state, 0, sbc_frame, sbc_frame_size);
     }
-
-#ifdef STORE_TO_WAV_FILE
-    audio_frame_count += num_audio_frames;
-    wav_writer_write_int16(wav_samples, wav_buffer);
-#endif
 }
 
 static void handle_pcm_data(int16_t * data, int num_audio_frames, int num_channels, int sample_rate, void * context){
@@ -434,10 +401,6 @@ static void handle_pcm_data(int16_t * data, int num_audio_frames, int num_channe
 
 void SBCDecoder::media_init() {
     btstack_sbc_decoder_init(&state, mode, handle_pcm_data, NULL);
-
-#ifdef STORE_TO_WAV_FILE
-    wav_writer_open(wav_filename, num_channels, sampling_frequency);
-#endif
 
     btstack_ring_buffer_init(&sbc_frame_ring_buffer, sbc_frame_storage, sizeof(sbc_frame_storage));
     btstack_ring_buffer_init(&decoded_audio_ring_buffer, decoded_audio_storage, sizeof(decoded_audio_storage));
@@ -494,14 +457,6 @@ void SBCDecoder::media_close() {
     sbc_frame_size = 0;
 #ifdef HAVE_BTSTACK_AUDIO_EFFECTIVE_SAMPLERATE
     l2cap_stream_started = 0;
-#endif
-
-#ifdef STORE_TO_WAV_FILE                 
-    wav_writer_close();
-    uint32_t total_frames_nr = state.good_frames_nr + state.bad_frames_nr + state.zero_frames_nr;
-
-    printf("WAV Writer: Decoding done. Processed %u SBC frames:\n - %d good\n - %d bad\n", total_frames_nr, state.good_frames_nr, total_frames_nr - state.good_frames_nr);
-    printf("WAV Writer: Wrote %u audio frames to wav file: %s\n", audio_frame_count, wav_filename);
 #endif
 
     // stop audio playback
