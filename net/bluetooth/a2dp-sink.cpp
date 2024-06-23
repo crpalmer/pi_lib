@@ -81,6 +81,101 @@
 
 #include "btstack_ring_buffer.h"
 
+static void C_a2dp_sink_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * packet, uint16_t event_size);
+static void C_handle_l2cap_media_data_packet(uint8_t seid, uint8_t *packet, uint16_t size);
+
+class A2DPSink {
+public:
+    A2DPSink();
+
+    void initialize();
+
+protected:
+    friend void C_a2dp_sink_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * packet, uint16_t event_size);
+    friend void C_handle_l2cap_media_data_packet(uint8_t seid, uint8_t *packet, uint16_t size);
+
+    void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * packet, uint16_t event_size);
+    void media_packet_handler(uint8_t seid, uint8_t *packet, uint16_t size);
+
+private:
+    uint8_t service_buffer[150];
+    class A2DPSinkConnection *connection;
+    class SBCDecoder *decoder;
+};
+
+typedef enum {
+    STREAM_STATE_CLOSED,
+    STREAM_STATE_OPEN,
+    STREAM_STATE_PLAYING,
+    STREAM_STATE_PAUSED,
+} stream_state_t;
+
+class A2DPSinkConnection {
+protected:
+    friend class A2DPSink;
+
+    bd_addr_t addr;
+    uint16_t  a2dp_cid;
+    uint8_t   a2dp_local_seid;
+    stream_state_t stream_state;
+};
+
+class SBCDecoder {
+public:
+    void media_init();
+    void media_close();
+    void start();
+    void pause();
+
+    void dump_state();
+    void receive_configuration(uint8_t *packet);
+    void stream_started();
+
+    void packet_handler(uint8_t seid, uint8_t *packet, uint16_t size);
+
+protected:
+    friend class A2DPSink;
+
+    bool  reconfigure = false;
+    uint8_t  num_channels = 2;
+    uint16_t sampling_frequency = 44100;
+    uint8_t  block_length = 0;
+    uint8_t  subbands = 0;
+    uint8_t  min_bitpool_value = 0;
+    uint8_t  max_bitpool_value = 0;
+    btstack_sbc_channel_mode_t channel_mode;
+    btstack_sbc_allocation_method_t allocation_method;
+
+    bool media_initialized = false;
+    bool audio_stream_started = false;
+};
+
+static A2DPSink *global_sink = NULL;
+
+A2DPSink::A2DPSink() {
+    assert(! global_sink);
+    global_sink = this;
+    a2dp_sink_init();
+    connection = new A2DPSinkConnection();
+    decoder = new SBCDecoder();
+}
+
+void C_a2dp_sink_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * packet, uint16_t event_size) {
+    assert(global_sink);
+    global_sink->packet_handler(packet_type, channel, packet, event_size);
+}
+
+void A2DPSink::initialize() {
+    a2dp_sink_register_packet_handler(C_a2dp_sink_packet_handler);
+    a2dp_sink_register_media_handler(C_handle_l2cap_media_data_packet);
+
+    // - Create and register A2DP Sink service record
+    memset(service_buffer, 0, sizeof(service_buffer));
+    a2dp_sink_create_sdp_record(service_buffer, sdp_create_service_record_handle(), AVDTP_SINK_FEATURE_MASK_HEADPHONE, NULL, NULL);
+    sdp_register_service(service_buffer);
+
+}
+
 #ifdef HAVE_POSIX_FILE_IO
 #include "wav_util.h"
 #define STORE_TO_WAV_FILE
@@ -94,7 +189,6 @@
 static btstack_sample_rate_compensation_t sample_rate_compensation;
 #endif
 
-static uint8_t  sdp_avdtp_sink_service_buffer[150];
 static uint8_t  sdp_avrcp_target_service_buffer[150];
 static uint8_t  sdp_avrcp_controller_service_buffer[200];
 static uint8_t  device_id_sdp_service_buffer[100];
@@ -129,8 +223,6 @@ static unsigned int sbc_frame_size;
 static uint8_t decoded_audio_storage[(128+16) * BYTES_PER_FRAME];
 static btstack_ring_buffer_t decoded_audio_ring_buffer;
 
-static int media_initialized = 0;
-static int audio_stream_started;
 #ifdef HAVE_BTSTACK_AUDIO_EFFECTIVE_SAMPLERATE
 static int l2cap_stream_started;
 #endif
@@ -145,38 +237,10 @@ static int volume_percentage = 0;
 static avrcp_battery_status_t battery_status = AVRCP_BATTERY_STATUS_WARNING;
 
 typedef struct {
-    uint8_t  reconfigure;
-    uint8_t  num_channels;
-    uint16_t sampling_frequency;
-    uint8_t  block_length;
-    uint8_t  subbands;
-    uint8_t  min_bitpool_value;
-    uint8_t  max_bitpool_value;
-    btstack_sbc_channel_mode_t      channel_mode;
-    btstack_sbc_allocation_method_t allocation_method;
-} media_codec_configuration_sbc_t;
-
-typedef enum {
-    STREAM_STATE_CLOSED,
-    STREAM_STATE_OPEN,
-    STREAM_STATE_PLAYING,
-    STREAM_STATE_PAUSED,
-} stream_state_t;
-
-typedef struct {
     uint8_t  a2dp_local_seid;
     uint8_t  media_sbc_codec_configuration[4];
 } a2dp_sink_demo_stream_endpoint_t;
 static a2dp_sink_demo_stream_endpoint_t a2dp_sink_demo_stream_endpoint;
-
-typedef struct {
-    bd_addr_t addr;
-    uint16_t  a2dp_cid;
-    uint8_t   a2dp_local_seid;
-    stream_state_t stream_state;
-    media_codec_configuration_sbc_t sbc_configuration;
-} a2dp_sink_demo_a2dp_connection_t;
-static a2dp_sink_demo_a2dp_connection_t a2dp_sink_demo_a2dp_connection;
 
 typedef struct {
     bd_addr_t addr;
@@ -190,7 +254,6 @@ static a2dp_sink_demo_avrcp_connection_t a2dp_sink_demo_avrcp_connection;
  *
  * @text The Listing MainConfiguration shows how to set up AD2P Sink and AVRCP services.
  * Besides calling init() method for each service, you'll also need to register several packet handlers:
- * - a2dp_sink_packet_handler - handles events on stream connection status (established, released), the media codec configuration, and, the status of the stream itself (opened, paused, stopped).
  * - handle_l2cap_media_data_packet - used to receive streaming data. If STORE_TO_WAV_FILE directive (check btstack_config.h) is used, the SBC decoder will be used to decode the SBC data into PCM frames. The resulting PCM frames are then processed in the SBC Decoder callback.
  * - avrcp_packet_handler - receives AVRCP connect/disconnect event.
  * - avrcp_controller_packet_handler - receives answers for sent AVRCP commands.
@@ -201,29 +264,27 @@ static a2dp_sink_demo_avrcp_connection_t a2dp_sink_demo_avrcp_connection;
  *
  * @text Note, currently only the SBC codec is supported. 
  * If you want to store the audio data in a file, you'll need to define STORE_TO_WAV_FILE. 
- * If STORE_TO_WAV_FILE directive is defined, the SBC decoder needs to get initialized when a2dp_sink_packet_handler receives event A2DP_SUBEVENT_STREAM_STARTED. 
  * The initialization of the SBC decoder requires a callback that handles PCM data:
  * - handle_pcm_data - handles PCM audio frames. Here, they are stored in a wav file if STORE_TO_WAV_FILE is defined, and/or played using the audio library.
  */
 
 /* LISTING_START(MainConfiguration): Setup Audio Sink and AVRCP services */
-static void a2dp_sink_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * packet, uint16_t event_size);
-static void handle_l2cap_media_data_packet(uint8_t seid, uint8_t *packet, uint16_t size);
 static void avrcp_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
 static void avrcp_controller_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
 static void avrcp_target_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
 
 static int setup_demo(void){
     // Init profiles
-    a2dp_sink_init();
+    A2DPSink *sink = new A2DPSink();
+
     avrcp_init();
     avrcp_controller_init();
     avrcp_target_init();
 
 
     // Configure A2DP Sink
-    a2dp_sink_register_packet_handler(&a2dp_sink_packet_handler);
-    a2dp_sink_register_media_handler(&handle_l2cap_media_data_packet);
+    sink->initialize();
+
     a2dp_sink_demo_stream_endpoint_t * stream_endpoint = &a2dp_sink_demo_stream_endpoint;
     avdtp_stream_endpoint_t * local_stream_endpoint = a2dp_sink_create_stream_endpoint(AVDTP_AUDIO,
                                                                                        AVDTP_CODEC_SBC, media_sbc_codec_capabilities, sizeof(media_sbc_codec_capabilities),
@@ -240,12 +301,6 @@ static int setup_demo(void){
     
 
     // Configure SDP
-
-    // - Create and register A2DP Sink service record
-    memset(sdp_avdtp_sink_service_buffer, 0, sizeof(sdp_avdtp_sink_service_buffer));
-    a2dp_sink_create_sdp_record(sdp_avdtp_sink_service_buffer, sdp_create_service_record_handle(),
-                                AVDTP_SINK_FEATURE_MASK_HEADPHONE, NULL, NULL);
-    sdp_register_service(sdp_avdtp_sink_service_buffer);
 
     // - Create AVRCP Controller service record and register it with SDP. We send Category 1 commands to the media player, e.g. play/pause
     memset(sdp_avrcp_controller_service_buffer, 0, sizeof(sdp_avrcp_controller_service_buffer));
@@ -377,48 +432,47 @@ static void handle_pcm_data(int16_t * data, int num_audio_frames, int num_channe
     }
 }
 
-static int media_processing_init(media_codec_configuration_sbc_t * configuration){
-    if (media_initialized) return 0;
+void SBCDecoder::media_init() {
     btstack_sbc_decoder_init(&state, mode, handle_pcm_data, NULL);
 
 #ifdef STORE_TO_WAV_FILE
-    wav_writer_open(wav_filename, configuration->num_channels, configuration->sampling_frequency);
+    wav_writer_open(wav_filename, num_channels, sampling_frequency);
 #endif
 
     btstack_ring_buffer_init(&sbc_frame_ring_buffer, sbc_frame_storage, sizeof(sbc_frame_storage));
     btstack_ring_buffer_init(&decoded_audio_ring_buffer, decoded_audio_storage, sizeof(decoded_audio_storage));
-    btstack_resample_init(&resample_instance, configuration->num_channels);
+    btstack_resample_init(&resample_instance, num_channels);
 
     // setup audio playback
     const btstack_audio_sink_t * audio = btstack_audio_sink_get_instance();
     if (audio){
-        audio->init(NUM_CHANNELS, configuration->sampling_frequency, &playback_handler);
+        audio->init(NUM_CHANNELS, sampling_frequency, &playback_handler);
     }
 
-    audio_stream_started = 0;
-    media_initialized = 1;
-    return 0;
+    audio_stream_started = false;
+    media_initialized = true;
 }
 
-static void media_processing_start(void){
-    if (!media_initialized) return;
+void SBCDecoder::start() {
+    if (! media_initialized) return;
 
 #ifdef HAVE_BTSTACK_AUDIO_EFFECTIVE_SAMPLERATE
     btstack_sample_rate_compensation_reset( &sample_rate_compensation, btstack_run_loop_get_time_ms() );
 #endif
+
     // setup audio playback
     const btstack_audio_sink_t * audio = btstack_audio_sink_get_instance();
     if (audio){
         audio->start_stream();
     }
-    audio_stream_started = 1;
+    audio_stream_started = true;
 }
 
-static void media_processing_pause(void){
-    if (!media_initialized) return;
+void SBCDecoder::pause(void) {
+    if (! media_initialized) return;
 
     // stop audio playback
-    audio_stream_started = 0;
+    audio_stream_started = false;
 #ifdef HAVE_BTSTACK_AUDIO_EFFECTIVE_SAMPLERATE
     l2cap_stream_started = 0;
 #endif
@@ -432,7 +486,7 @@ static void media_processing_pause(void){
     btstack_ring_buffer_reset(&sbc_frame_ring_buffer);
 }
 
-static void media_processing_close(void){
+void SBCDecoder::media_close() {
     if (!media_initialized) return;
 
     media_initialized = 0;
@@ -469,7 +523,16 @@ static void media_processing_close(void){
 static int read_media_data_header(uint8_t * packet, int size, int * offset, avdtp_media_packet_header_t * media_header);
 static int read_sbc_header(uint8_t * packet, int size, int * offset, avdtp_sbc_codec_header_t * sbc_header);
 
-static void handle_l2cap_media_data_packet(uint8_t seid, uint8_t *packet, uint16_t size){
+static void C_handle_l2cap_media_data_packet(uint8_t seid, uint8_t *packet, uint16_t size) {
+    assert(global_sink);
+    global_sink->media_packet_handler(seid, packet, size);
+}
+
+void A2DPSink::media_packet_handler(uint8_t seid, uint8_t *packet, uint16_t size) {
+    decoder->packet_handler(seid, packet, size);
+}
+
+void SBCDecoder::packet_handler(uint8_t seid, uint8_t *packet, uint16_t size) {
     UNUSED(seid);
     int pos = 0;
      
@@ -529,7 +592,7 @@ static void handle_l2cap_media_data_packet(uint8_t seid, uint8_t *packet, uint16
 #endif
     // start stream if enough frames buffered
     if (!audio_stream_started && sbc_frames_in_buffer >= OPTIMAL_FRAMES_MIN){
-        media_processing_start();
+        start();
     }
 }
 
@@ -582,14 +645,14 @@ static int read_media_data_header(uint8_t *packet, int size, int *offset, avdtp_
     return 1;
 }
 
-static void dump_sbc_configuration(media_codec_configuration_sbc_t * configuration){
-    printf("    - num_channels: %d\n", configuration->num_channels);
-    printf("    - sampling_frequency: %d\n", configuration->sampling_frequency);
-    printf("    - channel_mode: %d\n", configuration->channel_mode);
-    printf("    - block_length: %d\n", configuration->block_length);
-    printf("    - subbands: %d\n", configuration->subbands);
-    printf("    - allocation_method: %d\n", configuration->allocation_method);
-    printf("    - bitpool_value [%d, %d] \n", configuration->min_bitpool_value, configuration->max_bitpool_value);
+void SBCDecoder::dump_state() {
+    printf("    - num_channels: %d\n", num_channels);
+    printf("    - sampling_frequency: %d\n", sampling_frequency);
+    printf("    - channel_mode: %d\n", channel_mode);
+    printf("    - block_length: %d\n", block_length);
+    printf("    - subbands: %d\n", subbands);
+    printf("    - allocation_method: %d\n", allocation_method);
+    printf("    - bitpool_value [%d, %d] \n", min_bitpool_value, max_bitpool_value);
     printf("\n");
 }
 
@@ -822,111 +885,114 @@ static void avrcp_target_packet_handler(uint8_t packet_type, uint16_t channel, u
     }
 }
 
-static void a2dp_sink_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
+void SBCDecoder::receive_configuration(uint8_t *packet) {
+    reconfigure = a2dp_subevent_signaling_media_codec_sbc_configuration_get_reconfigure(packet);
+    num_channels = a2dp_subevent_signaling_media_codec_sbc_configuration_get_num_channels(packet);
+    sampling_frequency = a2dp_subevent_signaling_media_codec_sbc_configuration_get_sampling_frequency(packet);
+    block_length = a2dp_subevent_signaling_media_codec_sbc_configuration_get_block_length(packet);
+    subbands = a2dp_subevent_signaling_media_codec_sbc_configuration_get_subbands(packet);
+    min_bitpool_value = a2dp_subevent_signaling_media_codec_sbc_configuration_get_min_bitpool_value(packet);
+    max_bitpool_value = a2dp_subevent_signaling_media_codec_sbc_configuration_get_max_bitpool_value(packet);
+    
+    // Adapt Bluetooth spec definition to SBC Encoder expected input
+    int bt_spec_allocation_method = a2dp_subevent_signaling_media_codec_sbc_configuration_get_allocation_method(packet);
+    allocation_method = (btstack_sbc_allocation_method_t) (bt_spec_allocation_method - 1);
+   
+    switch (a2dp_subevent_signaling_media_codec_sbc_configuration_get_channel_mode(packet)){
+    case AVDTP_CHANNEL_MODE_JOINT_STEREO:
+	channel_mode = SBC_CHANNEL_MODE_JOINT_STEREO;
+	break;
+    case AVDTP_CHANNEL_MODE_STEREO:
+	channel_mode = SBC_CHANNEL_MODE_STEREO;
+	break;
+    case AVDTP_CHANNEL_MODE_DUAL_CHANNEL:
+	channel_mode = SBC_CHANNEL_MODE_DUAL_CHANNEL;
+	break;
+    case AVDTP_CHANNEL_MODE_MONO:
+	channel_mode = SBC_CHANNEL_MODE_MONO;
+	break;
+    default:
+	btstack_assert(false);
+	break;
+    }
+}
+
+void SBCDecoder::stream_started() {
+    if (reconfigure){
+	media_close();
+    }
+    // prepare media processing
+    media_init();
+}
+
+void A2DPSink::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
     UNUSED(channel);
     UNUSED(size);
     uint8_t status;
 
-    uint8_t allocation_method;
-
     if (packet_type != HCI_EVENT_PACKET) return;
     if (hci_event_packet_get_type(packet) != HCI_EVENT_A2DP_META) return;
 
-    a2dp_sink_demo_a2dp_connection_t * a2dp_conn = &a2dp_sink_demo_a2dp_connection;
+switch (packet[2]){
+    case A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_OTHER_CONFIGURATION:
+	printf("A2DP  Sink      : Received non SBC codec - not implemented\n");
+	break;
+    case A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_SBC_CONFIGURATION:{
+	printf("A2DP  Sink      : Received SBC codec configuration\n");
+	decoder->receive_configuration(packet);
+	decoder->dump_state();
+	break;
+    }
 
-    switch (packet[2]){
-        case A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_OTHER_CONFIGURATION:
-            printf("A2DP  Sink      : Received non SBC codec - not implemented\n");
-            break;
-        case A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_SBC_CONFIGURATION:{
-            printf("A2DP  Sink      : Received SBC codec configuration\n");
-            a2dp_conn->sbc_configuration.reconfigure = a2dp_subevent_signaling_media_codec_sbc_configuration_get_reconfigure(packet);
-            a2dp_conn->sbc_configuration.num_channels = a2dp_subevent_signaling_media_codec_sbc_configuration_get_num_channels(packet);
-            a2dp_conn->sbc_configuration.sampling_frequency = a2dp_subevent_signaling_media_codec_sbc_configuration_get_sampling_frequency(packet);
-            a2dp_conn->sbc_configuration.block_length = a2dp_subevent_signaling_media_codec_sbc_configuration_get_block_length(packet);
-            a2dp_conn->sbc_configuration.subbands = a2dp_subevent_signaling_media_codec_sbc_configuration_get_subbands(packet);
-            a2dp_conn->sbc_configuration.min_bitpool_value = a2dp_subevent_signaling_media_codec_sbc_configuration_get_min_bitpool_value(packet);
-            a2dp_conn->sbc_configuration.max_bitpool_value = a2dp_subevent_signaling_media_codec_sbc_configuration_get_max_bitpool_value(packet);
-            
-            allocation_method = a2dp_subevent_signaling_media_codec_sbc_configuration_get_allocation_method(packet);
-            
-            // Adapt Bluetooth spec definition to SBC Encoder expected input
-            a2dp_conn->sbc_configuration.allocation_method = (btstack_sbc_allocation_method_t)(allocation_method - 1);
-           
-            switch (a2dp_subevent_signaling_media_codec_sbc_configuration_get_channel_mode(packet)){
-                case AVDTP_CHANNEL_MODE_JOINT_STEREO:
-                    a2dp_conn->sbc_configuration.channel_mode = SBC_CHANNEL_MODE_JOINT_STEREO;
-                    break;
-                case AVDTP_CHANNEL_MODE_STEREO:
-                    a2dp_conn->sbc_configuration.channel_mode = SBC_CHANNEL_MODE_STEREO;
-                    break;
-                case AVDTP_CHANNEL_MODE_DUAL_CHANNEL:
-                    a2dp_conn->sbc_configuration.channel_mode = SBC_CHANNEL_MODE_DUAL_CHANNEL;
-                    break;
-                case AVDTP_CHANNEL_MODE_MONO:
-                    a2dp_conn->sbc_configuration.channel_mode = SBC_CHANNEL_MODE_MONO;
-                    break;
-                default:
-                    btstack_assert(false);
-                    break;
-            }
-            dump_sbc_configuration(&a2dp_conn->sbc_configuration);
-            break;
-        }
+    case A2DP_SUBEVENT_STREAM_ESTABLISHED:
+	status = a2dp_subevent_stream_established_get_status(packet);
+	if (status != ERROR_CODE_SUCCESS){
+	    printf("A2DP  Sink      : Streaming connection failed, status 0x%02x\n", status);
+	    break;
+	}
 
-        case A2DP_SUBEVENT_STREAM_ESTABLISHED:
-            status = a2dp_subevent_stream_established_get_status(packet);
-            if (status != ERROR_CODE_SUCCESS){
-                printf("A2DP  Sink      : Streaming connection failed, status 0x%02x\n", status);
-                break;
-            }
+	a2dp_subevent_stream_established_get_bd_addr(packet, connection->addr);
+	connection->a2dp_cid = a2dp_subevent_stream_established_get_a2dp_cid(packet);
+	connection->a2dp_local_seid = a2dp_subevent_stream_established_get_local_seid(packet);
+	connection->stream_state = STREAM_STATE_OPEN;
 
-            a2dp_subevent_stream_established_get_bd_addr(packet, a2dp_conn->addr);
-            a2dp_conn->a2dp_cid = a2dp_subevent_stream_established_get_a2dp_cid(packet);
-            a2dp_conn->a2dp_local_seid = a2dp_subevent_stream_established_get_local_seid(packet);
-            a2dp_conn->stream_state = STREAM_STATE_OPEN;
-
-            printf("A2DP  Sink      : Streaming connection is established, address %s, cid 0x%02x, local seid %d\n",
-                   bd_addr_to_str(a2dp_conn->addr), a2dp_conn->a2dp_cid, a2dp_conn->a2dp_local_seid);
-            break;
-        
+	printf("A2DP  Sink      : Streaming connection is established, address %s, cid 0x%02x, local seid %d\n",
+	       bd_addr_to_str(connection->addr), connection->a2dp_cid, connection->a2dp_local_seid);
+	break;
+    
 #ifdef ENABLE_AVDTP_ACCEPTOR_EXPLICIT_START_STREAM_CONFIRMATION
-        case A2DP_SUBEVENT_START_STREAM_REQUESTED:
-            printf("A2DP  Sink      : Explicit Accept to start stream, local_seid %d\n", a2dp_subevent_start_stream_requested_get_local_seid(packet));
-            a2dp_sink_start_stream_accept(a2dp_cid, a2dp_local_seid);
-            break;
+    case A2DP_SUBEVENT_START_STREAM_REQUESTED:
+	printf("A2DP  Sink      : Explicit Accept to start stream, local_seid %d\n", a2dp_subevent_start_stream_requested_get_local_seid(packet));
+	a2dp_sink_start_stream_accept(a2dp_cid, a2dp_local_seid);
+	break;
 #endif
-        case A2DP_SUBEVENT_STREAM_STARTED:
-            printf("A2DP  Sink      : Stream started\n");
-            a2dp_conn->stream_state = STREAM_STATE_PLAYING;
-            if (a2dp_conn->sbc_configuration.reconfigure){
-                media_processing_close();
-            }
-            // prepare media processing
-            media_processing_init(&a2dp_conn->sbc_configuration);
-            // audio stream is started when buffer reaches minimal level
-            break;
-        
-        case A2DP_SUBEVENT_STREAM_SUSPENDED:
-            printf("A2DP  Sink      : Stream paused\n");
-            a2dp_conn->stream_state = STREAM_STATE_PAUSED;
-            media_processing_pause();
-            break;
-        
-        case A2DP_SUBEVENT_STREAM_RELEASED:
-            printf("A2DP  Sink      : Stream released\n");
-            a2dp_conn->stream_state = STREAM_STATE_CLOSED;
-            media_processing_close();
-            break;
-        
-        case A2DP_SUBEVENT_SIGNALING_CONNECTION_RELEASED:
-            printf("A2DP  Sink      : Signaling connection released\n");
-            a2dp_conn->a2dp_cid = 0;
-            media_processing_close();
-            break;
-        
-        default:
-            break;
+    case A2DP_SUBEVENT_STREAM_STARTED:
+	printf("A2DP  Sink      : Stream started\n");
+	connection->stream_state = STREAM_STATE_PLAYING;
+	decoder->stream_started();
+	// audio stream is started when buffer reaches minimal level
+	break;
+    
+    case A2DP_SUBEVENT_STREAM_SUSPENDED:
+	printf("A2DP  Sink      : Stream paused\n");
+	connection->stream_state = STREAM_STATE_PAUSED;
+	decoder->pause();
+	break;
+    
+    case A2DP_SUBEVENT_STREAM_RELEASED:
+	printf("A2DP  Sink      : Stream released\n");
+	connection->stream_state = STREAM_STATE_CLOSED;
+	decoder->media_close();
+	break;
+    
+    case A2DP_SUBEVENT_SIGNALING_CONNECTION_RELEASED:
+	printf("A2DP  Sink      : Signaling connection released\n");
+	connection->a2dp_cid = 0;
+	decoder->media_close();
+	break;
+    
+    default:
+	break;
     }
 }
 
