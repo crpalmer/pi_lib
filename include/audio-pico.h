@@ -29,7 +29,6 @@ private:
     static const int n_buffers = 3;
 
     AudioConfig *config = NULL;
-    struct audio_buffer_pool *producer_pool = NULL;
     int bytes_per_sample;
     uint8_t *buffers[n_buffers];
     int next_buffer = 0;
