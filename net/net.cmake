@@ -6,6 +6,7 @@ if("${PLATFORM}" STREQUAL "pico")
   target_sources(lib-pi PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/bluetooth/a2dp-sink.cpp
     ${CMAKE_CURRENT_LIST_DIR}/bluetooth/bluetooth.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/bluetooth/sbc-decoder.cpp
     ${CMAKE_CURRENT_LIST_DIR}/wifi.c
   )
 endif()
