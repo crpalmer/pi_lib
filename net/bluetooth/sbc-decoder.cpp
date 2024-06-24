@@ -1,19 +1,25 @@
 #include "pi.h"
 #include "consoles.h"
+#include "bluetooth/a2dp-sink.h"
 #include "sbc-decoder.h"
 
-SBCDecoder::SBCDecoder() {
+SBCDecoder::SBCDecoder(A2DPSinkHandler *handler) : handler(handler) {
     // Setup the AVDTP endpoint
     a2dp_sink_create_stream_endpoint(AVDTP_AUDIO, AVDTP_CODEC_SBC, sbc_codec_capabilities, sizeof(sbc_codec_capabilities), sbc_codec_configuration, sizeof(sbc_codec_configuration));
 }
 
-static void handle_pcm_data(int16_t *data, int num_audio_frames, int num_channels, int sample_rate, void *context) {
-    extern void play_buffer(int16_t *data, int n_bytes);
-    play_buffer(data, num_audio_frames * num_channels * 2);	// TODO use configuration
+static void C_handle_pcm_data(int16_t *data, int num_audio_frames, int num_channels, int sample_rate, void *decoder_as_vp) {
+    SBCDecoder *decoder = (SBCDecoder *) decoder_as_vp;
+    decoder->handle_pcm_data(data, num_audio_frames);
+}
+
+void SBCDecoder::handle_pcm_data(int16_t *data, int num_audio_frames) {
+    handler->on_pcm_data((uint8_t *) data, num_audio_frames * get_bytes_per_sample() * get_num_channels());
 }
 
 void SBCDecoder::media_init() {
-    btstack_sbc_decoder_init(&state, mode, handle_pcm_data, NULL);
+    btstack_sbc_decoder_init(&state, mode, C_handle_pcm_data, this);
+    handler->on_configure(this);
     audio_stream_started = false;
     media_initialized = true;
 }

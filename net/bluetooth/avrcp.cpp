@@ -32,6 +32,18 @@ AVRCP::AVRCP() {
     avrcp_target_register_packet_handler(C_target_packet_handler);
 
     connection = new AVRCPConnection();
+
+    // - Create AVRCP Controller service record and register it with SDP. We send Category 1 commands to the media player, e.g. play/pause
+    memset(sdp_avrcp_controller_service_buffer, 0, sizeof(sdp_avrcp_controller_service_buffer));
+    uint16_t controller_supported_features = 1 << AVRCP_CONTROLLER_SUPPORTED_FEATURE_CATEGORY_PLAYER_OR_RECORDER;
+    avrcp_controller_create_sdp_record(sdp_avrcp_controller_service_buffer, sdp_create_service_record_handle(), controller_supported_features, NULL, NULL);
+    sdp_register_service(sdp_avrcp_controller_service_buffer);
+
+    //   -  We receive Category 2 commands from the media player, e.g. volume up/down
+    memset(sdp_avrcp_target_service_buffer, 0, sizeof(sdp_avrcp_target_service_buffer));
+    uint16_t target_supported_features = 1 << AVRCP_TARGET_SUPPORTED_FEATURE_CATEGORY_MONITOR_OR_AMPLIFIER;
+    avrcp_target_create_sdp_record(sdp_avrcp_target_service_buffer, sdp_create_service_record_handle(), target_supported_features, NULL, NULL);
+    sdp_register_service(sdp_avrcp_target_service_buffer);
 }
 
 void AVRCP::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){

@@ -43,7 +43,7 @@ A2DPSink::A2DPSink() {
     a2dp_sink_register_packet_handler(C_a2dp_sink_packet_handler);
     a2dp_sink_register_media_handler(C_handle_l2cap_media_data_packet);
 
-    decoder = new SBCDecoder();
+    decoder = new SBCDecoder(this);
 
     // - Create and register A2DP Sink service record
     memset(service_buffer, 0, sizeof(service_buffer));

@@ -13,6 +13,8 @@ public:
 
 private:
     class AVRCPConnection *connection;
+    uint8_t sdp_avrcp_target_service_buffer[150];
+    uint8_t sdp_avrcp_controller_service_buffer[200];
 
     int volume_percentage = 0;
 };

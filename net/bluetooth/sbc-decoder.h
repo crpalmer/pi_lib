@@ -1,11 +1,12 @@
 #ifndef __SBC_DECODER_H__
 #define __SBC_DECODER_H__
 
+#include "audio.h"
 #include "btstack.h"
 
-class SBCDecoder {
+class SBCDecoder : public AudioConfig {
 public:
-    SBCDecoder();
+    SBCDecoder(class A2DPSinkHandler *handler);
 
     void media_init();
     void media_close();
@@ -17,12 +18,19 @@ public:
     void stream_started();
 
     void packet_handler(uint8_t seid, uint8_t *packet, uint16_t size);
+    void handle_pcm_data(int16_t *data, int num_audio_frames);
+
+    int get_num_channels() override { return num_channels; }
+    int get_rate() override { return sampling_frequency; }
+    int get_bytes_per_sample() override { return 2; }
 
 private:
     bool parse_media_header(uint8_t *packet, int size, int *offset, avdtp_media_packet_header_t *media_header);
     bool parse_sbc_header(uint8_t *packet, int size, int *offset, avdtp_sbc_codec_header_t *sbc_header);
 
 private:
+    class A2DPSinkHandler *handler;
+
     bool  reconfigure = false;
     uint8_t  num_channels = 2;
     uint16_t sampling_frequency = 44100;
