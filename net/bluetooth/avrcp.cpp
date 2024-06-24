@@ -26,9 +26,7 @@ AVRCP::AVRCP() {
     avrcp_init();
     avrcp_controller_init();
     avrcp_target_init();
-}
 
-void AVRCP::initialize() {
     avrcp_register_packet_handler(C_packet_handler);
     avrcp_controller_register_packet_handler(C_controller_packet_handler);
     avrcp_target_register_packet_handler(C_target_packet_handler);

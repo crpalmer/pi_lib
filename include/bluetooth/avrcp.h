@@ -1,12 +1,9 @@
 #ifndef __AVRCP_H__
 #define __AVRCP_H__
 
-class AVRCPConnection;
-
 class AVRCP {
 public:
     AVRCP();
-    void initialize();
 
     void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
     void controller_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
@@ -15,7 +12,7 @@ public:
     virtual void on_volume_changed(uint8_t volume) { }
 
 private:
-    AVRCPConnection *connection;
+    class AVRCPConnection *connection;
 
     int volume_percentage = 0;
 };

@@ -11,14 +11,9 @@ static uint8_t device_id_sdp_service_buffer[100];
 
 static int setup_demo(void){
     // Init profiles
-    A2DPSink *sink = new A2DPSink();
-    AVRCP *avrcp = new AVRCP();
+    new A2DPSink();
+    new AVRCP();
 
-    // Configure A2DP Sink
-    sink->initialize();
-    avrcp->initialize();
-
-    // Configure AVRCP Controller + Target
     // Configure SDP
 
     // - Create AVRCP Controller service record and register it with SDP. We send Category 1 commands to the media player, e.g. play/pause

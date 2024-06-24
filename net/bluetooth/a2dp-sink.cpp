@@ -39,9 +39,7 @@ A2DPSink::A2DPSink() {
     global_sink = this;
     a2dp_sink_init();
     connection = new A2DPSinkConnection();
-}
 
-void A2DPSink::initialize() {
     a2dp_sink_register_packet_handler(C_a2dp_sink_packet_handler);
     a2dp_sink_register_media_handler(C_handle_l2cap_media_data_packet);
 

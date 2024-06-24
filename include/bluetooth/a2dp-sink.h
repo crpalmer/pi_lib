@@ -5,7 +5,6 @@ class A2DPSink {
 public:
     A2DPSink();
 
-    void initialize();
     void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * packet, uint16_t event_size);
     void media_packet_handler(uint8_t seid, uint8_t *packet, uint16_t size);
 
