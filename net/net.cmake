@@ -12,8 +12,6 @@ if("${PLATFORM}" STREQUAL "pico")
     ${CMAKE_CURRENT_LIST_DIR}/bluetooth/sbc-decoder.cpp
     ${CMAKE_CURRENT_LIST_DIR}/wifi.c
     ${CMAKE_CURRENT_LIST_DIR}/bluetooth/junk.cpp
-    ${BTSTACK_3RD_PARTY_PATH}/hxcmod-player/hxcmod.c
-    ${BTSTACK_3RD_PARTY_PATH}/hxcmod-player/mods/nao-deceased_by_disease.c
   )
   target_include_directories(lib-pi PUBLIC
     ${BTSTACK_3RD_PARTY_PATH}/hxcmod-player

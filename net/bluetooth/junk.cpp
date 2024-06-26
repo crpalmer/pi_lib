@@ -67,8 +67,6 @@
 #include <string.h>
 
 #include "btstack.h"
-#include "hxcmod.h"
-#include "mods/mod.h"
 
 #include "consoles.h"
 #include "bluetooth/bluetooth.h"
@@ -86,12 +84,6 @@
 
 #define SBC_STORAGE_SIZE 1030
 
-typedef enum {
-    STREAM_SINE = 0,
-    STREAM_MOD,
-    STREAM_PTS_TEST
-} stream_data_source_t;
-    
 typedef struct {
     uint16_t a2dp_cid;
     uint8_t  local_seid;
@@ -179,15 +171,9 @@ static btstack_sbc_encoder_state_t sbc_encoder_state;
 static uint8_t media_sbc_codec_configuration[4];
 static a2dp_media_sending_context_t media_tracker;
 
-static stream_data_source_t data_source;
-
 static int sine_phase;
 static int current_sample_rate = 44100;
 static int new_sample_rate = 44100;
-
-static int hxcmod_initialized;
-static modcontext mod_context;
-static tracker_buffer_state trkbuf;
 
 /* AVRCP Target context START */
 
@@ -198,15 +184,8 @@ typedef struct {
     uint32_t song_position_ms; // 0xFFFFFFFF if not supported
 } avrcp_play_status_info_t;
 
-// python -c "print('a'*512)"
-static const char title[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-
-avrcp_track_t tracks[] = {
-    {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}, 1, (char *) "Sine", (char *) "Generated", (char *) "A2DP Source Demo", (char *) "monotone", 12345},
-    {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02}, 2, (char *) "Nao-deceased", (char *) "Decease", (char *) "A2DP Source Demo", (char *) "vivid", 12345},
-    {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03}, 3, (char *)title, (char *) "Decease", (char *) "A2DP Source Demo", (char *) "vivid", 12345},
-};
-int current_track_index;
+avrcp_track_t track = 
+    {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}, 1, (char *) "Sine", (char *) "Generated", (char *) "A2DP Source Demo", (char *) "monotone", 12345};
 avrcp_play_status_info_t play_info;
 
 /* AVRCP Target context END */
@@ -227,8 +206,6 @@ static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, ui
 #ifdef HAVE_BTSTACK_STDIN
 static void stdin_process(char cmd);
 #endif
-
-static void a2dp_demo_hexcmod_configure_sample_rate(int sample_rate);
 
 static AVRCP *global_avrcp;	// Temporary until everything into A2DSource object
 
@@ -293,9 +270,6 @@ A2DPSource::A2DPSource() {
     avrcp_controller_create_sdp_record(sdp_avrcp_controller_service_buffer, 0x10003, controller_supported_features, NULL, NULL);
     sdp_register_service(sdp_avrcp_controller_service_buffer);
 
-    a2dp_demo_hexcmod_configure_sample_rate(current_sample_rate);
-    data_source = STREAM_MOD;
-
     // Parse human readable Bluetooth address.
     sscanf_bd_addr(device_addr_string, device_addr);
 
@@ -304,22 +278,6 @@ A2DPSource::A2DPSource() {
 #endif
 }
 /* LISTING_END */
-
-static void a2dp_demo_hexcmod_configure_sample_rate(int sample_rate){
-    if (!hxcmod_initialized){
-        hxcmod_initialized = hxcmod_init(&mod_context);
-        if (!hxcmod_initialized) {
-            printf("could not initialize hxcmod\n");
-            return;
-        }
-    }
-    current_sample_rate = sample_rate;
-    media_tracker.sbc_storage_count = 0;
-    media_tracker.samples_ready = 0;
-    hxcmod_unload(&mod_context);
-    hxcmod_setcfg(&mod_context, current_sample_rate, 16, 1, 1, 1);
-    hxcmod_load(&mod_context, (void *) &mod_data, mod_len);
-}
 
 static void a2dp_demo_send_media_packet(void){
     int num_bytes_in_frame = btstack_sbc_encoder_sbc_buffer_length();
@@ -365,21 +323,8 @@ static void produce_sine_audio(int16_t * pcm_buffer, int num_samples_to_write){
     }
 }
 
-static void produce_mod_audio(int16_t * pcm_buffer, int num_samples_to_write){
-    hxcmod_fillbuffer(&mod_context, (unsigned short *) &pcm_buffer[0], num_samples_to_write, &trkbuf);
-}
-
 static void produce_audio(int16_t * pcm_buffer, int num_samples){
-    switch (data_source){
-        case STREAM_SINE:
-            produce_sine_audio(pcm_buffer, num_samples);
-            break;
-        case STREAM_MOD:
-            produce_mod_audio(pcm_buffer, num_samples);
-            break;
-        default:
-            break;
-    }    
+    produce_sine_audio(pcm_buffer, num_samples);
 #ifdef VOLUME_REDUCTION
     int i;
     for (i=0;i<num_samples*2;i++){
@@ -591,7 +536,6 @@ static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, ui
             
             printf("A2DP Source: Stream established a2dp_cid 0x%02x, local_seid 0x%02x, remote_seid 0x%02x\n", cid, local_seid, a2dp_subevent_stream_established_get_remote_seid(packet));
             
-            a2dp_demo_hexcmod_configure_sample_rate(current_sample_rate);
             media_tracker.stream_opened = 1;
             status = a2dp_source_start_stream(media_tracker.a2dp_cid, media_tracker.local_seid);
             break;
@@ -607,7 +551,6 @@ static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, ui
             }
 
             printf("A2DP Source: Stream reconfigured a2dp_cid 0x%02x, local_seid 0x%02x\n", cid, local_seid);
-            a2dp_demo_hexcmod_configure_sample_rate(new_sample_rate);
             status = a2dp_source_start_stream(media_tracker.a2dp_cid, media_tracker.local_seid);
             break;
 
@@ -616,7 +559,7 @@ static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, ui
             cid = a2dp_subevent_stream_started_get_a2dp_cid(packet);
 
             play_info.status = AVRCP_PLAYBACK_STATUS_PLAYING;
-	    global_avrcp->set_now_playing_info(&tracks[data_source], sizeof(tracks)/sizeof(avrcp_track_t));
+	    global_avrcp->set_now_playing_info(&track, 1);
 	    global_avrcp->set_playback_status(AVRCP_PLAYBACK_STATUS_PLAYING);
 
             a2dp_demo_timer_start(&media_tracker);
@@ -651,7 +594,7 @@ static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, ui
                 media_tracker.stream_opened = 0;
                 printf("A2DP Source: Stream released.\n");
             }
-	    global_avrcp->set_now_playing_info(NULL, sizeof(tracks)/sizeof(avrcp_track_t));
+	    global_avrcp->set_now_playing_info(NULL, 1);
 	    global_avrcp->set_playback_status(AVRCP_PLAYBACK_STATUS_STOPPED);
             a2dp_demo_timer_stop(&media_tracker);
             break;
@@ -685,10 +628,6 @@ static void show_usage(void){
     printf("C      - AVRCP disconnect\n");
     printf("D      - delete all link keys\n");
 
-    printf("x      - start streaming sine\n");
-    if (hxcmod_initialized){
-        printf("z      - start streaming '%s'\n", mod_name);
-    }
     printf("p      - pause streaming\n");
     printf("w      - reconfigure stream for 44100 Hz\n");
     printf("e      - reconfigure stream for 48000 Hz\n");
@@ -755,21 +694,6 @@ static void stdin_process(char cmd){
             status = global_avrcp->set_volume(media_tracker.volume);
             break;
         
-        case 'x':
-	    global_avrcp->set_now_playing_info(&tracks[data_source], sizeof(tracks)/sizeof(avrcp_track_t));
-            printf("%c - Play sine.\n", cmd);
-            data_source = STREAM_SINE;
-            if (!media_tracker.stream_opened) break;
-            status = a2dp_source_start_stream(media_tracker.a2dp_cid, media_tracker.local_seid);
-            break;
-        case 'z':
-	    global_avrcp->set_now_playing_info(&tracks[data_source], sizeof(tracks)/sizeof(avrcp_track_t));
-            printf("%c - Play mod.\n", cmd);
-            data_source = STREAM_MOD;
-            if (!media_tracker.stream_opened) break;
-            status = a2dp_source_start_stream(media_tracker.a2dp_cid, media_tracker.local_seid);
-            break;
-        
         case 'p':
             if (!media_tracker.stream_opened) break;
             printf("%c - Pause stream.\n", cmd);
@@ -789,6 +713,7 @@ static void stdin_process(char cmd){
                 printf("%c - Reconfigure for %d Hz.\n", cmd, new_sample_rate);
                 status = a2dp_source_reconfigure_stream_sampling_frequency(media_tracker.a2dp_cid, new_sample_rate);
             }
+	    current_sample_rate = new_sample_rate;
             break;
 
         case 'e':
@@ -804,6 +729,7 @@ static void stdin_process(char cmd){
                 printf("%c - Reconfigure for %d Hz.\n", cmd, new_sample_rate);
                 status = a2dp_source_reconfigure_stream_sampling_frequency(media_tracker.a2dp_cid, new_sample_rate);
             }
+	    current_sample_rate = new_sample_rate;
             break;
 
         default:
