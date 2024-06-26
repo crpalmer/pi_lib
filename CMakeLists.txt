@@ -37,6 +37,7 @@ if(${PLATFORM} STREQUAL pico)
     pico_btstack_classic
     pico_btstack_cyw43
     pico_btstack_sbc_decoder
+    pico_btstack_sbc_encoder
     hardware_adc
     hardware_dma
     hardware_i2c

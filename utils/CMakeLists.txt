@@ -18,6 +18,7 @@ endfunction()
 
 if("${PLATFORM}" STREQUAL pico)
   util_cpp(a2dp-sink)
+  util_cpp(a2dp-source)
   util_cpp(light-sensor)
   util_cpp(neopixel-pico)
   util_cpp(notes pi-audio)
