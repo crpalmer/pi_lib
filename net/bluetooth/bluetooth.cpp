@@ -49,7 +49,7 @@ void bluetooth_start(uint32_t service_class, const char *name) {
     gap_set_local_name(name);
     gap_discoverable_control(1);
     gap_set_class_of_device(service_class);
-    gap_set_default_link_policy_settings(LM_LINK_POLICY_ENABLE_ROLE_SWITCH | LM_LINK_POLICY_ENABLE_SNIFF_MODE);
+    // gap_set_default_link_policy_settings(LM_LINK_POLICY_ENABLE_ROLE_SWITCH | LM_LINK_POLICY_ENABLE_SNIFF_MODE);
     gap_set_allow_role_switch(true);
 
     hci_power_control(HCI_POWER_ON);

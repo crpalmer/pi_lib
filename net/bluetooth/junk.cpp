@@ -71,6 +71,7 @@
 #include "mods/mod.h"
 
 #include "consoles.h"
+#include "bluetooth/bluetooth.h"
 #include "avrcp.h"
 
 // logarithmic volume reduction, samples are divided by 2^x
@@ -165,18 +166,12 @@ typedef struct {
     btstack_sbc_allocation_method_t allocation_method;
 } media_codec_configuration_sbc_t;
 
-static btstack_packet_callback_registration_t hci_event_callback_registration;
-
-// Minijambox:
-static const char * device_addr_string = "00:21:3C:AC:F7:38";
-
+static const char * device_addr_string = "BF:AC:94:0A:99:2E";
 static bd_addr_t device_addr;
-static bool scan_active;
 
 static uint8_t sdp_a2dp_source_service_buffer[150];
 static uint8_t sdp_avrcp_target_service_buffer[200];
 static uint8_t sdp_avrcp_controller_service_buffer[200];
-static uint8_t device_id_sdp_service_buffer[100];
 
 static media_codec_configuration_sbc_t sbc_configuration;
 static btstack_sbc_encoder_state_t sbc_encoder_state;
@@ -220,11 +215,7 @@ avrcp_play_status_info_t play_info;
  *
  * @text The Listing MainConfiguration shows how to setup AD2P Source and AVRCP services. 
  * Besides calling init() method for each service, you'll also need to register several packet handlers:
- * - hci_packet_handler - handles legacy pairing, here by using fixed '0000' pin code.
  * - a2dp_source_packet_handler - handles events on stream connection status (established, released), the media codec configuration, and, the commands on stream itself (open, pause, stopp).
- * - avrcp_packet_handler - receives connect/disconnect event.
- * - avrcp_controller_packet_handler - receives answers for sent AVRCP commands.
- * - avrcp_target_packet_handler - receives AVRCP commands, and registered notifications.
  * - stdin_process - used to trigger AVRCP commands to the A2DP Source device, such are get now playing info, start, stop, volume control. Requires HAVE_BTSTACK_STDIN.
  *
  * @text To announce A2DP Source and AVRCP services, you need to create corresponding
@@ -232,7 +223,6 @@ avrcp_play_status_info_t play_info;
  */
 
 /* LISTING_START(MainConfiguration): Setup Audio Source and AVRCP Target services */
-static void hci_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
 static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * event, uint16_t event_size);
 #ifdef HAVE_BTSTACK_STDIN
 static void stdin_process(char cmd);
@@ -264,15 +254,6 @@ private:
 A2DPSource::A2DPSource() {
     // Request role change on reconnecting headset to always use them in slave mode
     hci_set_master_slave_policy(0);
-    // enabled EIR
-    hci_set_inquiry_mode(INQUIRY_MODE_RSSI_AND_EIR);
-
-    l2cap_init();
-
-#ifdef ENABLE_BLE
-    // Initialize LE Security Manager. Needed for cross-transport key derivation
-    sm_init();
-#endif
 
     // Initialize  A2DP Source
     a2dp_source_init();
@@ -292,9 +273,6 @@ A2DPSource::A2DPSource() {
     avrcp = new A2DPAVRCP(this);
     global_avrcp = avrcp;
 
-    // Initialize SDP, 
-    sdp_init();
-    
     // Create A2DP Source service record and register it with SDP
     memset(sdp_a2dp_source_service_buffer, 0, sizeof(sdp_a2dp_source_service_buffer));
     a2dp_source_create_sdp_record(sdp_a2dp_source_service_buffer, 0x10001, AVDTP_SOURCE_FEATURE_MASK_PLAYER, NULL, NULL);
@@ -314,22 +292,6 @@ A2DPSource::A2DPSource() {
     uint16_t controller_supported_features = AVRCP_FEATURE_MASK_CATEGORY_MONITOR_OR_AMPLIFIER;
     avrcp_controller_create_sdp_record(sdp_avrcp_controller_service_buffer, 0x10003, controller_supported_features, NULL, NULL);
     sdp_register_service(sdp_avrcp_controller_service_buffer);
-
-    // Register Device ID (PnP) service SDP record
-    memset(device_id_sdp_service_buffer, 0, sizeof(device_id_sdp_service_buffer));
-    device_id_create_sdp_record(device_id_sdp_service_buffer, 0x10004, DEVICE_ID_VENDOR_ID_SOURCE_BLUETOOTH, BLUETOOTH_COMPANY_ID_BLUEKITCHEN_GMBH, 1, 1);
-    sdp_register_service(device_id_sdp_service_buffer);
-
-    // Set local name with a template Bluetooth address, that will be automatically
-    // replaced with a actual address once it is available, i.e. when BTstack boots
-    // up and starts talking to a Bluetooth module.
-    gap_set_local_name("A2DP Source 00:00:00:00:00:00");
-    gap_discoverable_control(1);
-    gap_set_class_of_device(0x200408);
-    
-    // Register for HCI events.
-    hci_event_callback_registration.callback = &hci_packet_handler;
-    hci_add_event_handler(&hci_event_callback_registration);
 
     a2dp_demo_hexcmod_configure_sample_rate(current_sample_rate);
     data_source = STREAM_MOD;
@@ -517,73 +479,6 @@ static void dump_sbc_configuration(media_codec_configuration_sbc_t * configurati
     printf("    - subbands: %d\n", configuration->subbands);
     printf("    - allocation_method: %d\n", configuration->allocation_method);
     printf("    - bitpool_value [%d, %d] \n", configuration->min_bitpool_value, configuration->max_bitpool_value);
-}
-
-static void a2dp_source_demo_start_scanning(void){
-    printf("Start scanning...\n");
-    gap_inquiry_start(A2DP_SOURCE_DEMO_INQUIRY_DURATION_1280MS);
-    scan_active = true;
-}
-
-static void hci_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
-    UNUSED(channel);
-    UNUSED(size);
-    if (packet_type != HCI_EVENT_PACKET) return;
-    uint8_t status;
-    UNUSED(status);
-
-    bd_addr_t address;
-    uint32_t cod;
-
-    // Service Class: Rendering | Audio, Major Device Class: Audio
-    const uint32_t bluetooth_speaker_cod = 0x200000 | 0x040000 | 0x000400;
-
-    switch (hci_event_packet_get_type(packet)){
-#ifndef HAVE_BTSTACK_STDIN
-        case  BTSTACK_EVENT_STATE:
-            if (btstack_event_state_get_state(packet) != HCI_STATE_WORKING) return;
-            a2dp_source_demo_start_scanning();
-            break;
-#endif
-        case HCI_EVENT_PIN_CODE_REQUEST:
-            printf("Pin code request - using '0000'\n");
-            hci_event_pin_code_request_get_bd_addr(packet, address);
-            gap_pin_code_response(address, "0000");
-            break;
-        case GAP_EVENT_INQUIRY_RESULT:
-            gap_event_inquiry_result_get_bd_addr(packet, address);
-            // print info
-            printf("Device found: %s ",  bd_addr_to_str(address));
-            cod = gap_event_inquiry_result_get_class_of_device(packet);
-            printf("with COD: %06" PRIx32, cod);
-            if (gap_event_inquiry_result_get_rssi_available(packet)){
-                printf(", rssi %d dBm", (int8_t) gap_event_inquiry_result_get_rssi(packet));
-            }
-            if (gap_event_inquiry_result_get_name_available(packet)){
-                char name_buffer[240];
-                int name_len = gap_event_inquiry_result_get_name_len(packet);
-                memcpy(name_buffer, gap_event_inquiry_result_get_name(packet), name_len);
-                name_buffer[name_len] = 0;
-                printf(", name '%s'", name_buffer);
-            }
-            printf("\n");
-            if ((cod & bluetooth_speaker_cod) == bluetooth_speaker_cod){
-                memcpy(device_addr, address, 6);
-                printf("Bluetooth speaker detected, trying to connect to %s...\n", bd_addr_to_str(device_addr));
-                scan_active = false;
-                gap_inquiry_stop();
-                a2dp_source_establish_stream(device_addr, &media_tracker.a2dp_cid);
-            }
-            break;
-        case GAP_EVENT_INQUIRY_COMPLETE:
-            if (scan_active){
-                printf("No Bluetooth speakers found, scanning again...\n");
-                gap_inquiry_start(A2DP_SOURCE_DEMO_INQUIRY_DURATION_1280MS);
-            }
-            break;
-        default:
-            break;
-    }
 }
 
 static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
@@ -808,9 +703,6 @@ static void show_usage(void){
 static void stdin_process(char cmd){
     uint8_t status = ERROR_CODE_SUCCESS;
     switch (cmd){
-        case 'a':
-            a2dp_source_demo_start_scanning();
-            break;
         case 'b':
             status = a2dp_source_establish_stream(device_addr, &media_tracker.a2dp_cid);
             printf("%c - Create A2DP Source connection to addr %s, cid 0x%02x.\n", cmd, bd_addr_to_str(device_addr), media_tracker.a2dp_cid);
@@ -926,8 +818,9 @@ static void stdin_process(char cmd){
 
 
 int btstack_main() {
+    bluetooth_init();
     new A2DPSource();
-    hci_power_control(HCI_POWER_ON);
+    bluetooth_start_a2dp_source();
     return 0;
 }
 /* EXAMPLE_END */
