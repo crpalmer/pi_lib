@@ -3,7 +3,6 @@
 #include "audio-player.h"
 #include "fillable-buffer.h"
 #include "bluetooth/a2dp-sink.h"
-#include "bluetooth/avrcp.h"
 #include "bluetooth/bluetooth.h"
 #include "pi-threads.h"
 #include "time-utils.h"
@@ -62,7 +61,6 @@ void thread_main(int argc, char **argv) {
     bluetooth_init();
 
     new Sink();
-    new AVRCP();
     bluetooth_start_a2dp_sink();
 
     while (1) ms_sleep(1000000);

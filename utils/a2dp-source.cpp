@@ -1,5 +1,4 @@
 #include "pi.h"
-#include "bluetooth/avrcp.h"
 #include "bluetooth/bluetooth.h"
 #include "pi-threads.h"
 #include "time-utils.h"

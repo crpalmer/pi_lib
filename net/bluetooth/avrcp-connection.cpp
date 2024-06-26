@@ -17,9 +17,11 @@ void AVRCPConnection::established(uint8_t *packet) {
     avrcp_subevent_connection_established_get_bd_addr(packet, addr);
     printf("AVRCP: Connected to %s, cid 0x%02x\n", bd_addr_to_str(addr), cid);
 
-    avrcp_target_support_event(cid, AVRCP_NOTIFICATION_EVENT_VOLUME_CHANGED);
     avrcp_target_support_event(cid, AVRCP_NOTIFICATION_EVENT_BATT_STATUS_CHANGED);
     avrcp_target_support_event(cid, AVRCP_NOTIFICATION_EVENT_NOW_PLAYING_CONTENT_CHANGED);
+    avrcp_target_support_event(cid, AVRCP_NOTIFICATION_EVENT_PLAYBACK_STATUS_CHANGED);
+    avrcp_target_support_event(cid, AVRCP_NOTIFICATION_EVENT_TRACK_CHANGED);
+    avrcp_target_support_event(cid, AVRCP_NOTIFICATION_EVENT_VOLUME_CHANGED);
     avrcp_target_battery_status_changed(cid, battery_status);
 
     // query supported events:
@@ -30,6 +32,16 @@ void AVRCPConnection::released(uint8_t *packet) {
     printf("AVRCP: Channel released: cid 0x%02x\n", avrcp_subevent_connection_released_get_avrcp_cid(packet));
     cid = 0;
     notifications_supported_by_target = 0;
+}
+
+uint8_t AVRCPConnection::connect(bd_addr_t addr) {
+    return avrcp_connect(addr, &cid);
+}
+
+uint8_t AVRCPConnection::disconnect() {
+    uint8_t status = avrcp_disconnect(cid);
+    cid = 0;
+    return status;
 }
 
 void AVRCPConnection::add_notification(uint8_t event_id) {

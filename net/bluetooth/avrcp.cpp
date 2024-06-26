@@ -32,18 +32,6 @@ AVRCP::AVRCP() {
     avrcp_target_register_packet_handler(C_target_packet_handler);
 
     connection = new AVRCPConnection();
-
-    // - Create AVRCP Controller service record and register it with SDP. We send Category 1 commands to the media player, e.g. play/pause
-    memset(sdp_avrcp_controller_service_buffer, 0, sizeof(sdp_avrcp_controller_service_buffer));
-    uint16_t controller_supported_features = 1 << AVRCP_CONTROLLER_SUPPORTED_FEATURE_CATEGORY_PLAYER_OR_RECORDER;
-    avrcp_controller_create_sdp_record(sdp_avrcp_controller_service_buffer, sdp_create_service_record_handle(), controller_supported_features, NULL, NULL);
-    sdp_register_service(sdp_avrcp_controller_service_buffer);
-
-    //   -  We receive Category 2 commands from the media player, e.g. volume up/down
-    memset(sdp_avrcp_target_service_buffer, 0, sizeof(sdp_avrcp_target_service_buffer));
-    uint16_t target_supported_features = 1 << AVRCP_TARGET_SUPPORTED_FEATURE_CATEGORY_MONITOR_OR_AMPLIFIER;
-    avrcp_target_create_sdp_record(sdp_avrcp_target_service_buffer, sdp_create_service_record_handle(), target_supported_features, NULL, NULL);
-    sdp_register_service(sdp_avrcp_target_service_buffer);
 }
 
 void AVRCP::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
@@ -77,13 +65,15 @@ void AVRCP::controller_packet_handler(uint8_t packet_type, uint16_t channel, uin
 
     case AVRCP_SUBEVENT_GET_CAPABILITY_EVENT_ID_DONE:
 	connection->dump_notifications();
-	connection->enable_notification(AVRCP_NOTIFICATION_EVENT_PLAYBACK_STATUS_CHANGED);
+	connection->enable_notification(AVRCP_NOTIFICATION_EVENT_BATT_STATUS_CHANGED);
 	connection->enable_notification(AVRCP_NOTIFICATION_EVENT_NOW_PLAYING_CONTENT_CHANGED);
+	connection->enable_notification(AVRCP_NOTIFICATION_EVENT_PLAYBACK_STATUS_CHANGED);
 	connection->enable_notification(AVRCP_NOTIFICATION_EVENT_TRACK_CHANGED);
+	connection->enable_notification(AVRCP_NOTIFICATION_EVENT_VOLUME_CHANGED);
 	break;
 
     case AVRCP_SUBEVENT_NOTIFICATION_STATE:
-	event_id = (avrcp_notification_event_id_t)avrcp_subevent_notification_state_get_event_id(packet);
+	event_id = (avrcp_notification_event_id_t) avrcp_subevent_notification_state_get_event_id(packet);
 	printf("AVRCP Controller: %s notification registered\n", avrcp_notification2str((avrcp_notification_event_id_t) event_id));
 	break;
 
@@ -189,6 +179,12 @@ void AVRCP::target_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t
     avrcp_operation_id_t operation_id;
 
     switch (packet[2]) {
+    case AVRCP_SUBEVENT_PLAY_STATUS_QUERY:
+	// TODO
+	// status = avrcp_target_play_status(media_tracker.avrcp_cid, play_info.song_length_ms, play_info.song_position_ms, play_info.status);
+	printf("avrcp-target: Play status query not yet handled.\n");
+	break;
+
     case AVRCP_SUBEVENT_NOTIFICATION_VOLUME_CHANGED:
 	volume = avrcp_subevent_notification_volume_changed_get_absolute_volume(packet);
 	volume_percentage = volume * 100 / 127;
@@ -199,15 +195,14 @@ void AVRCP::target_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t
     case AVRCP_SUBEVENT_OPERATION:
 	operation_id = (avrcp_operation_id_t) avrcp_subevent_operation_get_operation_id(packet);
 	button_state = avrcp_subevent_operation_get_button_pressed(packet) > 0 ? "PRESS" : "RELEASE";
-	switch (operation_id){
-	    case AVRCP_OPERATION_ID_VOLUME_UP:
-		printf("AVRCP Target    : VOLUME UP (%s)\n", button_state);
-		break;
-	    case AVRCP_OPERATION_ID_VOLUME_DOWN:
-		printf("AVRCP Target    : VOLUME DOWN (%s)\n", button_state);
-		break;
-	    default:
-		return;
+	printf("AVRCP Target: operation %s (%s)\n", avrcp_operation2str(operation_id), button_state);
+	switch (operation_id) {
+	case AVRCP_OPERATION_ID_VOLUME_UP:   on_button_pressed(AVRCP_BUTTON_VOLUME_UP); break;
+	case AVRCP_OPERATION_ID_VOLUME_DOWN: on_button_pressed(AVRCP_BUTTON_VOLUME_DOWN); break;
+	case AVRCP_OPERATION_ID_PLAY:        on_button_pressed(AVRCP_BUTTON_PLAY); break;
+	case AVRCP_OPERATION_ID_PAUSE:       on_button_pressed(AVRCP_BUTTON_PAUSE); break;
+	case AVRCP_OPERATION_ID_STOP:        on_button_pressed(AVRCP_BUTTON_STOP); break;
+	default: break;
 	}
 	break;
 
@@ -215,4 +210,48 @@ void AVRCP::target_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t
 	printf("AVRCP Target    : Event 0x%02x is not parsed\n", packet[2]);
 	break;
     }
+}
+
+uint8_t AVRCP::connect(bd_addr_t addr) {
+    if (! connection->is_established()) {
+	connection->connect(addr);
+    }
+    return ERROR_CODE_SUCCESS;
+}
+
+uint8_t AVRCP::disconnect() {
+    if (connection->is_established()) return connection->disconnect();
+    return ERROR_CODE_SUCCESS;
+}
+
+uint8_t AVRCP::volume_up() {
+printf("volume UP for %d\n", connection->get_cid());
+    if (connection->is_established()) return avrcp_controller_volume_up(connection->get_cid());
+    return ERROR_CODE_SUCCESS;
+}
+
+uint8_t AVRCP::volume_down() {
+printf("volume DOWN for %d\n", connection->get_cid());
+    if (connection->is_established()) return avrcp_controller_volume_down(connection->get_cid());
+    return ERROR_CODE_SUCCESS;
+}
+
+uint8_t AVRCP::set_volume(int volume) {
+printf("set volume %d for %d\n", volume, connection->get_cid());
+    if (connection->is_established()) return avrcp_controller_set_absolute_volume(connection->get_cid(), volume);
+    return ERROR_CODE_SUCCESS;
+}
+
+uint8_t AVRCP::set_now_playing_info(const avrcp_track_t *track, uint16_t n_tracks) {
+    if (connection->is_established()) {
+	return avrcp_target_set_now_playing_info(connection->get_cid(), track, n_tracks);
+    }
+    return ERROR_CODE_SUCCESS;
+}
+
+uint8_t AVRCP::set_playback_status(avrcp_playback_status_t status) {
+    if (connection->is_established()) {
+        return avrcp_target_set_playback_status(connection->get_cid(), AVRCP_PLAYBACK_STATUS_PLAYING);
+    }
+    return ERROR_CODE_SUCCESS;
 }

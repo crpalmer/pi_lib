@@ -70,6 +70,9 @@
 #include "hxcmod.h"
 #include "mods/mod.h"
 
+#include "consoles.h"
+#include "avrcp.h"
+
 // logarithmic volume reduction, samples are divided by 2^x
 // #define VOLUME_REDUCTION 3
 
@@ -93,7 +96,6 @@ typedef struct {
     uint8_t  local_seid;
     uint8_t  remote_seid;
     uint8_t  stream_opened;
-    uint16_t avrcp_cid;
 
     uint32_t time_audio_data_sent; // ms
     uint32_t acc_num_missed_samples;
@@ -232,17 +234,34 @@ avrcp_play_status_info_t play_info;
 /* LISTING_START(MainConfiguration): Setup Audio Source and AVRCP Target services */
 static void hci_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
 static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * event, uint16_t event_size);
-static void avrcp_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
-static void avrcp_target_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
-static void avrcp_controller_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
 #ifdef HAVE_BTSTACK_STDIN
 static void stdin_process(char cmd);
 #endif
 
 static void a2dp_demo_hexcmod_configure_sample_rate(int sample_rate);
 
-static int a2dp_source_and_avrcp_services_init(void){
+static AVRCP *global_avrcp;	// Temporary until everything into A2DSource object
 
+class A2DPSource {
+public:
+    A2DPSource();
+
+private:
+    AVRCP *avrcp;
+};
+
+class A2DPAVRCP : public AVRCP {
+public:
+    A2DPAVRCP(A2DPSource *a2dp) : AVRCP(), a2dp(a2dp) {
+    }
+
+    void on_button_pressed(avrcp_button_t button) override;
+
+private:
+    A2DPSource *a2dp;
+};
+
+A2DPSource::A2DPSource() {
     // Request role change on reconnecting headset to always use them in slave mode
     hci_set_master_slave_policy(0);
     // enabled EIR
@@ -262,8 +281,7 @@ static int a2dp_source_and_avrcp_services_init(void){
     // Create stream endpoint
     avdtp_stream_endpoint_t * local_stream_endpoint = a2dp_source_create_stream_endpoint(AVDTP_AUDIO, AVDTP_CODEC_SBC, media_sbc_codec_capabilities, sizeof(media_sbc_codec_capabilities), media_sbc_codec_configuration, sizeof(media_sbc_codec_configuration));
     if (!local_stream_endpoint){
-        printf("A2DP Source: not enough memory to create local stream endpoint\n");
-        return 1;
+        consoles_fatal_printf("A2DP Source: not enough memory to create local stream endpoint\n");
     }
 
     // Store stream enpoint's SEP ID, as it is used by A2DP API to indentify the stream endpoint
@@ -271,15 +289,8 @@ static int a2dp_source_and_avrcp_services_init(void){
     avdtp_source_register_delay_reporting_category(media_tracker.local_seid);
 
     // Initialize AVRCP Service
-    avrcp_init();
-    avrcp_register_packet_handler(&avrcp_packet_handler);
-    // Initialize AVRCP Target
-    avrcp_target_init();
-    avrcp_target_register_packet_handler(&avrcp_target_packet_handler);
-
-    // Initialize AVRCP Controller
-    avrcp_controller_init();
-    avrcp_controller_register_packet_handler(&avrcp_controller_packet_handler);
+    avrcp = new A2DPAVRCP(this);
+    global_avrcp = avrcp;
 
     // Initialize SDP, 
     sdp_init();
@@ -329,7 +340,6 @@ static int a2dp_source_and_avrcp_services_init(void){
 #ifdef HAVE_BTSTACK_STDIN
     btstack_stdin_setup(stdin_process);
 #endif
-    return 0;
 }
 /* LISTING_END */
 
@@ -711,10 +721,9 @@ static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, ui
             cid = a2dp_subevent_stream_started_get_a2dp_cid(packet);
 
             play_info.status = AVRCP_PLAYBACK_STATUS_PLAYING;
-            if (media_tracker.avrcp_cid){
-                avrcp_target_set_now_playing_info(media_tracker.avrcp_cid, &tracks[data_source], sizeof(tracks)/sizeof(avrcp_track_t));
-                avrcp_target_set_playback_status(media_tracker.avrcp_cid, AVRCP_PLAYBACK_STATUS_PLAYING);
-            }
+	    global_avrcp->set_now_playing_info(&tracks[data_source], sizeof(tracks)/sizeof(avrcp_track_t));
+	    global_avrcp->set_playback_status(AVRCP_PLAYBACK_STATUS_PLAYING);
+
             a2dp_demo_timer_start(&media_tracker);
             printf("A2DP Source: Stream started, a2dp_cid 0x%02x, local_seid 0x%02x\n", cid, local_seid);
             break;
@@ -730,9 +739,7 @@ static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, ui
             cid = a2dp_subevent_stream_suspended_get_a2dp_cid(packet);
             
             play_info.status = AVRCP_PLAYBACK_STATUS_PAUSED;
-            if (media_tracker.avrcp_cid){
-                avrcp_target_set_playback_status(media_tracker.avrcp_cid, AVRCP_PLAYBACK_STATUS_PAUSED);
-            }
+	    global_avrcp->set_playback_status(AVRCP_PLAYBACK_STATUS_PAUSED);
             printf("A2DP Source: Stream paused, a2dp_cid 0x%02x, local_seid 0x%02x\n", cid, local_seid);
             
             a2dp_demo_timer_stop(&media_tracker);
@@ -749,148 +756,26 @@ static void a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, ui
                 media_tracker.stream_opened = 0;
                 printf("A2DP Source: Stream released.\n");
             }
-            if (media_tracker.avrcp_cid){
-                avrcp_target_set_now_playing_info(media_tracker.avrcp_cid, NULL, sizeof(tracks)/sizeof(avrcp_track_t));
-                avrcp_target_set_playback_status(media_tracker.avrcp_cid, AVRCP_PLAYBACK_STATUS_STOPPED);
-            }
+	    global_avrcp->set_now_playing_info(NULL, sizeof(tracks)/sizeof(avrcp_track_t));
+	    global_avrcp->set_playback_status(AVRCP_PLAYBACK_STATUS_STOPPED);
             a2dp_demo_timer_stop(&media_tracker);
             break;
         case A2DP_SUBEVENT_SIGNALING_CONNECTION_RELEASED:
             cid = a2dp_subevent_signaling_connection_released_get_a2dp_cid(packet);
-            if (cid == media_tracker.a2dp_cid) {
-                media_tracker.avrcp_cid = 0;
-                media_tracker.a2dp_cid = 0;
-                printf("A2DP Source: Signaling released.\n\n");
-            }
+	    printf("A2DP Source: Signaling released.\n\n");
             break;
         default:
             break; 
     }
 }
 
-static void avrcp_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
-    UNUSED(channel);
-    UNUSED(size);
-    bd_addr_t event_addr;
-    uint16_t local_cid;
-    uint8_t  status = ERROR_CODE_SUCCESS;
-
-    if (packet_type != HCI_EVENT_PACKET) return;
-    if (hci_event_packet_get_type(packet) != HCI_EVENT_AVRCP_META) return;
-    
-    switch (packet[2]){
-        case AVRCP_SUBEVENT_CONNECTION_ESTABLISHED: 
-            local_cid = avrcp_subevent_connection_established_get_avrcp_cid(packet);
-            status = avrcp_subevent_connection_established_get_status(packet);
-            if (status != ERROR_CODE_SUCCESS){
-                printf("AVRCP: Connection failed, local cid 0x%02x, status 0x%02x\n", local_cid, status);
-                return;
-            }
-            media_tracker.avrcp_cid = local_cid;
-            avrcp_subevent_connection_established_get_bd_addr(packet, event_addr);
-
-            printf("AVRCP: Channel to %s successfully opened, avrcp_cid 0x%02x\n", bd_addr_to_str(event_addr), media_tracker.avrcp_cid);
-             
-            avrcp_target_support_event(media_tracker.avrcp_cid, AVRCP_NOTIFICATION_EVENT_PLAYBACK_STATUS_CHANGED);
-            avrcp_target_support_event(media_tracker.avrcp_cid, AVRCP_NOTIFICATION_EVENT_TRACK_CHANGED);
-            avrcp_target_support_event(media_tracker.avrcp_cid, AVRCP_NOTIFICATION_EVENT_NOW_PLAYING_CONTENT_CHANGED);
-            avrcp_target_set_now_playing_info(media_tracker.avrcp_cid, NULL, sizeof(tracks)/sizeof(avrcp_track_t));
-            
-            printf("Enable Volume Change notification\n");
-            avrcp_controller_enable_notification(media_tracker.avrcp_cid, AVRCP_NOTIFICATION_EVENT_VOLUME_CHANGED);
-            printf("Enable Battery Status Change notification\n");
-            avrcp_controller_enable_notification(media_tracker.avrcp_cid, AVRCP_NOTIFICATION_EVENT_BATT_STATUS_CHANGED);
-            return;
-        
-        case AVRCP_SUBEVENT_CONNECTION_RELEASED:
-            printf("AVRCP Target: Disconnected, avrcp_cid 0x%02x\n", avrcp_subevent_connection_released_get_avrcp_cid(packet));
-            media_tracker.avrcp_cid = 0;
-            return;
-        default:
-            break;
+void A2DPAVRCP::on_button_pressed(avrcp_button_t button) {
+    switch (button) {
+    case AVRCP_BUTTON_PLAY: a2dp_source_start_stream(media_tracker.a2dp_cid, media_tracker.local_seid); break;
+    case AVRCP_BUTTON_PAUSE: a2dp_source_pause_stream(media_tracker.a2dp_cid, media_tracker.local_seid); break;
+    case AVRCP_BUTTON_STOP: a2dp_source_disconnect(media_tracker.a2dp_cid); break;
+    default: break;
     }
-
-    if (status != ERROR_CODE_SUCCESS){
-        printf("Responding to event 0x%02x failed, status 0x%02x\n", packet[2], status);
-    }
-}
-
-static void avrcp_target_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
-    UNUSED(channel);
-    UNUSED(size);
-    uint8_t  status = ERROR_CODE_SUCCESS;
-
-    if (packet_type != HCI_EVENT_PACKET) return;
-    if (hci_event_packet_get_type(packet) != HCI_EVENT_AVRCP_META) return;
-
-    bool button_pressed;
-    char const * button_state;
-    avrcp_operation_id_t operation_id;
-
-    switch (packet[2]){
-        case AVRCP_SUBEVENT_PLAY_STATUS_QUERY:
-            status = avrcp_target_play_status(media_tracker.avrcp_cid, play_info.song_length_ms, play_info.song_position_ms, play_info.status);            
-            break;
-        // case AVRCP_SUBEVENT_NOW_PLAYING_INFO_QUERY:
-        //     status = avrcp_target_now_playing_info(avrcp_cid);
-        //     break;
-        case AVRCP_SUBEVENT_OPERATION:
-            operation_id = (avrcp_operation_id_t) avrcp_subevent_operation_get_operation_id(packet);
-            button_pressed = avrcp_subevent_operation_get_button_pressed(packet) > 0;
-            button_state = button_pressed ? "PRESS" : "RELEASE";
-
-            printf("AVRCP Target: operation %s (%s)\n", avrcp_operation2str(operation_id), button_state);
-
-            if (!button_pressed){
-                break;
-            }
-            switch (operation_id) {
-                case AVRCP_OPERATION_ID_PLAY:
-                    status = a2dp_source_start_stream(media_tracker.a2dp_cid, media_tracker.local_seid);
-                    break;
-                case AVRCP_OPERATION_ID_PAUSE:
-                    status = a2dp_source_pause_stream(media_tracker.a2dp_cid, media_tracker.local_seid);
-                    break;
-                case AVRCP_OPERATION_ID_STOP:
-                    status = a2dp_source_disconnect(media_tracker.a2dp_cid);
-                    break;
-                default:
-                    break;
-            }
-            break;
-        default:
-            break;
-    }
-
-    if (status != ERROR_CODE_SUCCESS){
-        printf("Responding to event 0x%02x failed, status 0x%02x\n", packet[2], status);
-    }
-}
-
-static void avrcp_controller_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
-    UNUSED(channel);
-    UNUSED(size);
-    
-    if (packet_type != HCI_EVENT_PACKET) return;
-    if (hci_event_packet_get_type(packet) != HCI_EVENT_AVRCP_META) return;
-    if (!media_tracker.avrcp_cid) return;
-    
-    switch (packet[2]){
-        case AVRCP_SUBEVENT_NOTIFICATION_VOLUME_CHANGED:
-            printf("AVRCP Controller: Notification Absolute Volume %d %%\n", avrcp_subevent_notification_volume_changed_get_absolute_volume(packet) * 100 / 127);
-            break;
-        case AVRCP_SUBEVENT_NOTIFICATION_EVENT_BATT_STATUS_CHANGED:
-            // see avrcp_battery_status_t
-            printf("AVRCP Controller: Notification Battery Status 0x%02x\n", avrcp_subevent_notification_event_batt_status_changed_get_battery_status(packet));
-            break;
-        case AVRCP_SUBEVENT_NOTIFICATION_STATE:
-            printf("AVRCP Controller: Notification %s - %s\n", 
-                avrcp_event2str(avrcp_subevent_notification_state_get_event_id(packet)), 
-                avrcp_subevent_notification_state_get_enabled(packet) != 0 ? "enabled" : "disabled");
-            break;
-        default:
-            break;
-    }  
 }
 
 #ifdef HAVE_BTSTACK_STDIN
@@ -936,11 +821,11 @@ static void stdin_process(char cmd){
             break;
         case 'c':
             printf("%c - Create AVRCP connection to addr %s.\n", cmd, bd_addr_to_str(device_addr));
-            status = avrcp_connect(device_addr, &media_tracker.avrcp_cid);
+            status = global_avrcp->connect(device_addr);
             break;
         case 'C':
             printf("%c - AVRCP disconnect\n", cmd);
-            status = avrcp_disconnect(media_tracker.avrcp_cid);
+            status = global_avrcp->disconnect();
             break;
         case 'D':
             printf("Deleting all link keys\n");
@@ -952,11 +837,11 @@ static void stdin_process(char cmd){
 
         case 't':
             printf(" - volume up\n");
-            status = avrcp_controller_volume_up(media_tracker.avrcp_cid);
+            status = global_avrcp->volume_up();
             break;
         case 'T':
             printf(" - volume down\n");
-            status = avrcp_controller_volume_down(media_tracker.avrcp_cid);
+            status = global_avrcp->volume_down();
             break;
 
         case 'v':
@@ -966,7 +851,7 @@ static void stdin_process(char cmd){
                 media_tracker.volume += 10;
             }
             printf(" - volume up (via set absolute volume) %d%% (%d)\n",  media_tracker.volume * 100 / 127,  media_tracker.volume);
-            status = avrcp_controller_set_absolute_volume(media_tracker.avrcp_cid, media_tracker.volume);
+            status = global_avrcp->set_volume(media_tracker.volume);
             break;
         case 'V':
             if (media_tracker.volume < 10){
@@ -975,22 +860,18 @@ static void stdin_process(char cmd){
                 media_tracker.volume -= 10;
             }
             printf(" - volume down (via set absolute volume) %d%% (%d)\n",  media_tracker.volume * 100 / 127,  media_tracker.volume);
-            status = avrcp_controller_set_absolute_volume(media_tracker.avrcp_cid, media_tracker.volume);
+            status = global_avrcp->set_volume(media_tracker.volume);
             break;
         
         case 'x':
-            if (media_tracker.avrcp_cid){
-                avrcp_target_set_now_playing_info(media_tracker.avrcp_cid, &tracks[data_source], sizeof(tracks)/sizeof(avrcp_track_t));
-            }
+	    global_avrcp->set_now_playing_info(&tracks[data_source], sizeof(tracks)/sizeof(avrcp_track_t));
             printf("%c - Play sine.\n", cmd);
             data_source = STREAM_SINE;
             if (!media_tracker.stream_opened) break;
             status = a2dp_source_start_stream(media_tracker.a2dp_cid, media_tracker.local_seid);
             break;
         case 'z':
-            if (media_tracker.avrcp_cid){
-                avrcp_target_set_now_playing_info(media_tracker.avrcp_cid, &tracks[data_source], sizeof(tracks)/sizeof(avrcp_track_t));
-            }
+	    global_avrcp->set_now_playing_info(&tracks[data_source], sizeof(tracks)/sizeof(avrcp_track_t));
             printf("%c - Play mod.\n", cmd);
             data_source = STREAM_MOD;
             if (!media_tracker.stream_opened) break;
@@ -1045,9 +926,7 @@ static void stdin_process(char cmd){
 
 
 int btstack_main() {
-    int err = a2dp_source_and_avrcp_services_init();
-    if (err) return err;
-    // turn on!
+    new A2DPSource();
     hci_power_control(HCI_POWER_ON);
     return 0;
 }

@@ -21,6 +21,10 @@ public:
 
 private:
     uint8_t service_buffer[150];
+    uint8_t sdp_avrcp_target_service_buffer[150];
+    uint8_t sdp_avrcp_controller_service_buffer[200];
+
+    class AVRCP *avrcp;
     class A2DPSinkConnection *connection;
     class SBCDecoder *decoder;
 };

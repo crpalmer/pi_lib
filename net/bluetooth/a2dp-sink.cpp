@@ -3,6 +3,7 @@
 
 #include "btstack.h"
 #include "bluetooth/a2dp-sink.h"
+#include "avrcp.h"
 #include "sbc-decoder.h"
 
 static A2DPSink *global_sink = NULL;
@@ -43,12 +44,26 @@ A2DPSink::A2DPSink() {
     a2dp_sink_register_packet_handler(C_a2dp_sink_packet_handler);
     a2dp_sink_register_media_handler(C_handle_l2cap_media_data_packet);
 
+    avrcp = new AVRCP();
     decoder = new SBCDecoder(this);
 
     // - Create and register A2DP Sink service record
     memset(service_buffer, 0, sizeof(service_buffer));
     a2dp_sink_create_sdp_record(service_buffer, sdp_create_service_record_handle(), AVDTP_SINK_FEATURE_MASK_HEADPHONE, NULL, NULL);
     sdp_register_service(service_buffer);
+
+    // - Create AVRCP Controller service record and register it with SDP. We send Category 1 commands to the media player, e.g. play/pause
+    memset(sdp_avrcp_controller_service_buffer, 0, sizeof(sdp_avrcp_controller_service_buffer));
+    uint16_t controller_supported_features = 1 << AVRCP_CONTROLLER_SUPPORTED_FEATURE_CATEGORY_PLAYER_OR_RECORDER;
+    avrcp_controller_create_sdp_record(sdp_avrcp_controller_service_buffer, sdp_create_service_record_handle(), controller_supported_features, NULL, NULL);
+    sdp_register_service(sdp_avrcp_controller_service_buffer);
+
+    //   -  We receive Category 2 commands from the media player, e.g. volume up/down
+    memset(sdp_avrcp_target_service_buffer, 0, sizeof(sdp_avrcp_target_service_buffer));
+    uint16_t target_supported_features = 1 << AVRCP_TARGET_SUPPORTED_FEATURE_CATEGORY_MONITOR_OR_AMPLIFIER;
+    avrcp_target_create_sdp_record(sdp_avrcp_target_service_buffer, sdp_create_service_record_handle(), target_supported_features, NULL, NULL);
+    sdp_register_service(sdp_avrcp_target_service_buffer);
+
 }
 
 void A2DPSink::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
