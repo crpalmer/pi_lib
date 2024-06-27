@@ -93,9 +93,13 @@ public:
 	    usage();
 	} else if (STRNCMP(line, "set_n_leds ") == 0) {
 	    n_leds = atoi(&line[space]);
+	    if (! neo) neo = new NeoPixelPico(4);
 	    neo->set_n_leds(n_leds);
+	} else if (! neo && STRNCMP(line, "gpio ") == 0) {
+	    neo = new NeoPixelPico(atoi(&line[space]));
+	    if (n_leds) neo->set_n_leds(n_leds);
 	} else if (n_leds == 0) {
-	    this->printf("error: you must set_n_leds <n> first\n");
+	    this->printf("error: you must set_n_leds <n> first (and optionally the gpio)\n");
 	} else if (STRNCMP(line, "set_brightness ") == 0) {
 	    neo->set_brightness(atof(&line[space]));
 	} else if (STRNCMP(line, "fade_in ") == 0) {
@@ -134,6 +138,7 @@ public:
 	this->printf("dump\n");
 	this->printf("fade_in <r> <g> <b>\n");
 	this->printf("fade_out <r> <g> <b>\n");
+	this->printf("gpio <gpio> - this can only be used before set_n_leds\n");
 	this->printf("set_all <r> <g> <b>\n");
 	this->printf("set_brightness <pct>\n");
 	this->printf("set_led <led> <r> <g> <b>\n");
@@ -143,7 +148,6 @@ public:
 };
 
 static void threads_main(int argc, char **argv) {
-    neo = new NeoPixelPico(4);
     new CommandLineThread(new UartReader(1024), new UartWriter(), "uart-cmd");
     new CommandLineThread(new USBReader(1024), new USBWriter(),  "usb-cmd");
 }
