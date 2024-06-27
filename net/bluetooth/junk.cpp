@@ -1,81 +1,10 @@
-/*
- * Copyright (C) 2016 BlueKitchen GmbH
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the copyright holders nor the names of
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- * 4. Any redistribution, use, or modification is done solely for
- *    personal benefit and not for any commercial purpose or for
- *    monetary gain.
- *
- * THIS SOFTWARE IS PROVIDED BY BLUEKITCHEN GMBH AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL BLUEKITCHEN
- * GMBH OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
- * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * Please inquire about commercial licensing options at 
- * contact@bluekitchen-gmbh.com
- *
- */
-
-#define BTSTACK_FILE__ "a2dp_source_demo.c"
-
-/*
- * a2dp_source_demo.c
- */
-
-// *****************************************************************************
-/* EXAMPLE_START(a2dp_source_demo): A2DP Source - Stream Audio and Control Volume
- *
- * @text This A2DP Source example demonstrates how to send an audio data stream 
- * to a remote A2DP Sink device and how to switch between two audio data sources.  
- * In addition, the AVRCP Target is used to answer queries on currently played media,
- * as well as to handle remote playback control, i.e. play, stop, repeat, etc. If HAVE_BTSTACK_STDIN 
- * is set, press SPACE on the console to show the available AVDTP and AVRCP commands.
- *
- * @text To test with a remote device, e.g. a Bluetooth speaker,
- * set the device_addr_string to the Bluetooth address of your 
- * remote device in the code, and use the UI to connect and start playback. 
- * 
- * @text For more info on BTstack audio, see our blog post 
- * [A2DP Sink and Source on STM32 F4 Discovery Board](http://bluekitchen-gmbh.com/a2dp-sink-and-source-on-stm32-f4-discovery-board/).
- * 
- */
-// *****************************************************************************
-
-
-#include <stdint.h>
-#include <stdio.h>
-#include <inttypes.h>
-#include <string.h>
-
-#include "btstack.h"
-
+#include "pi.h"
 #include "consoles.h"
 #include "bluetooth/bluetooth.h"
 #include "avrcp.h"
 
 // logarithmic volume reduction, samples are divided by 2^x
 // #define VOLUME_REDUCTION 3
-
-//#define AVRCP_BROWSING_ENABLED
 
 #define NUM_CHANNELS                2
 #define BYTES_PER_AUDIO_SAMPLE      (2*NUM_CHANNELS)
@@ -145,8 +74,6 @@ static const char * device_addr_string = "BF:AC:94:0A:99:2E";
 static a2dp_media_sending_context_t media_tracker;
 
 static int sine_phase;
-
-/* AVRCP Target context START */
 
 avrcp_track_t track = 
     {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}, 1, (char *) "Sine", (char *) "Generated", (char *) "A2DP Source Demo", (char *) "monotone", 12345};
@@ -246,9 +173,6 @@ A2DPSource::A2DPSource() {
     // Create AVRCP Target service record and register it with SDP. We receive Category 1 commands from the headphone, e.g. play/pause
     memset(sdp_avrcp_target_service_buffer, 0, sizeof(sdp_avrcp_target_service_buffer));
     uint16_t supported_features = AVRCP_FEATURE_MASK_CATEGORY_PLAYER_OR_RECORDER;
-#ifdef AVRCP_BROWSING_ENABLED
-    supported_features |= AVRCP_FEATURE_MASK_BROWSING;
-#endif
     avrcp_target_create_sdp_record(sdp_avrcp_target_service_buffer, 0x10002, supported_features, NULL, NULL);
     sdp_register_service(sdp_avrcp_target_service_buffer);
 
@@ -262,7 +186,6 @@ A2DPSource::A2DPSource() {
     btstack_stdin_setup(stdin_process);
 #endif
 }
-/* LISTING_END */
 
 int A2DPSource::get_recommended_buffer_size() {
     return btstack_min(a2dp_max_media_payload_size(a2dp_cid, local_seid), SBC_STORAGE_SIZE);
@@ -709,4 +632,3 @@ int btstack_main() {
     bluetooth_start_a2dp_source();
     return 0;
 }
-/* EXAMPLE_END */
