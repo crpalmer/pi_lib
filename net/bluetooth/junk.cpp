@@ -2,6 +2,7 @@
 #include "consoles.h"
 #include "bluetooth/bluetooth.h"
 #include "avrcp.h"
+#include "sbc-configuration.h"
 
 // logarithmic volume reduction, samples are divided by 2^x
 // #define VOLUME_REDUCTION 3
@@ -56,19 +57,6 @@ static const int num_samples_sine_int16_44100 = sizeof(sine_int16_44100) / 2;
 
 static const int A2DP_SOURCE_DEMO_INQUIRY_DURATION_1280MS = 12;
 
-typedef struct {
-    int reconfigure;
-    
-    int num_channels;
-    int sampling_frequency;
-    int block_length;
-    int subbands;
-    int min_bitpool_value;
-    int max_bitpool_value;
-    btstack_sbc_channel_mode_t      channel_mode;
-    btstack_sbc_allocation_method_t allocation_method;
-} media_codec_configuration_sbc_t;
-
 static const char * device_addr_string = "BF:AC:94:0A:99:2E";
 
 static a2dp_media_sending_context_t media_tracker;
@@ -112,7 +100,7 @@ private:
     uint8_t sdp_avrcp_target_service_buffer[200];
     uint8_t sdp_avrcp_controller_service_buffer[200];
 
-    media_codec_configuration_sbc_t sbc_configuration;
+    SBCConfiguration *configuration;
     btstack_sbc_encoder_state_t sbc_encoder_state;
 
     uint8_t media_sbc_codec_configuration[4];
@@ -133,6 +121,15 @@ private:
     A2DPSource *a2dp;
 };
 
+void A2DPAVRCP::on_button_pressed(avrcp_button_t button) {
+    switch (button) {
+    case AVRCP_BUTTON_PLAY: a2dp->play_stream();
+    case AVRCP_BUTTON_PAUSE: a2dp->pause_stream();
+    case AVRCP_BUTTON_STOP: a2dp->disconnect();
+    default: break;
+    }
+}
+
 static A2DPSource *global_a2dp_source = NULL;
 
 static void C_a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
@@ -143,6 +140,8 @@ static void C_a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, 
 A2DPSource::A2DPSource() {
     assert( ! global_a2dp_source);
     global_a2dp_source = this;
+
+    configuration = new SBCConfiguration();
 
     // Request role change on reconnecting headset to always use them in slave mode
     hci_set_master_slave_policy(0);
@@ -313,17 +312,6 @@ static void a2dp_demo_timer_stop(a2dp_media_sending_context_t * context){
     btstack_run_loop_remove_timer(&context->audio_timer);
 } 
 
-static void dump_sbc_configuration(media_codec_configuration_sbc_t * configuration){
-    printf("Received media codec configuration:\n");
-    printf("    - num_channels: %d\n", configuration->num_channels);
-    printf("    - sampling_frequency: %d\n", configuration->sampling_frequency);
-    printf("    - channel_mode: %d\n", configuration->channel_mode);
-    printf("    - block_length: %d\n", configuration->block_length);
-    printf("    - subbands: %d\n", configuration->subbands);
-    printf("    - allocation_method: %d\n", configuration->allocation_method);
-    printf("    - bitpool_value [%d, %d] \n", configuration->min_bitpool_value, configuration->max_bitpool_value);
-}
-
 uint8_t A2DPSource::connect(const char *address) {
     bd_addr_t bd_addr;
     sscanf_bd_addr(address, bd_addr);
@@ -352,9 +340,6 @@ void A2DPSource::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
     bd_addr_t address;
     uint16_t cid;
 
-    avdtp_channel_mode_t channel_mode;
-    uint8_t allocation_method;
-
     if (packet_type != HCI_EVENT_PACKET) return;
     if (hci_event_packet_get_type(packet) != HCI_EVENT_A2DP_META) return;
 
@@ -375,54 +360,14 @@ void A2DPSource::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
             printf("A2DP Source: Connected to address %s, a2dp cid 0x%02x, local seid 0x%02x.\n", bd_addr_to_str(address), a2dp_cid, local_seid);
             break;
 
-         case A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_SBC_CONFIGURATION:{
+         case A2DP_SUBEVENT_SIGNALING_MEDIA_CODEC_SBC_CONFIGURATION:
             cid  = avdtp_subevent_signaling_media_codec_sbc_configuration_get_avdtp_cid(packet);
             if (cid != a2dp_cid) return;
 
-            sbc_configuration.reconfigure = a2dp_subevent_signaling_media_codec_sbc_configuration_get_reconfigure(packet);
-            sbc_configuration.num_channels = a2dp_subevent_signaling_media_codec_sbc_configuration_get_num_channels(packet);
-            sbc_configuration.sampling_frequency = a2dp_subevent_signaling_media_codec_sbc_configuration_get_sampling_frequency(packet);
-            sbc_configuration.block_length = a2dp_subevent_signaling_media_codec_sbc_configuration_get_block_length(packet);
-            sbc_configuration.subbands = a2dp_subevent_signaling_media_codec_sbc_configuration_get_subbands(packet);
-            sbc_configuration.min_bitpool_value = a2dp_subevent_signaling_media_codec_sbc_configuration_get_min_bitpool_value(packet);
-            sbc_configuration.max_bitpool_value = a2dp_subevent_signaling_media_codec_sbc_configuration_get_max_bitpool_value(packet);
-            
-            channel_mode = (avdtp_channel_mode_t) a2dp_subevent_signaling_media_codec_sbc_configuration_get_channel_mode(packet);
-            allocation_method = a2dp_subevent_signaling_media_codec_sbc_configuration_get_allocation_method(packet);
-            
-            printf("A2DP Source: Received SBC codec configuration, sampling frequency %u, a2dp_cid 0x%02x, local seid 0x%02x, remote seid 0x%02x.\n", 
-                sbc_configuration.sampling_frequency, cid,
-                   a2dp_subevent_signaling_media_codec_sbc_configuration_get_local_seid(packet),
-                   a2dp_subevent_signaling_media_codec_sbc_configuration_get_remote_seid(packet));
-            
-            // Adapt Bluetooth spec definition to SBC Encoder expected input
-            sbc_configuration.allocation_method = (btstack_sbc_allocation_method_t)(allocation_method - 1);
-            switch (channel_mode){
-                case AVDTP_CHANNEL_MODE_JOINT_STEREO:
-                    sbc_configuration.channel_mode = SBC_CHANNEL_MODE_JOINT_STEREO;
-                    break;
-                case AVDTP_CHANNEL_MODE_STEREO:
-                    sbc_configuration.channel_mode = SBC_CHANNEL_MODE_STEREO;
-                    break;
-                case AVDTP_CHANNEL_MODE_DUAL_CHANNEL:
-                    sbc_configuration.channel_mode = SBC_CHANNEL_MODE_DUAL_CHANNEL;
-                    break;
-                case AVDTP_CHANNEL_MODE_MONO:
-                    sbc_configuration.channel_mode = SBC_CHANNEL_MODE_MONO;
-                    break;
-                default:
-                    btstack_assert(false);
-                    break;
-            }
-            dump_sbc_configuration(&sbc_configuration);
-
-            btstack_sbc_encoder_init(&sbc_encoder_state, SBC_MODE_STANDARD, 
-                sbc_configuration.block_length, sbc_configuration.subbands, 
-                sbc_configuration.allocation_method, sbc_configuration.sampling_frequency, 
-                sbc_configuration.max_bitpool_value,
-                sbc_configuration.channel_mode);
+	    configuration->receive(packet);
+	    configuration->dump();
+	    configuration->encoder_init(&sbc_encoder_state);
             break;
-        }  
 
         case A2DP_SUBEVENT_SIGNALING_DELAY_REPORTING_CAPABILITY:
             printf("A2DP Source: remote supports delay report, remote seid %d\n", 
@@ -518,15 +463,6 @@ void A2DPSource::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
             break;
         default:
             break; 
-    }
-}
-
-void A2DPAVRCP::on_button_pressed(avrcp_button_t button) {
-    switch (button) {
-    case AVRCP_BUTTON_PLAY: a2dp->play_stream();
-    case AVRCP_BUTTON_PAUSE: a2dp->pause_stream();
-    case AVRCP_BUTTON_STOP: a2dp->disconnect();
-    default: break;
     }
 }
 

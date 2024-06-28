@@ -9,6 +9,7 @@ if("${PLATFORM}" STREQUAL "pico")
     ${CMAKE_CURRENT_LIST_DIR}/bluetooth/avrcp.cpp
     ${CMAKE_CURRENT_LIST_DIR}/bluetooth/avrcp-connection.cpp
     ${CMAKE_CURRENT_LIST_DIR}/bluetooth/bluetooth.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/bluetooth/sbc-configuration.cpp
     ${CMAKE_CURRENT_LIST_DIR}/bluetooth/sbc-decoder.cpp
     ${CMAKE_CURRENT_LIST_DIR}/wifi.c
     ${CMAKE_CURRENT_LIST_DIR}/bluetooth/junk.cpp

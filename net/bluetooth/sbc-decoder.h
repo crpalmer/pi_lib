@@ -1,28 +1,26 @@
 #ifndef __SBC_DECODER_H__
 #define __SBC_DECODER_H__
 
-#include "audio.h"
 #include "btstack.h"
+#include "sbc-configuration.h"
 
-class SBCDecoder : public AudioConfig {
+class SBCDecoder {
 public:
     SBCDecoder(class A2DPSinkHandler *handler);
+
+    void dump_state() { configuration->dump(); }
+    void receive_configuration(uint8_t *packet) { configuration->receive(packet); }
 
     void media_init();
     void media_close();
     void start();
     void pause();
 
-    void dump_state();
-    void receive_configuration(uint8_t *packet);
+    void dump_configuration();
     void stream_started();
 
     void packet_handler(uint8_t seid, uint8_t *packet, uint16_t size);
     void handle_pcm_data(int16_t *data, int num_audio_frames);
-
-    int get_num_channels() override { return num_channels; }
-    int get_rate() override { return sampling_frequency; }
-    int get_bytes_per_sample() override { return 2; }
 
 private:
     bool parse_media_header(uint8_t *packet, int size, int *offset, avdtp_media_packet_header_t *media_header);
@@ -30,16 +28,7 @@ private:
 
 private:
     class A2DPSinkHandler *handler;
-
-    bool  reconfigure = false;
-    uint8_t  num_channels = 2;
-    uint16_t sampling_frequency = 44100;
-    uint8_t  block_length = 0;
-    uint8_t  subbands = 0;
-    uint8_t  min_bitpool_value = 0;
-    uint8_t  max_bitpool_value = 0;
-    btstack_sbc_channel_mode_t channel_mode;
-    btstack_sbc_allocation_method_t allocation_method;
+    SBCConfiguration *configuration;
 
     bool media_initialized = false;
     bool audio_stream_started = false;

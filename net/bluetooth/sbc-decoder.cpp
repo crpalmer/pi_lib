@@ -6,6 +6,7 @@
 SBCDecoder::SBCDecoder(A2DPSinkHandler *handler) : handler(handler) {
     // Setup the AVDTP endpoint
     a2dp_sink_create_stream_endpoint(AVDTP_AUDIO, AVDTP_CODEC_SBC, sbc_codec_capabilities, sizeof(sbc_codec_capabilities), sbc_codec_configuration, sizeof(sbc_codec_configuration));
+    configuration = new SBCConfiguration();
 }
 
 static void C_handle_pcm_data(int16_t *data, int num_audio_frames, int num_channels, int sample_rate, void *decoder_as_vp) {
@@ -14,12 +15,12 @@ static void C_handle_pcm_data(int16_t *data, int num_audio_frames, int num_chann
 }
 
 void SBCDecoder::handle_pcm_data(int16_t *data, int num_audio_frames) {
-    handler->on_pcm_data((uint8_t *) data, num_audio_frames * get_bytes_per_sample() * get_num_channels());
+    handler->on_pcm_data((uint8_t *) data, num_audio_frames * configuration->get_bytes_per_sample() * configuration->get_num_channels());
 }
 
 void SBCDecoder::media_init() {
     btstack_sbc_decoder_init(&state, mode, C_handle_pcm_data, this);
-    handler->on_configure(this);
+    handler->on_configure(configuration);
     audio_stream_started = false;
     media_initialized = true;
 }
@@ -109,51 +110,8 @@ void SBCDecoder::packet_handler(uint8_t seid, uint8_t *packet, uint16_t size) {
     btstack_sbc_decoder_process_data(&state, 0, packet_begin, packet_length);
 }
 
-void SBCDecoder::dump_state() {
-    printf("    - num_channels: %d\n", num_channels);
-    printf("    - sampling_frequency: %d\n", sampling_frequency);
-    printf("    - channel_mode: %d\n", channel_mode);
-    printf("    - block_length: %d\n", block_length);
-    printf("    - subbands: %d\n", subbands);
-    printf("    - allocation_method: %d\n", allocation_method);
-    printf("    - bitpool_value [%d, %d] \n", min_bitpool_value, max_bitpool_value);
-    printf("\n");
-}
-
-void SBCDecoder::receive_configuration(uint8_t *packet) {
-    reconfigure = a2dp_subevent_signaling_media_codec_sbc_configuration_get_reconfigure(packet);
-    num_channels = a2dp_subevent_signaling_media_codec_sbc_configuration_get_num_channels(packet);
-    sampling_frequency = a2dp_subevent_signaling_media_codec_sbc_configuration_get_sampling_frequency(packet);
-    block_length = a2dp_subevent_signaling_media_codec_sbc_configuration_get_block_length(packet);
-    subbands = a2dp_subevent_signaling_media_codec_sbc_configuration_get_subbands(packet);
-    min_bitpool_value = a2dp_subevent_signaling_media_codec_sbc_configuration_get_min_bitpool_value(packet);
-    max_bitpool_value = a2dp_subevent_signaling_media_codec_sbc_configuration_get_max_bitpool_value(packet);
-    
-    // Adapt Bluetooth spec definition to SBC Encoder expected input
-    int bt_spec_allocation_method = a2dp_subevent_signaling_media_codec_sbc_configuration_get_allocation_method(packet);
-    allocation_method = (btstack_sbc_allocation_method_t) (bt_spec_allocation_method - 1);
-   
-    switch (a2dp_subevent_signaling_media_codec_sbc_configuration_get_channel_mode(packet)){
-    case AVDTP_CHANNEL_MODE_JOINT_STEREO:
-	channel_mode = SBC_CHANNEL_MODE_JOINT_STEREO;
-	break;
-    case AVDTP_CHANNEL_MODE_STEREO:
-	channel_mode = SBC_CHANNEL_MODE_STEREO;
-	break;
-    case AVDTP_CHANNEL_MODE_DUAL_CHANNEL:
-	channel_mode = SBC_CHANNEL_MODE_DUAL_CHANNEL;
-	break;
-    case AVDTP_CHANNEL_MODE_MONO:
-	channel_mode = SBC_CHANNEL_MODE_MONO;
-	break;
-    default:
-	btstack_assert(false);
-	break;
-    }
-}
-
 void SBCDecoder::stream_started() {
-    if (reconfigure){
+    if (configuration->needs_reconfiguration()){
 	media_close();
     }
     // prepare media processing
