@@ -49,4 +49,3 @@ void SBCConfiguration::receive(uint8_t *packet) {
 void SBCConfiguration::encoder_init(btstack_sbc_encoder_state_t *state) {
     btstack_sbc_encoder_init(state, SBC_MODE_STANDARD, block_length, subbands, allocation_method, sampling_frequency, max_bitpool_value, channel_mode);
 }
-

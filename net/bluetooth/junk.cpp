@@ -1,7 +1,8 @@
 #include "pi.h"
-#include "consoles.h"
-#include "bluetooth/bluetooth.h"
 #include "avrcp.h"
+#include "bluetooth/bluetooth.h"
+#include "consoles.h"
+#include "pi-threads.h"
 #include "sbc-configuration.h"
 
 // logarithmic volume reduction, samples are divided by 2^x
@@ -15,15 +16,8 @@ typedef struct {
 
     uint32_t time_audio_data_sent; // ms
     uint32_t acc_num_missed_samples;
-    uint32_t samples_ready;
     btstack_timer_source_t audio_timer;
     uint8_t  streaming;
-    int      max_media_payload_size;
-    uint32_t rtp_timestamp;
-
-    uint8_t  sbc_storage[SBC_STORAGE_SIZE];
-    uint16_t sbc_storage_count;
-    uint8_t  sbc_ready_to_send;
 } a2dp_media_sending_context_t;
 
 /* ---- sine wave --- */
@@ -48,7 +42,7 @@ static const int num_samples_sine_int16_44100 = sizeof(sine_int16_44100) / 2;
 
 static int sine_phase;
 
-static void produce_sine_audio(int16_t * pcm_buffer, int num_samples_to_write){
+static void produce_audio(int16_t * pcm_buffer, int num_samples_to_write){
     int count;
     for (count = 0; count < num_samples_to_write ; count++){
 	pcm_buffer[count * 2]     = sine_int16_44100[sine_phase];
@@ -58,10 +52,6 @@ static void produce_sine_audio(int16_t * pcm_buffer, int num_samples_to_write){
 	    sine_phase -= num_samples_sine_int16_44100;
 	}
     }
-}
-
-static void produce_audio(int16_t * pcm_buffer, int num_samples){
-    produce_sine_audio(pcm_buffer, num_samples);
 #ifdef VOLUME_REDUCTION
     int i;
     for (i=0;i<num_samples*2;i++){
@@ -81,13 +71,140 @@ static void stdin_process(char cmd);
 
 static AVRCP *global_avrcp;	// Temporary until everything into A2DSource object
 
+class SBCEncoder {
+public:
+    SBCEncoder();
+
+    void receive_configuration(uint8_t *packet) { configuration->receive(packet); }
+    void init(uint16_t a2dp_cid, uint16_t local_seid);
+    void enqueue_pcm_data(int16_t *pcm, int n_samples);
+    void send_media_payload_rtp();
+    void resume() { cond->signal(); }
+
+    int get_max_buffer_size() {
+        return btstack_min(a2dp_max_media_payload_size(a2dp_cid, local_seid), SBC_STORAGE_SIZE);
+    }
+
+    void dump_state() { configuration->dump(); }
+
+private:
+    SBCConfiguration *configuration;
+    PiMutex *lock;
+    PiCond *cond;
+
+    uint16_t a2dp_cid;
+    uint16_t local_seid;
+
+    btstack_sbc_encoder_state_t state;
+
+    uint32_t rtp_timestamp = 0;
+    uint8_t  sbc_buffer[SBC_STORAGE_SIZE];
+    int16_t *pcm_buffer = NULL;
+    uint16_t n_sbc_buffer = 0;
+    uint16_t a_pcm_buffer = 0;
+    uint16_t n_pcm_buffer = 0;
+    bool ready_to_send = false;
+};
+
+SBCEncoder::SBCEncoder() {
+    configuration = new SBCConfiguration();
+    lock = new PiMutex();
+    cond = new PiCond();
+}
+
+void SBCEncoder::init(uint16_t a2dp_cid, uint16_t local_seid) {
+    configuration->encoder_init(&state);
+    this->a2dp_cid = a2dp_cid;
+    this->local_seid = local_seid;
+
+    if (pcm_buffer) fatal_free(pcm_buffer);
+    a_pcm_buffer = btstack_sbc_encoder_num_audio_frames();
+    pcm_buffer = (int16_t *) fatal_malloc(a_pcm_buffer * sizeof(pcm_buffer) * NUM_CHANNELS);
+    cond->signal();
+}
+
+// enqueue_pcm_data will block if too much data has built up and we are
+// waiting for it to be sent.
+
+void SBCEncoder::enqueue_pcm_data(int16_t *pcm, int n_samples) {
+    lock->lock();
+
+    while (! a_pcm_buffer) {
+	printf("%s: not intialized\n", __func__);
+	cond->wait(lock);
+    }
+
+    while (n_samples) {
+	// If we have less than a total buffer to process, just save the pcm data for the
+	// next time we get more data
+
+	if (n_pcm_buffer + n_samples < a_pcm_buffer) {
+	    memcpy(&pcm_buffer[n_pcm_buffer * NUM_CHANNELS], pcm, n_samples * NUM_CHANNELS);
+	    n_pcm_buffer += n_samples;
+	    break;
+	}
+
+	// We have atleast one full buffer for encoding, encode it (the new encoded
+	// buffer is stored in the sbc object until we can copy it to our local storage)
+
+	if (n_pcm_buffer) {
+	    // Combine the existing unprocessed data with the new data
+	    int n_to_copy = a_pcm_buffer - n_pcm_buffer;
+	    assert(n_to_copy <= n_samples);	// If it wasn't, we would have handled it (above)
+	    memcpy(&pcm_buffer[n_pcm_buffer * NUM_CHANNELS], pcm, n_to_copy * NUM_CHANNELS);
+	    btstack_sbc_encoder_process_data(pcm_buffer);
+	    n_pcm_buffer = 0;
+	    pcm += n_to_copy;
+	    n_samples -= n_to_copy;
+	} else {
+	    // No previous unprocessed data, skip the extra copying and
+	    // process it directly.
+	    btstack_sbc_encoder_process_data(pcm);
+	    pcm += a_pcm_buffer;
+	    n_samples -= a_pcm_buffer;
+	}
+
+	uint8_t * sbc_frame = btstack_sbc_encoder_sbc_buffer();
+	int sbc_len = btstack_sbc_encoder_sbc_buffer_length();
+
+	// If there is no room for more data, send the buffer and wait until it is
+	// sent so that we have space to store the new data
+
+	while (n_sbc_buffer + sbc_len > get_max_buffer_size()) {
+printf("%d %d %d\n", n_sbc_buffer, sbc_len, get_max_buffer_size());
+	    void a2dp_source_request_can_send_now();  // TODO forward declaration not neeed after spliting headers/src
+	    a2dp_source_request_can_send_now();
+	    cond->wait(lock);
+	}
+
+	memcpy(&sbc_buffer[n_sbc_buffer], sbc_frame, sbc_len);
+	n_sbc_buffer += sbc_len;
+    }
+
+    lock->unlock();
+}
+
+void SBCEncoder::send_media_payload_rtp() {
+    lock->lock();
+
+    uint8_t num_frames = n_sbc_buffer / btstack_sbc_encoder_sbc_buffer_length();
+    // Prepend SBC Header
+    sbc_buffer[0] = num_frames;  // (fragmentation << 7) | (starting_packet << 6) | (last_packet << 5) | num_frames;
+    a2dp_source_stream_send_media_payload_rtp(a2dp_cid, local_seid, 0, rtp_timestamp, sbc_buffer, n_sbc_buffer + 1);
+
+    // update rtp_timestamp
+    unsigned int num_audio_samples_per_sbc_buffer = btstack_sbc_encoder_num_audio_frames();
+    rtp_timestamp += num_frames * num_audio_samples_per_sbc_buffer;
+
+    n_sbc_buffer = 0;
+
+    cond->signal();
+    lock->unlock();
+}
+
 class A2DPSource {
 public:
     A2DPSource();
-
-    void hack_can_send_now() {
-        a2dp_source_stream_endpoint_request_can_send_now(a2dp_cid, local_seid);
-    }
 
     int get_recommended_buffer_size();
 
@@ -96,14 +213,18 @@ public:
     uint8_t play_stream();
     uint8_t pause_stream();
 
+    bool is_playing() { return avrcp->is_playing(); }
+
+    void play(int16_t *pcm, int n_samples);
+
     bool set_volume(int volume);
     bool volume_up(int inc = 10);
     bool volume_down(int inc = 10);
 
     void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
 
-private:
-    void send_media_packet(void);
+    void request_can_send_now();
+    void call_request_can_send_now();
 
 private:
     AVRCP *avrcp;
@@ -113,8 +234,7 @@ private:
 
     int volume = 50;
 
-    SBCConfiguration *configuration;
-    btstack_sbc_encoder_state_t sbc_encoder_state;
+    SBCEncoder *encoder;
 
     uint8_t media_sbc_codec_capabilities[4] = {
          (AVDTP_SBC_44100 << 4) | AVDTP_SBC_STEREO,
@@ -123,6 +243,7 @@ private:
     }; 
     uint8_t media_sbc_codec_configuration[4];
 
+    btstack_context_callback_registration_t request_can_send_now_callback_registration;
     avrcp_playback_status_t playback_status = AVRCP_PLAYBACK_STATUS_STOPPED;
     uint16_t a2dp_cid;
     uint8_t  local_seid;
@@ -143,104 +264,77 @@ static A2DPSource *global_a2dp_source = NULL;
 
 /* SBC-Encoder */
 
-static a2dp_media_sending_context_t media_tracker;
+#include "time-utils.h"
 
-void A2DPSource::send_media_packet(void) {
-    int num_bytes_in_frame = btstack_sbc_encoder_sbc_buffer_length();
-    int bytes_in_storage = media_tracker.sbc_storage_count;
-    uint8_t num_sbc_frames = bytes_in_storage / num_bytes_in_frame;
-    // Prepend SBC Header
-    media_tracker.sbc_storage[0] = num_sbc_frames;  // (fragmentation << 7) | (starting_packet << 6) | (last_packet << 5) | num_frames;
-    a2dp_source_stream_send_media_payload_rtp(a2dp_cid, local_seid, 0,
-                                               media_tracker.rtp_timestamp,
-                                               media_tracker.sbc_storage, bytes_in_storage + 1);
-
-    // update rtp_timestamp
-    unsigned int num_audio_samples_per_sbc_buffer = btstack_sbc_encoder_num_audio_frames();
-    media_tracker.rtp_timestamp += num_sbc_frames * num_audio_samples_per_sbc_buffer;
-
-    media_tracker.sbc_storage_count = 0;
-    media_tracker.sbc_ready_to_send = 0;
-}
-
-static int a2dp_demo_fill_sbc_audio_buffer(a2dp_media_sending_context_t * context){
-    // perform sbc encoding
-    int total_num_bytes_read = 0;
-    unsigned int num_audio_samples_per_sbc_buffer = btstack_sbc_encoder_num_audio_frames();
-    while (context->samples_ready >= num_audio_samples_per_sbc_buffer
-        && (context->max_media_payload_size - context->sbc_storage_count) >= btstack_sbc_encoder_sbc_buffer_length()){
-
-        int16_t pcm_frame[256*NUM_CHANNELS];
-
-        produce_audio(pcm_frame, num_audio_samples_per_sbc_buffer);
-        btstack_sbc_encoder_process_data(pcm_frame);
-        
-        uint16_t sbc_frame_size = btstack_sbc_encoder_sbc_buffer_length(); 
-        uint8_t * sbc_frame = btstack_sbc_encoder_sbc_buffer();
-        
-        total_num_bytes_read += num_audio_samples_per_sbc_buffer;
-        // first byte in sbc storage contains sbc media header
-        memcpy(&context->sbc_storage[1 + context->sbc_storage_count], sbc_frame, sbc_frame_size);
-        context->sbc_storage_count += sbc_frame_size;
-        context->samples_ready -= num_audio_samples_per_sbc_buffer;
+class Player : PiThread {
+public:
+    Player() : PiThread("player") {
+	lock = new PiMutex();
+	cond = new PiCond();
+	start();
     }
 
-    if ((context->sbc_storage_count + btstack_sbc_encoder_sbc_buffer_length()) > context->max_media_payload_size){
-        // schedule sending
-        context->sbc_ready_to_send = 1;
-	global_a2dp_source->hack_can_send_now();
+    void main() {
+	struct timespec start;
+	uint32_t missed_samples = 0;
+
+	nano_gettime(&start);
+	missed_samples = 0;
+
+	while (1) {
+	    while (is_paused) {
+		cond->wait(lock);
+
+		nano_gettime(&start);
+		missed_samples = 0;
+	    }
+
+	    int ms = nano_elapsed_ms_now(&start);
+
+    	    uint32_t num_samples = (ms * SAMPLE_RATE) / 1000;
+    	    missed_samples += (ms * SAMPLE_RATE) % 1000;
+
+	    while (missed_samples >= 1000) {
+		num_samples++;
+		missed_samples -= 1000;
+	    }
+	    
+	    while (num_samples > 0) {
+		int n_now = num_samples > 256 ? 256 : num_samples;
+		produce_audio(pcm_frame, n_now);
+		lock->unlock();
+		global_a2dp_source->play(pcm_frame, n_now);
+		ms_sleep(AUDIO_TIMEOUT_MS);
+		lock->lock();
+		num_samples -= n_now;
+	    }
+	}
     }
 
-    return total_num_bytes_read;
-}
-
-static void a2dp_demo_audio_timeout_handler(btstack_timer_source_t * timer){
-    a2dp_media_sending_context_t * context = (a2dp_media_sending_context_t *) btstack_run_loop_get_timer_context(timer);
-    btstack_run_loop_set_timer(&context->audio_timer, AUDIO_TIMEOUT_MS); 
-    btstack_run_loop_add_timer(&context->audio_timer);
-    uint32_t now = btstack_run_loop_get_time_ms();
-
-    uint32_t update_period_ms = AUDIO_TIMEOUT_MS;
-    if (context->time_audio_data_sent > 0){
-        update_period_ms = now - context->time_audio_data_sent;
-    } 
-
-    uint32_t num_samples = (update_period_ms * SAMPLE_RATE) / 1000;
-    context->acc_num_missed_samples += (update_period_ms * SAMPLE_RATE) % 1000;
-    
-    while (context->acc_num_missed_samples >= 1000){
-        num_samples++;
-        context->acc_num_missed_samples -= 1000;
+    void pause() {
+	lock->lock();
+	assert(! is_paused);
+	is_paused = true;
+	lock->unlock();
     }
-    context->time_audio_data_sent = now;
-    context->samples_ready += num_samples;
 
-    if (context->sbc_ready_to_send) return;
+    void resume() {
+	lock->lock();
+	assert(is_paused);
+	is_paused = false;
+	cond->signal();
+	lock->unlock();
+    }
 
-    a2dp_demo_fill_sbc_audio_buffer(context);
-}
+private:
+    bool is_paused = true;
+    PiMutex *lock;
+    PiCond *cond;
 
-static void a2dp_demo_timer_start(a2dp_media_sending_context_t * context){
-    context->max_media_payload_size = global_a2dp_source->get_recommended_buffer_size();
-    context->sbc_storage_count = 0;
-    context->sbc_ready_to_send = 0;
-    context->streaming = 1;
-    btstack_run_loop_remove_timer(&context->audio_timer);
-    btstack_run_loop_set_timer_handler(&context->audio_timer, a2dp_demo_audio_timeout_handler);
-    btstack_run_loop_set_timer_context(&context->audio_timer, context);
-    btstack_run_loop_set_timer(&context->audio_timer, AUDIO_TIMEOUT_MS); 
-    btstack_run_loop_add_timer(&context->audio_timer);
-}
+    int16_t pcm_frame[256*NUM_CHANNELS];
+};
 
-static void a2dp_demo_timer_stop(a2dp_media_sending_context_t * context){
-    context->time_audio_data_sent = 0;
-    context->acc_num_missed_samples = 0;
-    context->samples_ready = 0;
-    context->streaming = 1;
-    context->sbc_storage_count = 0;
-    context->sbc_ready_to_send = 0;
-    btstack_run_loop_remove_timer(&context->audio_timer);
-} 
+static class Player *global_player;
 
 /* END SBC-Encoder */
 
@@ -258,11 +352,23 @@ static void C_a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, 
     global_a2dp_source->packet_handler(packet_type, channel, packet, size);
 }
 
+void a2dp_source_request_can_send_now() {
+    global_a2dp_source->request_can_send_now();
+}
+
+static void C_call_request_can_send_now_callback(void *a2dp_source_as_vp) {
+    A2DPSource *a2dp_source = (A2DPSource *) a2dp_source_as_vp;
+    a2dp_source->call_request_can_send_now();
+}
+
 A2DPSource::A2DPSource() {
     assert( ! global_a2dp_source);
     global_a2dp_source = this;
 
-    configuration = new SBCConfiguration();
+    request_can_send_now_callback_registration.context = this;
+    request_can_send_now_callback_registration.callback = C_call_request_can_send_now_callback;
+
+    encoder = new SBCEncoder();
 
     // Request role change on reconnecting headset to always use them in slave mode
     hci_set_master_slave_policy(0);
@@ -307,8 +413,16 @@ A2DPSource::A2DPSource() {
 #endif
 }
 
+void A2DPSource::request_can_send_now() {
+    btstack_run_loop_execute_on_main_thread(&request_can_send_now_callback_registration);
+}
+
+void A2DPSource::call_request_can_send_now() {
+    a2dp_source_stream_endpoint_request_can_send_now(a2dp_cid, local_seid);
+}
+
 int A2DPSource::get_recommended_buffer_size() {
-    return btstack_min(a2dp_max_media_payload_size(a2dp_cid, local_seid), SBC_STORAGE_SIZE);
+    return encoder->get_max_buffer_size();
 }
 
 uint8_t A2DPSource::connect(const char *address) {
@@ -331,7 +445,13 @@ uint8_t A2DPSource::pause_stream() {
 
 uint8_t A2DPSource::play_stream() {
     printf("Resume stream.\n");
-    return a2dp_source_start_stream(a2dp_cid, local_seid);
+    bool ret = a2dp_source_start_stream(a2dp_cid, local_seid);
+    encoder->resume();
+    return ret;
+}
+
+void A2DPSource::play(int16_t *pcm, int n_samples) {
+    encoder->enqueue_pcm_data(pcm, n_samples);
 }
 
 void A2DPSource::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
@@ -362,9 +482,9 @@ void A2DPSource::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
             cid  = avdtp_subevent_signaling_media_codec_sbc_configuration_get_avdtp_cid(packet);
             if (cid != a2dp_cid) return;
 
-	    configuration->receive(packet);
-	    configuration->dump();
-	    configuration->encoder_init(&sbc_encoder_state);
+	    encoder->receive_configuration(packet);
+	    encoder->dump_state();
+	    encoder->init(a2dp_cid, local_seid);
             break;
 
         case A2DP_SUBEVENT_SIGNALING_DELAY_REPORTING_CAPABILITY:
@@ -419,14 +539,12 @@ void A2DPSource::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
             playback_status = AVRCP_PLAYBACK_STATUS_PLAYING;
 	    global_avrcp->set_playback_status(AVRCP_PLAYBACK_STATUS_PLAYING);
 
-            a2dp_demo_timer_start(&media_tracker);
             printf("A2DP Source: Stream started, a2dp_cid 0x%02x, local_seid 0x%02x\n", cid, local_seid);
             break;
 
         case A2DP_SUBEVENT_STREAMING_CAN_SEND_MEDIA_PACKET_NOW:
             local_seid = a2dp_subevent_streaming_can_send_media_packet_now_get_local_seid(packet);
-            cid = a2dp_subevent_signaling_media_codec_sbc_configuration_get_a2dp_cid(packet);
-	    global_a2dp_source->send_media_packet();
+	    encoder->send_media_payload_rtp();
             break;        
 
         case A2DP_SUBEVENT_STREAM_SUSPENDED:
@@ -437,7 +555,6 @@ void A2DPSource::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
 	    global_avrcp->set_playback_status(AVRCP_PLAYBACK_STATUS_PAUSED);
             printf("A2DP Source: Stream paused, a2dp_cid 0x%02x, local_seid 0x%02x\n", cid, local_seid);
             
-            a2dp_demo_timer_stop(&media_tracker);
             break;
 
         case A2DP_SUBEVENT_STREAM_RELEASED:
@@ -452,7 +569,6 @@ void A2DPSource::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
             }
 	    global_avrcp->set_now_playing_info(NULL, 1);
 	    global_avrcp->set_playback_status(AVRCP_PLAYBACK_STATUS_STOPPED);
-            a2dp_demo_timer_stop(&media_tracker);
             break;
         case A2DP_SUBEVENT_SIGNALING_CONNECTION_RELEASED:
             cid = a2dp_subevent_signaling_connection_released_get_a2dp_cid(packet);
@@ -536,9 +652,11 @@ static void stdin_process(char cmd){
 
         case 'p':
 	    status = global_a2dp_source->pause_stream();
+	    global_player->pause();
             break;
         
         case 'P':
+	    global_player->resume();
 	    status = global_a2dp_source->play_stream();
             break;
         
@@ -554,6 +672,7 @@ static void stdin_process(char cmd){
 
 int btstack_main() {
     bluetooth_init();
+    global_player = new Player();
     new A2DPSource();
     bluetooth_start_a2dp_source();
     return 0;

@@ -22,6 +22,8 @@ public:
     uint8_t connect(bd_addr_t addr);
     uint8_t disconnect();
 
+    bool is_playing() { return connection->is_playing(); }
+
     uint8_t volume_up();
     uint8_t volume_down();
     uint8_t set_volume(int volume);
