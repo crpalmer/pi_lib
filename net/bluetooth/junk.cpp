@@ -8,10 +8,7 @@
 // #define VOLUME_REDUCTION 3
 
 #define NUM_CHANNELS                2
-#define BYTES_PER_AUDIO_SAMPLE      (2*NUM_CHANNELS)
 #define AUDIO_TIMEOUT_MS            10 
-#define TABLE_SIZE_441HZ            100
-
 #define SBC_STORAGE_SIZE 1030
 
 typedef struct {
@@ -27,15 +24,9 @@ typedef struct {
     uint8_t  sbc_storage[SBC_STORAGE_SIZE];
     uint16_t sbc_storage_count;
     uint8_t  sbc_ready_to_send;
-
-    uint8_t volume;
 } a2dp_media_sending_context_t;
 
-static  uint8_t media_sbc_codec_capabilities[] = {
-    (AVDTP_SBC_44100 << 4) | AVDTP_SBC_STEREO,
-    0xFF,//(AVDTP_SBC_BLOCK_LENGTH_16 << 4) | (AVDTP_SBC_SUBBANDS_8 << 2) | AVDTP_SBC_ALLOCATION_METHOD_LOUDNESS,
-    2, 53
-}; 
+/* ---- sine wave --- */
 
 #define SAMPLE_RATE 44100
 
@@ -55,19 +46,35 @@ static const int16_t sine_int16_44100[] = {
 
 static const int num_samples_sine_int16_44100 = sizeof(sine_int16_44100) / 2;
 
-static const int A2DP_SOURCE_DEMO_INQUIRY_DURATION_1280MS = 12;
-
-static const char * device_addr_string = "BF:AC:94:0A:99:2E";
-
-static a2dp_media_sending_context_t media_tracker;
-
 static int sine_phase;
 
-avrcp_track_t track = 
-    {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}, 1, (char *) "Sine", (char *) "Generated", (char *) "A2DP Source Demo", (char *) "monotone", 12345};
+static void produce_sine_audio(int16_t * pcm_buffer, int num_samples_to_write){
+    int count;
+    for (count = 0; count < num_samples_to_write ; count++){
+	pcm_buffer[count * 2]     = sine_int16_44100[sine_phase];
+	pcm_buffer[count * 2 + 1] = sine_int16_44100[sine_phase];
+	sine_phase++;
+	if (sine_phase >= num_samples_sine_int16_44100){
+	    sine_phase -= num_samples_sine_int16_44100;
+	}
+    }
+}
 
-/* AVRCP Target context END */
+static void produce_audio(int16_t * pcm_buffer, int num_samples){
+    produce_sine_audio(pcm_buffer, num_samples);
+#ifdef VOLUME_REDUCTION
+    int i;
+    for (i=0;i<num_samples*2;i++){
+        if (pcm_buffer[i] > 0){
+            pcm_buffer[i] =     pcm_buffer[i]  >> VOLUME_REDUCTION;
+        } else {
+            pcm_buffer[i] = -((-pcm_buffer[i]) >> VOLUME_REDUCTION);
+        }
+    }
+#endif
+}
 
+static const char * device_addr_string = "BF:AC:94:0A:99:2E";
 #ifdef HAVE_BTSTACK_STDIN
 static void stdin_process(char cmd);
 #endif
@@ -89,6 +96,10 @@ public:
     uint8_t play_stream();
     uint8_t pause_stream();
 
+    bool set_volume(int volume);
+    bool volume_up(int inc = 10);
+    bool volume_down(int inc = 10);
+
     void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
 
 private:
@@ -100,9 +111,16 @@ private:
     uint8_t sdp_avrcp_target_service_buffer[200];
     uint8_t sdp_avrcp_controller_service_buffer[200];
 
+    int volume = 50;
+
     SBCConfiguration *configuration;
     btstack_sbc_encoder_state_t sbc_encoder_state;
 
+    uint8_t media_sbc_codec_capabilities[4] = {
+         (AVDTP_SBC_44100 << 4) | AVDTP_SBC_STEREO,
+         0xFF,//(AVDTP_SBC_BLOCK_LENGTH_16 << 4) | (AVDTP_SBC_SUBBANDS_8 << 2) | AVDTP_SBC_ALLOCATION_METHOD_LOUDNESS,
+         2, 53
+    }; 
     uint8_t media_sbc_codec_configuration[4];
 
     avrcp_playback_status_t playback_status = AVRCP_PLAYBACK_STATUS_STOPPED;
@@ -121,6 +139,111 @@ private:
     A2DPSource *a2dp;
 };
 
+static A2DPSource *global_a2dp_source = NULL;
+
+/* SBC-Encoder */
+
+static a2dp_media_sending_context_t media_tracker;
+
+void A2DPSource::send_media_packet(void) {
+    int num_bytes_in_frame = btstack_sbc_encoder_sbc_buffer_length();
+    int bytes_in_storage = media_tracker.sbc_storage_count;
+    uint8_t num_sbc_frames = bytes_in_storage / num_bytes_in_frame;
+    // Prepend SBC Header
+    media_tracker.sbc_storage[0] = num_sbc_frames;  // (fragmentation << 7) | (starting_packet << 6) | (last_packet << 5) | num_frames;
+    a2dp_source_stream_send_media_payload_rtp(a2dp_cid, local_seid, 0,
+                                               media_tracker.rtp_timestamp,
+                                               media_tracker.sbc_storage, bytes_in_storage + 1);
+
+    // update rtp_timestamp
+    unsigned int num_audio_samples_per_sbc_buffer = btstack_sbc_encoder_num_audio_frames();
+    media_tracker.rtp_timestamp += num_sbc_frames * num_audio_samples_per_sbc_buffer;
+
+    media_tracker.sbc_storage_count = 0;
+    media_tracker.sbc_ready_to_send = 0;
+}
+
+static int a2dp_demo_fill_sbc_audio_buffer(a2dp_media_sending_context_t * context){
+    // perform sbc encoding
+    int total_num_bytes_read = 0;
+    unsigned int num_audio_samples_per_sbc_buffer = btstack_sbc_encoder_num_audio_frames();
+    while (context->samples_ready >= num_audio_samples_per_sbc_buffer
+        && (context->max_media_payload_size - context->sbc_storage_count) >= btstack_sbc_encoder_sbc_buffer_length()){
+
+        int16_t pcm_frame[256*NUM_CHANNELS];
+
+        produce_audio(pcm_frame, num_audio_samples_per_sbc_buffer);
+        btstack_sbc_encoder_process_data(pcm_frame);
+        
+        uint16_t sbc_frame_size = btstack_sbc_encoder_sbc_buffer_length(); 
+        uint8_t * sbc_frame = btstack_sbc_encoder_sbc_buffer();
+        
+        total_num_bytes_read += num_audio_samples_per_sbc_buffer;
+        // first byte in sbc storage contains sbc media header
+        memcpy(&context->sbc_storage[1 + context->sbc_storage_count], sbc_frame, sbc_frame_size);
+        context->sbc_storage_count += sbc_frame_size;
+        context->samples_ready -= num_audio_samples_per_sbc_buffer;
+    }
+
+    if ((context->sbc_storage_count + btstack_sbc_encoder_sbc_buffer_length()) > context->max_media_payload_size){
+        // schedule sending
+        context->sbc_ready_to_send = 1;
+	global_a2dp_source->hack_can_send_now();
+    }
+
+    return total_num_bytes_read;
+}
+
+static void a2dp_demo_audio_timeout_handler(btstack_timer_source_t * timer){
+    a2dp_media_sending_context_t * context = (a2dp_media_sending_context_t *) btstack_run_loop_get_timer_context(timer);
+    btstack_run_loop_set_timer(&context->audio_timer, AUDIO_TIMEOUT_MS); 
+    btstack_run_loop_add_timer(&context->audio_timer);
+    uint32_t now = btstack_run_loop_get_time_ms();
+
+    uint32_t update_period_ms = AUDIO_TIMEOUT_MS;
+    if (context->time_audio_data_sent > 0){
+        update_period_ms = now - context->time_audio_data_sent;
+    } 
+
+    uint32_t num_samples = (update_period_ms * SAMPLE_RATE) / 1000;
+    context->acc_num_missed_samples += (update_period_ms * SAMPLE_RATE) % 1000;
+    
+    while (context->acc_num_missed_samples >= 1000){
+        num_samples++;
+        context->acc_num_missed_samples -= 1000;
+    }
+    context->time_audio_data_sent = now;
+    context->samples_ready += num_samples;
+
+    if (context->sbc_ready_to_send) return;
+
+    a2dp_demo_fill_sbc_audio_buffer(context);
+}
+
+static void a2dp_demo_timer_start(a2dp_media_sending_context_t * context){
+    context->max_media_payload_size = global_a2dp_source->get_recommended_buffer_size();
+    context->sbc_storage_count = 0;
+    context->sbc_ready_to_send = 0;
+    context->streaming = 1;
+    btstack_run_loop_remove_timer(&context->audio_timer);
+    btstack_run_loop_set_timer_handler(&context->audio_timer, a2dp_demo_audio_timeout_handler);
+    btstack_run_loop_set_timer_context(&context->audio_timer, context);
+    btstack_run_loop_set_timer(&context->audio_timer, AUDIO_TIMEOUT_MS); 
+    btstack_run_loop_add_timer(&context->audio_timer);
+}
+
+static void a2dp_demo_timer_stop(a2dp_media_sending_context_t * context){
+    context->time_audio_data_sent = 0;
+    context->acc_num_missed_samples = 0;
+    context->samples_ready = 0;
+    context->streaming = 1;
+    context->sbc_storage_count = 0;
+    context->sbc_ready_to_send = 0;
+    btstack_run_loop_remove_timer(&context->audio_timer);
+} 
+
+/* END SBC-Encoder */
+
 void A2DPAVRCP::on_button_pressed(avrcp_button_t button) {
     switch (button) {
     case AVRCP_BUTTON_PLAY: a2dp->play_stream();
@@ -129,8 +252,6 @@ void A2DPAVRCP::on_button_pressed(avrcp_button_t button) {
     default: break;
     }
 }
-
-static A2DPSource *global_a2dp_source = NULL;
 
 static void C_a2dp_source_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
     assert(global_a2dp_source);
@@ -190,128 +311,6 @@ int A2DPSource::get_recommended_buffer_size() {
     return btstack_min(a2dp_max_media_payload_size(a2dp_cid, local_seid), SBC_STORAGE_SIZE);
 }
 
-void A2DPSource::send_media_packet(void) {
-    int num_bytes_in_frame = btstack_sbc_encoder_sbc_buffer_length();
-    int bytes_in_storage = media_tracker.sbc_storage_count;
-    uint8_t num_sbc_frames = bytes_in_storage / num_bytes_in_frame;
-    // Prepend SBC Header
-    media_tracker.sbc_storage[0] = num_sbc_frames;  // (fragmentation << 7) | (starting_packet << 6) | (last_packet << 5) | num_frames;
-    a2dp_source_stream_send_media_payload_rtp(a2dp_cid, local_seid, 0,
-                                               media_tracker.rtp_timestamp,
-                                               media_tracker.sbc_storage, bytes_in_storage + 1);
-
-    // update rtp_timestamp
-    unsigned int num_audio_samples_per_sbc_buffer = btstack_sbc_encoder_num_audio_frames();
-    media_tracker.rtp_timestamp += num_sbc_frames * num_audio_samples_per_sbc_buffer;
-
-    media_tracker.sbc_storage_count = 0;
-    media_tracker.sbc_ready_to_send = 0;
-}
-
-static void produce_sine_audio(int16_t * pcm_buffer, int num_samples_to_write){
-    int count;
-    for (count = 0; count < num_samples_to_write ; count++){
-	pcm_buffer[count * 2]     = sine_int16_44100[sine_phase];
-	pcm_buffer[count * 2 + 1] = sine_int16_44100[sine_phase];
-	sine_phase++;
-	if (sine_phase >= num_samples_sine_int16_44100){
-	    sine_phase -= num_samples_sine_int16_44100;
-	}
-    }
-}
-
-static void produce_audio(int16_t * pcm_buffer, int num_samples){
-    produce_sine_audio(pcm_buffer, num_samples);
-#ifdef VOLUME_REDUCTION
-    int i;
-    for (i=0;i<num_samples*2;i++){
-        if (pcm_buffer[i] > 0){
-            pcm_buffer[i] =     pcm_buffer[i]  >> VOLUME_REDUCTION;
-        } else {
-            pcm_buffer[i] = -((-pcm_buffer[i]) >> VOLUME_REDUCTION);
-        }
-    }
-#endif
-}
-
-static int a2dp_demo_fill_sbc_audio_buffer(a2dp_media_sending_context_t * context){
-    // perform sbc encoding
-    int total_num_bytes_read = 0;
-    unsigned int num_audio_samples_per_sbc_buffer = btstack_sbc_encoder_num_audio_frames();
-    while (context->samples_ready >= num_audio_samples_per_sbc_buffer
-        && (context->max_media_payload_size - context->sbc_storage_count) >= btstack_sbc_encoder_sbc_buffer_length()){
-
-        int16_t pcm_frame[256*NUM_CHANNELS];
-
-        produce_audio(pcm_frame, num_audio_samples_per_sbc_buffer);
-        btstack_sbc_encoder_process_data(pcm_frame);
-        
-        uint16_t sbc_frame_size = btstack_sbc_encoder_sbc_buffer_length(); 
-        uint8_t * sbc_frame = btstack_sbc_encoder_sbc_buffer();
-        
-        total_num_bytes_read += num_audio_samples_per_sbc_buffer;
-        // first byte in sbc storage contains sbc media header
-        memcpy(&context->sbc_storage[1 + context->sbc_storage_count], sbc_frame, sbc_frame_size);
-        context->sbc_storage_count += sbc_frame_size;
-        context->samples_ready -= num_audio_samples_per_sbc_buffer;
-    }
-    return total_num_bytes_read;
-}
-
-static void a2dp_demo_audio_timeout_handler(btstack_timer_source_t * timer){
-    a2dp_media_sending_context_t * context = (a2dp_media_sending_context_t *) btstack_run_loop_get_timer_context(timer);
-    btstack_run_loop_set_timer(&context->audio_timer, AUDIO_TIMEOUT_MS); 
-    btstack_run_loop_add_timer(&context->audio_timer);
-    uint32_t now = btstack_run_loop_get_time_ms();
-
-    uint32_t update_period_ms = AUDIO_TIMEOUT_MS;
-    if (context->time_audio_data_sent > 0){
-        update_period_ms = now - context->time_audio_data_sent;
-    } 
-
-    uint32_t num_samples = (update_period_ms * SAMPLE_RATE) / 1000;
-    context->acc_num_missed_samples += (update_period_ms * SAMPLE_RATE) % 1000;
-    
-    while (context->acc_num_missed_samples >= 1000){
-        num_samples++;
-        context->acc_num_missed_samples -= 1000;
-    }
-    context->time_audio_data_sent = now;
-    context->samples_ready += num_samples;
-
-    if (context->sbc_ready_to_send) return;
-
-    a2dp_demo_fill_sbc_audio_buffer(context);
-
-    if ((context->sbc_storage_count + btstack_sbc_encoder_sbc_buffer_length()) > context->max_media_payload_size){
-        // schedule sending
-        context->sbc_ready_to_send = 1;
-	global_a2dp_source->hack_can_send_now();
-    }
-}
-
-static void a2dp_demo_timer_start(a2dp_media_sending_context_t * context){
-    context->max_media_payload_size = global_a2dp_source->get_recommended_buffer_size();
-    context->sbc_storage_count = 0;
-    context->sbc_ready_to_send = 0;
-    context->streaming = 1;
-    btstack_run_loop_remove_timer(&context->audio_timer);
-    btstack_run_loop_set_timer_handler(&context->audio_timer, a2dp_demo_audio_timeout_handler);
-    btstack_run_loop_set_timer_context(&context->audio_timer, context);
-    btstack_run_loop_set_timer(&context->audio_timer, AUDIO_TIMEOUT_MS); 
-    btstack_run_loop_add_timer(&context->audio_timer);
-}
-
-static void a2dp_demo_timer_stop(a2dp_media_sending_context_t * context){
-    context->time_audio_data_sent = 0;
-    context->acc_num_missed_samples = 0;
-    context->samples_ready = 0;
-    context->streaming = 1;
-    context->sbc_storage_count = 0;
-    context->sbc_ready_to_send = 0;
-    btstack_run_loop_remove_timer(&context->audio_timer);
-} 
-
 uint8_t A2DPSource::connect(const char *address) {
     bd_addr_t bd_addr;
     sscanf_bd_addr(address, bd_addr);
@@ -355,7 +354,6 @@ void A2DPSource::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
                 break;
             }
             a2dp_cid = cid;
-            media_tracker.volume = 32;
 
             printf("A2DP Source: Connected to address %s, a2dp cid 0x%02x, local seid 0x%02x.\n", bd_addr_to_str(address), a2dp_cid, local_seid);
             break;
@@ -419,7 +417,6 @@ void A2DPSource::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
             cid = a2dp_subevent_stream_started_get_a2dp_cid(packet);
 
             playback_status = AVRCP_PLAYBACK_STATUS_PLAYING;
-	    global_avrcp->set_now_playing_info(&track, 1);
 	    global_avrcp->set_playback_status(AVRCP_PLAYBACK_STATUS_PLAYING);
 
             a2dp_demo_timer_start(&media_tracker);
@@ -466,12 +463,26 @@ void A2DPSource::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
     }
 }
 
+bool A2DPSource::set_volume(int new_volume) {
+    if (new_volume > 100) new_volume = 100;
+    if (new_volume < 0) new_volume = 0;
+    volume = new_volume;
+    return global_avrcp->set_volume(volume) == ERROR_CODE_SUCCESS;
+}
+
+bool A2DPSource::volume_up(int inc) {
+    return set_volume(volume + inc);
+}
+
+bool A2DPSource::volume_down(int inc) {
+    return set_volume(volume - inc);
+}
+
 #ifdef HAVE_BTSTACK_STDIN
 static void show_usage(void){
     bd_addr_t      iut_address;
     gap_local_bd_addr(iut_address);
     printf("\n--- Bluetooth  A2DP Source/AVRCP Demo %s ---\n", bd_addr_to_str(iut_address));
-    printf("a      - Scan for Bluetooth speaker and connect\n");
     printf("b      - A2DP Source create connection to addr %s\n", device_addr_string);
     printf("B      - A2DP Source disconnect\n");
     printf("c      - AVRCP create connection to addr %s\n", device_addr_string);
@@ -482,8 +493,6 @@ static void show_usage(void){
     printf("P      - resume streaming\n");
     printf("t      - volume up\n");
     printf("T      - volume down\n");
-    printf("v      - volume up (via set absolute volume)\n");
-    printf("V      - volume down (via set absolute volume)\n");
 
     printf("---\n");
 }
@@ -518,32 +527,13 @@ static void stdin_process(char cmd){
 
         case 't':
             printf(" - volume up\n");
-            status = global_avrcp->volume_up();
+            status = global_a2dp_source->volume_up();
             break;
         case 'T':
             printf(" - volume down\n");
-            status = global_avrcp->volume_down();
+            status = global_a2dp_source->volume_down();
             break;
 
-        case 'v':
-            if (media_tracker.volume > 117){
-                media_tracker.volume = 127;
-            } else {
-                media_tracker.volume += 10;
-            }
-            printf(" - volume up (via set absolute volume) %d%% (%d)\n",  media_tracker.volume * 100 / 127,  media_tracker.volume);
-            status = global_avrcp->set_volume(media_tracker.volume);
-            break;
-        case 'V':
-            if (media_tracker.volume < 10){
-                media_tracker.volume = 0;
-            } else {
-                media_tracker.volume -= 10;
-            }
-            printf(" - volume down (via set absolute volume) %d%% (%d)\n",  media_tracker.volume * 100 / 127,  media_tracker.volume);
-            status = global_avrcp->set_volume(media_tracker.volume);
-            break;
-        
         case 'p':
 	    status = global_a2dp_source->pause_stream();
             break;
