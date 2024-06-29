@@ -84,10 +84,13 @@ bool
 file_exists(const char *fname)
 {
     FF_Stat_t stat;
+    const char *full_fname = filename_to_sd_filename(fname);
 
     lock();
-    bool ret = ff_stat(fname, &stat) >= 0;
+    bool ret = ff_stat(full_fname, &stat) >= 0;
     unlock();
+
+    full_fname_free(fname, full_fname);
     return ret;
 }
 
