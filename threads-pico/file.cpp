@@ -26,23 +26,16 @@ static inline void unlock() { if (ff_lock) ff_lock->unlock(); }
 
 static const char *root = "/sd0";
 
-static char *filename_to_sd_filename(const char *fname) {
-    char *full_fname;
+static const char *filename_to_sd_filename(const char *fname) {
+    if (fname[0] != '/') return fname;
 
-    if (fname[0] == '/') full_fname = maprintf("%s%s", root, fname);
-    else full_fname = strdup(fname);
-
-    int j = 1;
-    for (int i = 1; full_fname[i]; i++) {
-	if (full_fname[j-1] == '/' && full_fname[i] == '/') {
-	    // We have // skip the second slash
-	} else {
-	    full_fname[j++] = full_fname[i];
-	}
-    }
-    full_fname[j] = '\0';
-
+    char *full_fname = (char *) fatal_malloc(strlen(root) + strlen(fname) + 1);
+    sprintf(full_fname, "%s%s", root, fname);
     return full_fname;
+}
+
+static void full_fname_free(const char *fname, const char *full_fname) {
+    if (fname != full_fname) fatal_free((void *) full_fname);
 }
 
 static void init_once() {
@@ -76,14 +69,14 @@ C_DECL void file_init(void) {
 off_t file_size(const char *fname) {
     FF_Stat_t stat;
     off_t size;
-    char *full_fname = filename_to_sd_filename(fname);
+    const char *full_fname = filename_to_sd_filename(fname);
 
     lock();
     if (ff_stat(full_fname, &stat) >= 0) size = stat.st_size;
     else size = -1;
     unlock();
 
-    fatal_free(full_fname);
+    full_fname_free(fname, full_fname);
     return size;
 }
 
@@ -101,11 +94,13 @@ file_exists(const char *fname)
 C_DECL file_t *file_open(const char *fname, const char *mode) {
     init_once();
 
-    char *full_fname = filename_to_sd_filename(fname);
+    const char *full_fname = filename_to_sd_filename(fname);
+
     lock();
     file_t *file = ff_fopen(full_fname, mode);
     unlock();
-    fatal_free(full_fname);
+
+    full_fname_free(fname, full_fname);
 
     return file;
 }
