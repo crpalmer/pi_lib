@@ -24,10 +24,12 @@ static PiMutex *ff_lock;
 static inline void lock() { if (ff_lock) ff_lock->lock(); }
 static inline void unlock() { if (ff_lock) ff_lock->unlock(); }
 
+static const char *root = "/sd0";
+
 static char *filename_to_sd_filename(const char *fname) {
     char *full_fname;
 
-    if (fname[0] == '/') full_fname = maprintf("/sd0%s", fname);
+    if (fname[0] == '/') full_fname = maprintf("%s%s", root, fname);
     else full_fname = strdup(fname);
 
     int j = 1;
@@ -56,7 +58,13 @@ static void init_once() {
 	if (FF_isERR(xError) != pdFALSE) {
 	    consoles_fatal_printf("FF_SDDiskMount: %s\n", (const char *)FF_GetErrMessage(xError));
 	}
-	FF_FS_Add("/sd0", pxDisk);
+	FF_FS_Add(root, pxDisk);
+	uint64_t mb;
+	unsigned pct;
+
+	getFree(pxDisk, &mb, &pct);
+	consoles_printf("%s: mount - %u free MB (%u %%)\n", root, (unsigned) mb, pct);
+	ff_chdir(root);
     }
     init_lock->unlock();
 }
