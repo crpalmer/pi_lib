@@ -50,7 +50,6 @@ void AVRCP::controller_packet_handler(uint8_t packet_type, uint16_t channel, uin
 
     // helper to print c strings
     uint8_t avrcp_subevent_value[256];
-    uint8_t play_status;
     uint8_t event_id;
 
     if (packet_type != HCI_EVENT_PACKET) return;
@@ -83,8 +82,7 @@ void AVRCP::controller_packet_handler(uint8_t packet_type, uint16_t channel, uin
 
     case AVRCP_SUBEVENT_NOTIFICATION_PLAYBACK_STATUS_CHANGED:
 	printf("AVRCP Controller: Playback status changed %s\n", avrcp_play_status2str(avrcp_subevent_notification_playback_status_changed_get_play_status(packet)));
-	play_status = avrcp_subevent_notification_playback_status_changed_get_play_status(packet);
-	connection->set_is_playing(play_status == AVRCP_PLAYBACK_STATUS_PLAYING);
+	playback_status = (avrcp_playback_status_t) avrcp_subevent_notification_playback_status_changed_get_play_status(packet);
 	break;
 
     case AVRCP_SUBEVENT_NOTIFICATION_NOW_PLAYING_CONTENT_CHANGED:
@@ -251,7 +249,9 @@ uint8_t AVRCP::set_now_playing_info(const avrcp_track_t *track, uint16_t n_track
 
 uint8_t AVRCP::set_playback_status(avrcp_playback_status_t status) {
     if (connection->is_established()) {
-        return avrcp_target_set_playback_status(connection->get_cid(), AVRCP_PLAYBACK_STATUS_PLAYING);
+        bool ret = avrcp_target_set_playback_status(connection->get_cid(), AVRCP_PLAYBACK_STATUS_PLAYING);
+	if (ret == ERROR_CODE_SUCCESS) playback_status = status;
+	return ret;
     }
     return ERROR_CODE_SUCCESS;
 }

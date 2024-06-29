@@ -6,7 +6,7 @@
 #include "sbc-configuration.h"
 
 // logarithmic volume reduction, samples are divided by 2^x
-// #define VOLUME_REDUCTION 3
+#define VOLUME_REDUCTION 3
 
 #define NUM_CHANNELS                2
 #define AUDIO_TIMEOUT_MS            10 
@@ -54,7 +54,7 @@ static void produce_audio(int16_t * pcm_buffer, int num_samples_to_write){
     }
 #ifdef VOLUME_REDUCTION
     int i;
-    for (i=0;i<num_samples*2;i++){
+    for (i=0;i<num_samples_to_write*2;i++){
         if (pcm_buffer[i] > 0){
             pcm_buffer[i] =     pcm_buffer[i]  >> VOLUME_REDUCTION;
         } else {
@@ -139,7 +139,7 @@ void SBCEncoder::enqueue_pcm_data(int16_t *pcm, int n_samples) {
 	// next time we get more data
 
 	if (n_pcm_buffer + n_samples < a_pcm_buffer) {
-	    memcpy(&pcm_buffer[n_pcm_buffer * NUM_CHANNELS], pcm, n_samples * NUM_CHANNELS);
+	    memcpy(&pcm_buffer[n_pcm_buffer * NUM_CHANNELS], pcm, n_samples * NUM_CHANNELS * sizeof(pcm_buffer));
 	    n_pcm_buffer += n_samples;
 	    break;
 	}
@@ -147,11 +147,12 @@ void SBCEncoder::enqueue_pcm_data(int16_t *pcm, int n_samples) {
 	// We have atleast one full buffer for encoding, encode it (the new encoded
 	// buffer is stored in the sbc object until we can copy it to our local storage)
 
-	if (n_pcm_buffer) {
+	if (1 || n_pcm_buffer) {
 	    // Combine the existing unprocessed data with the new data
 	    int n_to_copy = a_pcm_buffer - n_pcm_buffer;
 	    assert(n_to_copy <= n_samples);	// If it wasn't, we would have handled it (above)
-	    memcpy(&pcm_buffer[n_pcm_buffer * NUM_CHANNELS], pcm, n_to_copy * NUM_CHANNELS);
+	    memcpy(&pcm_buffer[n_pcm_buffer * NUM_CHANNELS], pcm, n_to_copy * NUM_CHANNELS * sizeof(pcm_buffer));
+printf("%d + %d of %d\n", n_pcm_buffer, n_to_copy, n_samples);
 	    btstack_sbc_encoder_process_data(pcm_buffer);
 	    n_pcm_buffer = 0;
 	    pcm += n_to_copy;
@@ -171,7 +172,6 @@ void SBCEncoder::enqueue_pcm_data(int16_t *pcm, int n_samples) {
 	// sent so that we have space to store the new data
 
 	while (n_sbc_buffer + sbc_len > get_max_buffer_size()) {
-printf("%d %d %d\n", n_sbc_buffer, sbc_len, get_max_buffer_size());
 	    void a2dp_source_request_can_send_now();  // TODO forward declaration not neeed after spliting headers/src
 	    a2dp_source_request_can_send_now();
 	    cond->wait(lock);
@@ -187,6 +187,7 @@ printf("%d %d %d\n", n_sbc_buffer, sbc_len, get_max_buffer_size());
 void SBCEncoder::send_media_payload_rtp() {
     lock->lock();
 
+printf("send\n");
     uint8_t num_frames = n_sbc_buffer / btstack_sbc_encoder_sbc_buffer_length();
     // Prepend SBC Header
     sbc_buffer[0] = num_frames;  // (fragmentation << 7) | (starting_packet << 6) | (last_packet << 5) | num_frames;
@@ -264,6 +265,7 @@ static A2DPSource *global_a2dp_source = NULL;
 
 /* SBC-Encoder */
 
+#if 0
 #include "time-utils.h"
 
 class Player : PiThread {
@@ -275,21 +277,15 @@ public:
     }
 
     void main() {
-	struct timespec start;
-	uint32_t missed_samples = 0;
-
-	nano_gettime(&start);
+	nano_gettime(&start_time);
 	missed_samples = 0;
 
 	while (1) {
 	    while (is_paused) {
 		cond->wait(lock);
-
-		nano_gettime(&start);
-		missed_samples = 0;
 	    }
 
-	    int ms = nano_elapsed_ms_now(&start);
+	    int ms = nano_elapsed_ms_now(&start_time);
 
     	    uint32_t num_samples = (ms * SAMPLE_RATE) / 1000;
     	    missed_samples += (ms * SAMPLE_RATE) % 1000;
@@ -300,7 +296,7 @@ public:
 	    }
 	    
 	    while (num_samples > 0) {
-		int n_now = num_samples > 256 ? 256 : num_samples;
+		int n_now = num_samples > 128 ? 128 : num_samples;
 		produce_audio(pcm_frame, n_now);
 		lock->unlock();
 		global_a2dp_source->play(pcm_frame, n_now);
@@ -313,17 +309,21 @@ public:
 
     void pause() {
 	lock->lock();
-	assert(! is_paused);
 	is_paused = true;
 	lock->unlock();
     }
 
     void resume() {
+printf("resuming player\n");
 	lock->lock();
-	assert(is_paused);
-	is_paused = false;
+	if (is_paused) {
+	    nano_gettime(&start_time);
+	    missed_samples = 0;
+	    is_paused = false;
+	}
 	cond->signal();
 	lock->unlock();
+printf("resumed player\n");
     }
 
 private:
@@ -332,10 +332,14 @@ private:
     PiCond *cond;
 
     int16_t pcm_frame[256*NUM_CHANNELS];
+    struct timespec start_time;
+    uint32_t missed_samples = 0;
+
 };
 
 static class Player *global_player;
 
+#endif
 /* END SBC-Encoder */
 
 void A2DPAVRCP::on_button_pressed(avrcp_button_t button) {
@@ -652,11 +656,11 @@ static void stdin_process(char cmd){
 
         case 'p':
 	    status = global_a2dp_source->pause_stream();
-	    global_player->pause();
+	    //global_player->pause();
             break;
         
         case 'P':
-	    global_player->resume();
+	    //global_player->resume();
 	    status = global_a2dp_source->play_stream();
             break;
         
@@ -670,10 +674,22 @@ static void stdin_process(char cmd){
 }
 #endif
 
-int btstack_main() {
+void a2dp_connect() {
+    global_a2dp_source->connect(device_addr_string);
+}
+
+void a2dp_play(int16_t *buffer, int n_samples) {
+    global_a2dp_source->play(buffer, n_samples);
+}
+
+int btstack_setup() {
     bluetooth_init();
-    global_player = new Player();
+    //global_player = new Player();
     new A2DPSource();
     bluetooth_start_a2dp_source();
     return 0;
+}
+
+int btstack_run() {
+    //global_player = new Player();
 }

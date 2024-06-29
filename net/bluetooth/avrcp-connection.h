@@ -10,9 +10,6 @@ public:
     void established(uint8_t *packet);
     void released(uint8_t *packet);
 
-    bool is_playing() { return stream_is_playing; }
-    void set_is_playing(bool is_playing) { stream_is_playing = is_playing; }
-
     uint8_t connect(bd_addr_t addr);
     uint8_t disconnect();
 
@@ -27,7 +24,6 @@ private:
     bd_addr_t addr;
     uint16_t  cid = 0;
 
-    bool      stream_is_playing = false;
     uint16_t  notifications_supported_by_target = 0;
     avrcp_battery_status_t battery_status = AVRCP_BATTERY_STATUS_WARNING;
 };

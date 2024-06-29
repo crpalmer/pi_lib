@@ -22,7 +22,7 @@ public:
     uint8_t connect(bd_addr_t addr);
     uint8_t disconnect();
 
-    bool is_playing() { return connection->is_playing(); }
+    bool is_playing() { return playback_status == AVRCP_PLAYBACK_STATUS_PLAYING; }
 
     uint8_t volume_up();
     uint8_t volume_down();
@@ -37,6 +37,7 @@ public:
 private:
     AVRCPConnection *connection;
     int volume_percentage = 0;
+    avrcp_playback_status_t playback_status = AVRCP_PLAYBACK_STATUS_STOPPED;
 };
 
 #endif
