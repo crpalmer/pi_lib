@@ -8,7 +8,7 @@
 
 class AudioHack : public Audio {
 public:
-    size_t get_recommended_buffer_size() { return 512; };
+    size_t get_recommended_buffer_size() { return 256 * 2 * 2; };
     bool configure(AudioConfig *config) { return true; }
     bool play(void *buf, size_t n) {
 	extern void a2dp_play(int16_t *buffer, int n);
@@ -25,33 +25,41 @@ void play_wav_main(int argc, char **argv) {
     Audio *audio = new AudioHack();
     AudioPlayer *player = new AudioPlayer(audio);
     extern void a2dp_connect();
-
-    a2dp_connect();
-    ms_sleep(5*1000);
-    a2dp_connect();
+    extern void a2dp_set_volume(int);
 
     while (1) {
 	static char buf[1024];
 	AudioBuffer *audio_buffer;
 
 	pi_readline(buf, sizeof(buf));
-        audio_buffer = wav_open(buf);
-	if (! audio_buffer) continue;
 
-	printf("Playing %s\n", audio_buffer->get_fname());
-	player->play(audio_buffer);
-	player->wait_all_done();
+	if (strcmp(buf, "connect") == 0) {
+	    a2dp_connect();
+	} else if (strncmp(buf, "volume ", 7) == 0) {
+	    a2dp_set_volume(atoi(&buf[7]));
+	} else if (strcmp(buf, "threads") == 0) {
+	    pi_threads_dump_state();
+	    printf("%d bytes free.\n", pi_threads_get_free_ram());
+	} else {
+	    audio_buffer = wav_open(buf);
+	    if (! audio_buffer) continue;
 
-	delete audio_buffer;
+	    printf("Playing %s\n", audio_buffer->get_fname());
+	    struct timespec start;
+	    nano_gettime(&start);
+	    player->play(audio_buffer);
+	    player->wait_all_done();
+	    printf("Done: %d ms\n", nano_elapsed_ms_now(&start));
 
-	pi_threads_dump_state();
-	ms_sleep(1000);
+	    delete audio_buffer;
+	    pi_threads_dump_state();
+	    printf("%d bytes free.\n", pi_threads_get_free_ram());
+	}
     }
 }
 
 void thread_main(int argc, char **argv) {
     extern int btstack_setup();
-    extern int btstack_run();
 
     ms_sleep(1000);
 
@@ -63,12 +71,7 @@ void thread_main(int argc, char **argv) {
     bluetooth_init();
     btstack_setup();
 
-#if 0
-    btstack_run();
-#else
     play_wav_main(argc, argv);
-#endif
-    while (1) ms_sleep(1000000);
 }
 
 int main(int argc, char **argv) {

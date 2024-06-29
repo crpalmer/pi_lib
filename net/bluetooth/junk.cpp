@@ -5,69 +5,10 @@
 #include "pi-threads.h"
 #include "sbc-configuration.h"
 
-// logarithmic volume reduction, samples are divided by 2^x
-#define VOLUME_REDUCTION 3
-
 #define NUM_CHANNELS                2
-#define AUDIO_TIMEOUT_MS            10 
 #define SBC_STORAGE_SIZE 1030
 
-typedef struct {
-
-    uint32_t time_audio_data_sent; // ms
-    uint32_t acc_num_missed_samples;
-    btstack_timer_source_t audio_timer;
-    uint8_t  streaming;
-} a2dp_media_sending_context_t;
-
-/* ---- sine wave --- */
-
-#define SAMPLE_RATE 44100
-
-// input signal: pre-computed int16 sine wave, 44100 Hz at 441 Hz
-static const int16_t sine_int16_44100[] = {
-     0,    2057,    4107,    6140,    8149,   10126,   12062,   13952,   15786,   17557,
- 19260,   20886,   22431,   23886,   25247,   26509,   27666,   28714,   29648,   30466,
- 31163,   31738,   32187,   32509,   32702,   32767,   32702,   32509,   32187,   31738,
- 31163,   30466,   29648,   28714,   27666,   26509,   25247,   23886,   22431,   20886,
- 19260,   17557,   15786,   13952,   12062,   10126,    8149,    6140,    4107,    2057,
-     0,   -2057,   -4107,   -6140,   -8149,  -10126,  -12062,  -13952,  -15786,  -17557,
--19260,  -20886,  -22431,  -23886,  -25247,  -26509,  -27666,  -28714,  -29648,  -30466,
--31163,  -31738,  -32187,  -32509,  -32702,  -32767,  -32702,  -32509,  -32187,  -31738,
--31163,  -30466,  -29648,  -28714,  -27666,  -26509,  -25247,  -23886,  -22431,  -20886,
--19260,  -17557,  -15786,  -13952,  -12062,  -10126,   -8149,   -6140,   -4107,   -2057,
-};
-
-static const int num_samples_sine_int16_44100 = sizeof(sine_int16_44100) / 2;
-
-static int sine_phase;
-
-static void produce_audio(int16_t * pcm_buffer, int num_samples_to_write){
-    int count;
-    for (count = 0; count < num_samples_to_write ; count++){
-	pcm_buffer[count * 2]     = sine_int16_44100[sine_phase];
-	pcm_buffer[count * 2 + 1] = sine_int16_44100[sine_phase];
-	sine_phase++;
-	if (sine_phase >= num_samples_sine_int16_44100){
-	    sine_phase -= num_samples_sine_int16_44100;
-	}
-    }
-#ifdef VOLUME_REDUCTION
-    int i;
-    for (i=0;i<num_samples_to_write*2;i++){
-        if (pcm_buffer[i] > 0){
-            pcm_buffer[i] =     pcm_buffer[i]  >> VOLUME_REDUCTION;
-        } else {
-            pcm_buffer[i] = -((-pcm_buffer[i]) >> VOLUME_REDUCTION);
-        }
-    }
-#endif
-}
-
 static const char * device_addr_string = "BF:AC:94:0A:99:2E";
-#ifdef HAVE_BTSTACK_STDIN
-static void stdin_process(char cmd);
-#endif
 
 static AVRCP *global_avrcp;	// Temporary until everything into A2DSource object
 
@@ -77,7 +18,7 @@ public:
 
     void receive_configuration(uint8_t *packet) { configuration->receive(packet); }
     void init(uint16_t a2dp_cid, uint16_t local_seid);
-    void enqueue_pcm_data(int16_t *pcm, int n_samples);
+    void enqueue_pcm_data(int16_t *pcm, int n_samples, int volume = 100);
     void send_media_payload_rtp();
     void resume() { cond->signal(); }
 
@@ -98,11 +39,15 @@ private:
     btstack_sbc_encoder_state_t state;
 
     uint32_t rtp_timestamp = 0;
-    uint8_t  sbc_buffer[SBC_STORAGE_SIZE];
+
+    uint8_t  sbc_buffer[2*SBC_STORAGE_SIZE];
+    int n_sbc_buffer[2] = { 0, 0 };
+    int seq = 0;
+
     int16_t *pcm_buffer = NULL;
-    uint16_t n_sbc_buffer = 0;
     uint16_t a_pcm_buffer = 0;
     uint16_t n_pcm_buffer = 0;
+
     bool ready_to_send = false;
 };
 
@@ -126,7 +71,9 @@ void SBCEncoder::init(uint16_t a2dp_cid, uint16_t local_seid) {
 // enqueue_pcm_data will block if too much data has built up and we are
 // waiting for it to be sent.
 
-void SBCEncoder::enqueue_pcm_data(int16_t *pcm, int n_samples) {
+#include "time-utils.h"
+
+void SBCEncoder::enqueue_pcm_data(int16_t *pcm, int n_samples, int volume) {
     lock->lock();
 
     while (! a_pcm_buffer) {
@@ -147,23 +94,30 @@ void SBCEncoder::enqueue_pcm_data(int16_t *pcm, int n_samples) {
 	// We have atleast one full buffer for encoding, encode it (the new encoded
 	// buffer is stored in the sbc object until we can copy it to our local storage)
 
-	if (1 || n_pcm_buffer) {
+	int16_t *to_play;
+
+	if (n_pcm_buffer) {
 	    // Combine the existing unprocessed data with the new data
 	    int n_to_copy = a_pcm_buffer - n_pcm_buffer;
 	    assert(n_to_copy <= n_samples);	// If it wasn't, we would have handled it (above)
 	    memcpy(&pcm_buffer[n_pcm_buffer * NUM_CHANNELS], pcm, n_to_copy * NUM_CHANNELS * sizeof(pcm_buffer));
-printf("%d + %d of %d\n", n_pcm_buffer, n_to_copy, n_samples);
-	    btstack_sbc_encoder_process_data(pcm_buffer);
+	    to_play = pcm_buffer;
 	    n_pcm_buffer = 0;
 	    pcm += n_to_copy;
 	    n_samples -= n_to_copy;
 	} else {
 	    // No previous unprocessed data, skip the extra copying and
 	    // process it directly.
-	    btstack_sbc_encoder_process_data(pcm);
+	    to_play = pcm;
 	    pcm += a_pcm_buffer;
 	    n_samples -= a_pcm_buffer;
 	}
+
+	if (volume >= 0 && volume < 100) {
+	    for (int i = 0; i < a_pcm_buffer * NUM_CHANNELS; i++) to_play[i] = to_play[i] * volume / 100;
+	}
+
+        btstack_sbc_encoder_process_data(to_play);
 
 	uint8_t * sbc_frame = btstack_sbc_encoder_sbc_buffer();
 	int sbc_len = btstack_sbc_encoder_sbc_buffer_length();
@@ -171,14 +125,14 @@ printf("%d + %d of %d\n", n_pcm_buffer, n_to_copy, n_samples);
 	// If there is no room for more data, send the buffer and wait until it is
 	// sent so that we have space to store the new data
 
-	while (n_sbc_buffer + sbc_len > get_max_buffer_size()) {
+	while (n_sbc_buffer[seq] + sbc_len > get_max_buffer_size()) {
 	    void a2dp_source_request_can_send_now();  // TODO forward declaration not neeed after spliting headers/src
 	    a2dp_source_request_can_send_now();
 	    cond->wait(lock);
 	}
 
-	memcpy(&sbc_buffer[n_sbc_buffer], sbc_frame, sbc_len);
-	n_sbc_buffer += sbc_len;
+	memcpy(&sbc_buffer[seq * SBC_STORAGE_SIZE], sbc_frame, sbc_len);
+	n_sbc_buffer[seq] += sbc_len;
     }
 
     lock->unlock();
@@ -187,27 +141,34 @@ printf("%d + %d of %d\n", n_pcm_buffer, n_to_copy, n_samples);
 void SBCEncoder::send_media_payload_rtp() {
     lock->lock();
 
-printf("send\n");
-    uint8_t num_frames = n_sbc_buffer / btstack_sbc_encoder_sbc_buffer_length();
+    uint8_t *buf = &sbc_buffer[seq * SBC_STORAGE_SIZE];
+    int n_buf = n_sbc_buffer[seq];
+
+    seq = (seq + 1) % 2;
+    n_sbc_buffer[seq] = 0;
+
+    cond->signal();
+    lock->unlock();
+
+    uint8_t num_frames = n_buf / btstack_sbc_encoder_sbc_buffer_length();
     // Prepend SBC Header
-    sbc_buffer[0] = num_frames;  // (fragmentation << 7) | (starting_packet << 6) | (last_packet << 5) | num_frames;
-    a2dp_source_stream_send_media_payload_rtp(a2dp_cid, local_seid, 0, rtp_timestamp, sbc_buffer, n_sbc_buffer + 1);
+    buf[0] = num_frames;  // (fragmentation << 7) | (starting_packet << 6) | (last_packet << 5) | num_frames;
+    a2dp_source_stream_send_media_payload_rtp(a2dp_cid, local_seid, 0, rtp_timestamp, buf, n_buf + 1);
 
     // update rtp_timestamp
     unsigned int num_audio_samples_per_sbc_buffer = btstack_sbc_encoder_num_audio_frames();
     rtp_timestamp += num_frames * num_audio_samples_per_sbc_buffer;
-
-    n_sbc_buffer = 0;
-
-    cond->signal();
-    lock->unlock();
 }
 
-class A2DPSource {
+#define N_SAMPLES_TO_PLAY 256
+
+class A2DPSource : public PiThread {
 public:
     A2DPSource();
 
-    int get_recommended_buffer_size();
+    void main(void) override;
+
+    int get_recommended_buffer_size() { return N_SAMPLES_TO_PLAY * NUM_CHANNELS * 2; }
 
     uint8_t connect(const char *address);
     uint8_t disconnect();
@@ -233,7 +194,7 @@ private:
     uint8_t sdp_avrcp_target_service_buffer[200];
     uint8_t sdp_avrcp_controller_service_buffer[200];
 
-    int volume = 50;
+    int volume = 10;
 
     SBCEncoder *encoder;
 
@@ -248,6 +209,11 @@ private:
     avrcp_playback_status_t playback_status = AVRCP_PLAYBACK_STATUS_STOPPED;
     uint16_t a2dp_cid;
     uint8_t  local_seid;
+
+    PiMutex *lock;
+    PiCond *cond;
+    int16_t pcm_to_play[N_SAMPLES_TO_PLAY * NUM_CHANNELS];
+    int n_samples_to_play = 0;
 };
 
 class A2DPAVRCP : public AVRCP {
@@ -262,85 +228,6 @@ private:
 };
 
 static A2DPSource *global_a2dp_source = NULL;
-
-/* SBC-Encoder */
-
-#if 0
-#include "time-utils.h"
-
-class Player : PiThread {
-public:
-    Player() : PiThread("player") {
-	lock = new PiMutex();
-	cond = new PiCond();
-	start();
-    }
-
-    void main() {
-	nano_gettime(&start_time);
-	missed_samples = 0;
-
-	while (1) {
-	    while (is_paused) {
-		cond->wait(lock);
-	    }
-
-	    int ms = nano_elapsed_ms_now(&start_time);
-
-    	    uint32_t num_samples = (ms * SAMPLE_RATE) / 1000;
-    	    missed_samples += (ms * SAMPLE_RATE) % 1000;
-
-	    while (missed_samples >= 1000) {
-		num_samples++;
-		missed_samples -= 1000;
-	    }
-	    
-	    while (num_samples > 0) {
-		int n_now = num_samples > 128 ? 128 : num_samples;
-		produce_audio(pcm_frame, n_now);
-		lock->unlock();
-		global_a2dp_source->play(pcm_frame, n_now);
-		ms_sleep(AUDIO_TIMEOUT_MS);
-		lock->lock();
-		num_samples -= n_now;
-	    }
-	}
-    }
-
-    void pause() {
-	lock->lock();
-	is_paused = true;
-	lock->unlock();
-    }
-
-    void resume() {
-printf("resuming player\n");
-	lock->lock();
-	if (is_paused) {
-	    nano_gettime(&start_time);
-	    missed_samples = 0;
-	    is_paused = false;
-	}
-	cond->signal();
-	lock->unlock();
-printf("resumed player\n");
-    }
-
-private:
-    bool is_paused = true;
-    PiMutex *lock;
-    PiCond *cond;
-
-    int16_t pcm_frame[256*NUM_CHANNELS];
-    struct timespec start_time;
-    uint32_t missed_samples = 0;
-
-};
-
-static class Player *global_player;
-
-#endif
-/* END SBC-Encoder */
 
 void A2DPAVRCP::on_button_pressed(avrcp_button_t button) {
     switch (button) {
@@ -365,7 +252,7 @@ static void C_call_request_can_send_now_callback(void *a2dp_source_as_vp) {
     a2dp_source->call_request_can_send_now();
 }
 
-A2DPSource::A2DPSource() {
+A2DPSource::A2DPSource() : PiThread("a2dp-source") {
     assert( ! global_a2dp_source);
     global_a2dp_source = this;
 
@@ -412,9 +299,9 @@ A2DPSource::A2DPSource() {
     avrcp_controller_create_sdp_record(sdp_avrcp_controller_service_buffer, 0x10003, controller_supported_features, NULL, NULL);
     sdp_register_service(sdp_avrcp_controller_service_buffer);
 
-#ifdef HAVE_BTSTACK_STDIN
-    btstack_stdin_setup(stdin_process);
-#endif
+    lock = new PiMutex();
+    cond = new PiCond();
+    start();
 }
 
 void A2DPSource::request_can_send_now() {
@@ -423,10 +310,6 @@ void A2DPSource::request_can_send_now() {
 
 void A2DPSource::call_request_can_send_now() {
     a2dp_source_stream_endpoint_request_can_send_now(a2dp_cid, local_seid);
-}
-
-int A2DPSource::get_recommended_buffer_size() {
-    return encoder->get_max_buffer_size();
 }
 
 uint8_t A2DPSource::connect(const char *address) {
@@ -455,9 +338,25 @@ uint8_t A2DPSource::play_stream() {
 }
 
 void A2DPSource::play(int16_t *pcm, int n_samples) {
-    encoder->enqueue_pcm_data(pcm, n_samples);
+    assert(n_samples <= N_SAMPLES_TO_PLAY);
+    lock->lock();
+    while (n_samples_to_play > 0) cond->wait(lock);
+    memcpy(pcm_to_play, pcm, n_samples * NUM_CHANNELS * sizeof(pcm_to_play[0]));
+    n_samples_to_play = n_samples;
+    cond->broadcast();
+    lock->unlock();
 }
 
+void A2DPSource::main(void) {
+    lock->lock();
+    while (1) {
+	while (! n_samples_to_play) cond->wait(lock);
+        encoder->enqueue_pcm_data(pcm_to_play, n_samples_to_play, volume);
+	n_samples_to_play = 0;
+	cond->broadcast();
+    }
+}
+    
 void A2DPSource::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
     uint8_t status;
     bd_addr_t address;
@@ -586,6 +485,7 @@ void A2DPSource::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
 bool A2DPSource::set_volume(int new_volume) {
     if (new_volume > 100) new_volume = 100;
     if (new_volume < 0) new_volume = 0;
+printf("volume set to %d\n", new_volume);
     volume = new_volume;
     return global_avrcp->set_volume(volume) == ERROR_CODE_SUCCESS;
 }
@@ -598,82 +498,6 @@ bool A2DPSource::volume_down(int inc) {
     return set_volume(volume - inc);
 }
 
-#ifdef HAVE_BTSTACK_STDIN
-static void show_usage(void){
-    bd_addr_t      iut_address;
-    gap_local_bd_addr(iut_address);
-    printf("\n--- Bluetooth  A2DP Source/AVRCP Demo %s ---\n", bd_addr_to_str(iut_address));
-    printf("b      - A2DP Source create connection to addr %s\n", device_addr_string);
-    printf("B      - A2DP Source disconnect\n");
-    printf("c      - AVRCP create connection to addr %s\n", device_addr_string);
-    printf("C      - AVRCP disconnect\n");
-    printf("D      - delete all link keys\n");
-
-    printf("p      - pause streaming\n");
-    printf("P      - resume streaming\n");
-    printf("t      - volume up\n");
-    printf("T      - volume down\n");
-
-    printf("---\n");
-}
-
-static void stdin_process(char cmd){
-    uint8_t status = ERROR_CODE_SUCCESS;
-    switch (cmd){
-        case 'b':
-	    global_a2dp_source->connect(device_addr_string);
-            break;
-        case 'B':
-	    global_a2dp_source->disconnect();
-            break;
-        case 'c': {
-	    bd_addr_t device_addr;
-	    sscanf_bd_addr(device_addr_string, device_addr);
-            printf("%c - Create AVRCP connection to addr %s.\n", cmd, bd_addr_to_str(device_addr));
-            status = global_avrcp->connect(device_addr);
-            break;
-	}
-        case 'C':
-            printf("%c - AVRCP disconnect\n", cmd);
-            status = global_avrcp->disconnect();
-            break;
-        case 'D':
-            printf("Deleting all link keys\n");
-            gap_delete_all_link_keys();
-            break;
-        case '\n':
-        case '\r':
-            break;
-
-        case 't':
-            printf(" - volume up\n");
-            status = global_a2dp_source->volume_up();
-            break;
-        case 'T':
-            printf(" - volume down\n");
-            status = global_a2dp_source->volume_down();
-            break;
-
-        case 'p':
-	    status = global_a2dp_source->pause_stream();
-	    //global_player->pause();
-            break;
-        
-        case 'P':
-	    //global_player->resume();
-	    status = global_a2dp_source->play_stream();
-            break;
-        
-        default:
-            show_usage();
-            return;
-    }
-    if (status != ERROR_CODE_SUCCESS){
-        printf("Could not perform command \'%c\', status 0x%02x\n", cmd, status);
-    }
-}
-#endif
-
 void a2dp_connect() {
     global_a2dp_source->connect(device_addr_string);
 }
@@ -682,14 +506,14 @@ void a2dp_play(int16_t *buffer, int n_samples) {
     global_a2dp_source->play(buffer, n_samples);
 }
 
+void a2dp_set_volume(int volume) {
+    global_a2dp_source->set_volume(volume);
+}
+
 int btstack_setup() {
     bluetooth_init();
     //global_player = new Player();
     new A2DPSource();
     bluetooth_start_a2dp_source();
     return 0;
-}
-
-int btstack_run() {
-    //global_player = new Player();
 }
