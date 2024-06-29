@@ -180,14 +180,14 @@ pi_threads_dump_state() {
     unsigned long total_run_time;
     n_tasks = uxTaskGetSystemState(status, n_tasks, &total_run_time);
 
-    consoles_printf(" #  Task Name        State Prio Stack Cores\n");
-    consoles_printf("--- ---------------- ----- ---- ----- -----\n");
+    consoles_printf(" #  Task Name        State Prio Stack Cores Run Time\n");
+    consoles_printf("--- ---------------- ----- ---- ----- ----- --------\n");
     for (int i = 0; i < n_tasks; i++) {
 	UBaseType_t aff;
 
 	aff = vTaskCoreAffinityGet(status[i].xHandle);
 
-	consoles_printf("%3d %-16s %-5s %4d %4d  %d%d\n", (int) status[i].xTaskNumber, status[i].pcTaskName, task_state_to_str(status[i].eCurrentState), (int) status[i].uxCurrentPriority, (int) status[i].usStackHighWaterMark, (int) (aff&1), (int) ((aff>>1)&1));
+	consoles_printf("%3d %-16s %-5s %4d %4d  %d%d %11.3f\n", (int) status[i].xTaskNumber, status[i].pcTaskName, task_state_to_str(status[i].eCurrentState), (int) status[i].uxCurrentPriority, (int) status[i].usStackHighWaterMark, (int) (aff&1), (int) ((aff>>1)&1), status[i].ulRunTimeCounter / 1000.0);
     }
 
     //vTaskPreemptionEnable();
