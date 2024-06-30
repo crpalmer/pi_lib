@@ -9,13 +9,16 @@
 #include "time-utils.h"
 #include "wav.h"
 
+Audio *audio;
+AudioPlayer *player;
+
 void threads_main(int argc, char **argv) {
 #ifdef PLATFORM_pi
-    Audio *audio = new AudioPi();
+    audio = new AudioPi();
 #else
-    Audio *audio = new AudioPico();
+    audio = new AudioPico();
 #endif
-    AudioPlayer *player = new AudioPlayer(audio);
+    player = new AudioPlayer(audio);
 
     while (1) {
 	static char buf[1024];
