@@ -131,7 +131,7 @@ void SBCEncoder::enqueue_pcm_data(int16_t *pcm, int n_samples, int volume) {
 	    cond->wait(lock);
 	}
 
-	memcpy(&sbc_buffer[seq * SBC_STORAGE_SIZE], sbc_frame, sbc_len);
+	memcpy(&sbc_buffer[seq * SBC_STORAGE_SIZE + n_sbc_buffer[seq]], sbc_frame, sbc_len);
 	n_sbc_buffer[seq] += sbc_len;
     }
 
