@@ -61,8 +61,6 @@ void play_wav_main(int argc, char **argv) {
 void thread_main(int argc, char **argv) {
     extern int btstack_setup();
 
-    ms_sleep(1000);
-
 #ifdef WITH_WIFI
     wifi_init(CYW43_HOST_NAME);
     //wifi_wait_for_connection();
