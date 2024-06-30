@@ -18,9 +18,9 @@ public:
 
     void disable() override;
 
-    int get_num_channels() override { return config ? config->get_num_channels() : 2; }
-    int get_rate() override { return config ? config->get_rate() : 44100; }
-    int get_bytes_per_sample() override { return config ? config->get_bytes_per_sample() : 2; }
+    int get_num_channels() override { return num_channels; }
+    int get_rate() override { return rate; }
+    int get_bytes_per_sample() override { return bytes_per_sample; }
 
 private:
     void config_clocks();
@@ -28,10 +28,12 @@ private:
 private:
     static const int n_buffers = 3;
 
-    AudioConfig *config = NULL;
-    int bytes_per_sample;
     uint8_t *buffers[n_buffers];
     int next_buffer = 0;
+
+    int num_channels = 2;
+    int rate = 44100;
+    int bytes_per_sample = 2;
 
     int pio;
     uint8_t sm;
