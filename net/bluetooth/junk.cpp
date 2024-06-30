@@ -40,15 +40,13 @@ private:
 
     uint32_t rtp_timestamp = 0;
 
-    uint8_t  sbc_buffer[2*SBC_STORAGE_SIZE];
-    int n_sbc_buffer[2] = { 0, 0 };
-    int seq = 0;
+    uint8_t  sbc_buffer[SBC_STORAGE_SIZE];
+    int n_sbc_buffer = 0;
+
+    uint16_t n_samples_per_encode = 0;
 
     int16_t *pcm_buffer = NULL;
-    uint16_t a_pcm_buffer = 0;
     uint16_t n_pcm_buffer = 0;
-
-    bool ready_to_send = false;
 };
 
 SBCEncoder::SBCEncoder() {
@@ -62,9 +60,10 @@ void SBCEncoder::init(uint16_t a2dp_cid, uint16_t local_seid) {
     this->a2dp_cid = a2dp_cid;
     this->local_seid = local_seid;
 
+    n_samples_per_encode = btstack_sbc_encoder_num_audio_frames();
+
     if (pcm_buffer) fatal_free(pcm_buffer);
-    a_pcm_buffer = btstack_sbc_encoder_num_audio_frames();
-    pcm_buffer = (int16_t *) fatal_malloc(a_pcm_buffer * sizeof(pcm_buffer) * NUM_CHANNELS);
+    pcm_buffer = (int16_t *) fatal_malloc(n_samples_per_encode * sizeof(pcm_buffer[0]) * NUM_CHANNELS);
     cond->signal();
 }
 
@@ -76,7 +75,7 @@ void SBCEncoder::init(uint16_t a2dp_cid, uint16_t local_seid) {
 void SBCEncoder::enqueue_pcm_data(int16_t *pcm, int n_samples, int volume) {
     lock->lock();
 
-    while (! a_pcm_buffer) {
+    while (! n_samples_per_encode) {
 	printf("%s: not intialized\n", __func__);
 	cond->wait(lock);
     }
@@ -85,8 +84,8 @@ void SBCEncoder::enqueue_pcm_data(int16_t *pcm, int n_samples, int volume) {
 	// If we have less than a total buffer to process, just save the pcm data for the
 	// next time we get more data
 
-	if (n_pcm_buffer + n_samples < a_pcm_buffer) {
-	    memcpy(&pcm_buffer[n_pcm_buffer * NUM_CHANNELS], pcm, n_samples * NUM_CHANNELS * sizeof(pcm_buffer));
+	if (n_pcm_buffer + n_samples < n_samples_per_encode) {
+	    memcpy(&pcm_buffer[n_pcm_buffer * NUM_CHANNELS], pcm, n_samples * NUM_CHANNELS * sizeof(pcm_buffer[0]));
 	    n_pcm_buffer += n_samples;
 	    break;
 	}
@@ -98,41 +97,40 @@ void SBCEncoder::enqueue_pcm_data(int16_t *pcm, int n_samples, int volume) {
 
 	if (n_pcm_buffer) {
 	    // Combine the existing unprocessed data with the new data
-	    int n_to_copy = a_pcm_buffer - n_pcm_buffer;
+	    int n_to_copy = n_samples_per_encode - n_pcm_buffer;
 	    assert(n_to_copy <= n_samples);	// If it wasn't, we would have handled it (above)
-	    memcpy(&pcm_buffer[n_pcm_buffer * NUM_CHANNELS], pcm, n_to_copy * NUM_CHANNELS * sizeof(pcm_buffer));
+	    memcpy(&pcm_buffer[n_pcm_buffer * NUM_CHANNELS], pcm, n_to_copy * NUM_CHANNELS * sizeof(pcm_buffer[0]));
 	    to_play = pcm_buffer;
 	    n_pcm_buffer = 0;
-	    pcm += n_to_copy;
+	    pcm += n_to_copy * NUM_CHANNELS;
 	    n_samples -= n_to_copy;
 	} else {
 	    // No previous unprocessed data, skip the extra copying and
 	    // process it directly.
 	    to_play = pcm;
-	    pcm += a_pcm_buffer;
-	    n_samples -= a_pcm_buffer;
+	    pcm += n_samples_per_encode * NUM_CHANNELS;
+	    n_samples -= n_samples_per_encode;
 	}
 
 	if (volume >= 0 && volume < 100) {
-	    for (int i = 0; i < a_pcm_buffer * NUM_CHANNELS; i++) to_play[i] = to_play[i] * volume / 100;
+	    for (int i = 0; i < n_samples_per_encode * NUM_CHANNELS; i++) to_play[i] = to_play[i] * volume / 100;
 	}
 
         btstack_sbc_encoder_process_data(to_play);
 
 	uint8_t * sbc_frame = btstack_sbc_encoder_sbc_buffer();
-	int sbc_len = btstack_sbc_encoder_sbc_buffer_length();
 
 	// If there is no room for more data, send the buffer and wait until it is
 	// sent so that we have space to store the new data
 
-	while (n_sbc_buffer[seq] + sbc_len > get_max_buffer_size()) {
+	while (n_sbc_buffer + btstack_sbc_encoder_sbc_buffer_length() > get_max_buffer_size()) {
 	    void a2dp_source_request_can_send_now();  // TODO forward declaration not neeed after spliting headers/src
 	    a2dp_source_request_can_send_now();
 	    cond->wait(lock);
 	}
 
-	memcpy(&sbc_buffer[seq * SBC_STORAGE_SIZE + n_sbc_buffer[seq]], sbc_frame, sbc_len);
-	n_sbc_buffer[seq] += sbc_len;
+	memcpy(&sbc_buffer[n_sbc_buffer+1], sbc_frame, btstack_sbc_encoder_sbc_buffer_length());
+	n_sbc_buffer += btstack_sbc_encoder_sbc_buffer_length();
     }
 
     lock->unlock();
@@ -141,23 +139,20 @@ void SBCEncoder::enqueue_pcm_data(int16_t *pcm, int n_samples, int volume) {
 void SBCEncoder::send_media_payload_rtp() {
     lock->lock();
 
-    uint8_t *buf = &sbc_buffer[seq * SBC_STORAGE_SIZE];
-    int n_buf = n_sbc_buffer[seq];
+    uint8_t num_frames = n_sbc_buffer / btstack_sbc_encoder_sbc_buffer_length();
 
-    seq = (seq + 1) % 2;
-    n_sbc_buffer[seq] = 0;
-
-    cond->signal();
-    lock->unlock();
-
-    uint8_t num_frames = n_buf / btstack_sbc_encoder_sbc_buffer_length();
     // Prepend SBC Header
-    buf[0] = num_frames;  // (fragmentation << 7) | (starting_packet << 6) | (last_packet << 5) | num_frames;
-    a2dp_source_stream_send_media_payload_rtp(a2dp_cid, local_seid, 0, rtp_timestamp, buf, n_buf + 1);
+    sbc_buffer[0] = num_frames;  // (fragmentation << 7) | (starting_packet << 6) | (last_packet << 5) | num_frames;
+    a2dp_source_stream_send_media_payload_rtp(a2dp_cid, local_seid, 0, rtp_timestamp, sbc_buffer, n_sbc_buffer + 1);
 
     // update rtp_timestamp
     unsigned int num_audio_samples_per_sbc_buffer = btstack_sbc_encoder_num_audio_frames();
     rtp_timestamp += num_frames * num_audio_samples_per_sbc_buffer;
+
+    n_sbc_buffer = 0;
+
+    cond->signal();
+    lock->unlock();
 }
 
 #define N_SAMPLES_TO_PLAY 256
