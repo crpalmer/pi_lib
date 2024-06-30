@@ -17,6 +17,8 @@
 
 #define C_DECL extern "C"
 
+const bool trace_open_close = false;
+
 static PiMutex *init_lock;
 static bool is_init = false;
 static PiMutex *ff_lock;
@@ -103,6 +105,8 @@ C_DECL file_t *file_open(const char *fname, const char *mode) {
     file_t *file = ff_fopen(full_fname, mode);
     unlock();
 
+    if (trace_open_close) printf("%s: %s (%s) -> %p\n", __func__, fname, full_fname, file);
+
     full_fname_free(fname, full_fname);
 
     return file;
@@ -183,6 +187,7 @@ C_DECL bool file_seek_rel(file_t *file, long delta) {
 
 C_DECL void file_close(file_t *file) {
    assert(is_init);
+    if (trace_open_close) printf("%s: %p\n", __func__, file);
    lock();
    ff_fclose((FF_FILE *) file);
    unlock();
