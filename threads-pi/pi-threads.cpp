@@ -35,7 +35,7 @@ PiThread::PiThread(const char *name) : name(name) {
     c_paused = new PiCond();
 }
 
-PiThread *PiThread::start(int priority_unused) {
+PiThread *PiThread::start(int priority_unused, int affinity_unused) {
     if (pthread_create(&t, NULL, (void *(*)(void *)) PiThread::thread_entry, this)) {
         pthread_detach(t);
     }

@@ -19,7 +19,6 @@ const char *get_task_name() {
 }
 
 static void init_with_threads(void *main_as_vp) {
-    pi_init_no_reboot();
     malloc_lock_init();
     pico_set_sleep_fn(rtos_sleep);
     set_consoles_lock();
@@ -36,6 +35,8 @@ static void init_with_threads(void *main_as_vp) {
 #define STACK_SIZE 1024
 
 void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
+    pi_init_no_reboot();
+    ms_sleep(100);	// 1ms seems to be enough
     xTaskCreate(init_with_threads, "main", STACK_SIZE, (void *) main, 1, NULL);
     vTaskStartScheduler();
 }
@@ -46,8 +47,9 @@ PiThread::PiThread(const char *name) : name(name) {
 PiThread::~PiThread() {
 }
 
-PiThread *PiThread::start(int priority) {
+PiThread *PiThread::start(int priority, int core_affinity) {
     xTaskCreate(PiThread::thread_entry, name ? name : "pi-thread", STACK_SIZE, this, priority, (TaskHandle_t *) &task);
+    if (core_affinity > 0) vTaskCoreAffinitySet((TaskHandle_t) task, core_affinity);
     return this;
 }
 

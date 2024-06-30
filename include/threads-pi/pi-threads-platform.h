@@ -10,7 +10,7 @@ public:
     PiThread(const char *name = "");
     ~PiThread();
 
-    PiThread *start(int priority = 1);
+    PiThread *start(int priority = 1, int affinity = -1);
 
     virtual void main() = 0;
     static void thread_entry(void *vp);
