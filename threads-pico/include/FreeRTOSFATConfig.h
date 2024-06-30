@@ -200,7 +200,7 @@ If time support is used, the following function must be supplied:
 	time_t FreeRTOS_time( time_t *pxTime );
 
 FreeRTOS_time has the same semantics as the standard time() function. */
-#define	ffconfigTIME_SUPPORT 1
+#define	ffconfigTIME_SUPPORT 0
 
 /* Set to 1 if the media is removable (such as a memory card).
 
@@ -210,7 +210,7 @@ When set to 1 all file handles will be "invalidated" if the media is
 extracted.  If set to 0 then file handles will not be invalidated.
 In that case the user will have to confirm that the media is still present
 before every access. */
-#define	ffconfigREMOVABLE_MEDIA	1
+#define	ffconfigREMOVABLE_MEDIA	0
 
 /* Set to 1 to determine the disk's free space and the disk's first free
 cluster when a disk is mounted.
@@ -230,7 +230,7 @@ when the path is deep within a directory structure at the expense of
 additional RAM usage.
 
 Set to 0 to not use a path cache. */
-#define	ffconfigPATH_CACHE 0
+#define	ffconfigPATH_CACHE 1
 
 /* Only used if ffconfigPATH_CACHE is 1.
 
@@ -296,7 +296,7 @@ ff_fprintf() is quite a heavy function because it allocates RAM and
 brings in a lot of string and variable argument handling code.  If
 ff_fprintf() is not being used then the code size can be reduced by setting
 ffconfigFPRINTF_SUPPORT to 0. */
-#define ffconfigFPRINTF_SUPPORT	1
+#define ffconfigFPRINTF_SUPPORT	0
 
 /* ff_fprintf() will allocate a buffer of this size in which it will create
 its formatted string.  The buffer will be freed before the function
