@@ -119,7 +119,7 @@ AudioPico::AudioPico(int pio, int data_pin, int clock_pin_base) : pio(pio) {
 
 bool AudioPico::configure(AudioConfig *config) {
     if (config->get_num_channels() != 2 || config->get_rate() != 44100 || config->get_bytes_per_sample() != 2) {
-	consoles_fatal_printf("Audio format is not currently compatible.  Must be 2 channels, 44100 hz, 16 bit signed.\n");
+	consoles_fatal_printf("Audio format is not currently compatible: %d channels, %d khz %d bytes per sample.\n44100 hz, 16 bit signed.\n", config->get_num_channels(), config->get_rate(), config->get_bytes_per_sample());
     }
 
     int old_rate = rate;
