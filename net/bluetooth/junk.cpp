@@ -6,7 +6,7 @@
 #include "sbc-configuration.h"
 
 #define NUM_CHANNELS                2
-#define SBC_STORAGE_SIZE 1030
+#define SBC_STORAGE_SIZE 1031
 
 static const char * device_addr_string = "BF:AC:94:0A:99:2E";
 
@@ -23,7 +23,7 @@ public:
     void resume() { cond->signal(); }
 
     int get_max_buffer_size() {
-        return btstack_min(a2dp_max_media_payload_size(a2dp_cid, local_seid), SBC_STORAGE_SIZE);
+        return btstack_min(a2dp_max_media_payload_size(a2dp_cid, local_seid), SBC_STORAGE_SIZE-1);
     }
 
     void dump_state() { configuration->dump(); }
