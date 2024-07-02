@@ -1,7 +1,11 @@
-#include <stdio.h>
-#include <stdlib.h>
-
+#include "pi.h"
+#include "consoles.h"
+#ifndef PLATFORM_linux
 #include <pigpio.h>
+#else
+static inline int spiWrite(int spi, void *ptr, int n) { return 0; }
+static inline int spiOpen(int spi, int speed, int flags) { return 0; }
+#endif
 
 #include "st7735s.h"
 
@@ -150,8 +154,7 @@ ST7735S::ST7735S()
     BL = new GPOutput(17);
 
     if (spiOpen(SPI, 20*1000*1000, 0) < 0) {
-	fprintf(stderr, "Failed to open SPI!\n");
-	exit(1);
+	consoles_fatal_printf("Failed to open SPI!\n");
     }
 
     set_brightness(0);

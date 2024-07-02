@@ -47,21 +47,24 @@ if(${PLATFORM} STREQUAL pico)
     hardware_rtc
   )
 else()
-  target_link_libraries(lib-pi PUBLIC pthread usb rt pthread png16 gpiod pigpio)
+  target_link_libraries(lib-pi PUBLIC pthread usb rt pthread png16 gpiod)
+  if ("${PLATFORM}" STREQUAL pi)
+    target_link_libraries(lib-pi PUBLIC pigpio)
+  endif()
 endif()
 
 target_include_directories(lib-pi
   PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/include
-    ${CMAKE_CURRENT_LIST_DIR}/include/${PLATFORM}
-    ${CMAKE_CURRENT_LIST_DIR}/include/threads-${PLATFORM}
+    ${CMAKE_CURRENT_LIST_DIR}/include/${PLATFORM_DIR}
+    ${CMAKE_CURRENT_LIST_DIR}/include/threads-${PLATFORM_DIR}
 )
 
 include(audio/audio.cmake)
 include(core/core.cmake)
-include(core-${PLATFORM}/platform.cmake)
+include(core-${PLATFORM_DIR}/platform.cmake)
 include(net/net.cmake)
 include(threads/threads.cmake)
-include(threads-${PLATFORM}/platform.cmake)
+include(threads-${PLATFORM_DIR}/platform.cmake)
 
 add_subdirectory(utils)

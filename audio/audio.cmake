@@ -1,5 +1,5 @@
 target_sources(lib-pi PRIVATE
-  ${CMAKE_CURRENT_LIST_DIR}/audio-${PLATFORM}.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/audio-${PLATFORM_DIR}.cpp
   ${CMAKE_CURRENT_LIST_DIR}/audio-player.cpp
   ${CMAKE_CURRENT_LIST_DIR}/${PLATFORM_SOURCE}
   ${CMAKE_CURRENT_LIST_DIR}/talker-auto-gain.c

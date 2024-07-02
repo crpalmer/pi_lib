@@ -13,10 +13,10 @@ Audio *audio;
 AudioPlayer *player;
 
 void threads_main(int argc, char **argv) {
-#ifdef PLATFORM_pi
-    audio = new AudioPi();
-#else
+#ifdef PLATFORM_pico
     audio = new AudioPico();
+#else
+    audio = new AudioPi();
 #endif
     player = new AudioPlayer(audio);
 

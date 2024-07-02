@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-#ifdef PLATFORM_pi
+#ifndef PLATFORM_pico
 #include <unistd.h>
 static inline void closesocket(int socket) { close(socket); }
 #endif

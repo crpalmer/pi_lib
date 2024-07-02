@@ -1,13 +1,19 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <gpiod.h>
-#include <pthread.h>
-#include <linux/gpio.h>
-#include <pigpio.h>
+#include "pi.h"
 #include "pi-gpio.h"
 
-int pi_gpio_servo(unsigned gpio, unsigned ms)
-{
+#ifdef PLATFORM_linux
+
+#include "consoles.h"
+int pi_gpio_servo(unsigned gpio, unsigned ms) {
+    consoles_fatal_printf("%s not supported.\n", __func__);
+    return 0;
+}
+
+#else
+
+#include <pigpio.h>
+int pi_gpio_servo(unsigned gpio, unsigned ms) {
     return gpioServo(gpio, ms);
 }
 
+#endif
