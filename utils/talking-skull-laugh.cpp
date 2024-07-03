@@ -43,12 +43,7 @@ void talk_once(Audio *audio, AudioPlayer *player, TalkingSkull *skull) {
 }
 
 void threads_main(int argc, char **argv) {
-    Audio *audio;
-#ifdef PLATFORM_pico
-    audio = new AudioPico();
-#else
-    audio = new AudioPi();
-#endif
+    Audio *audio = Audio::create_instance();
     AudioPlayer *player = new AudioPlayer(audio);
     TalkingSkull *skull = new LaughTalkingSkull(22);
 

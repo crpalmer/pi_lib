@@ -77,6 +77,10 @@ static void dma_enqueue_data_locked(void *data, int n) {
     }
 }
 
+Audio *Audio::create_instance() {
+    return new AudioPico();
+}
+
 AudioPico::AudioPico(int pio, int data_pin, int clock_pin_base) : pio(pio) {
     if (dma_channel != (uint8_t) -1) {
 	consoles_fatal_printf("May only create a single AudioPico instance (dma_channel = %d)!\n", dma_channel);

@@ -13,11 +13,7 @@ Audio *audio;
 AudioPlayer *player;
 
 void threads_main(int argc, char **argv) {
-#ifdef PLATFORM_pico
-    audio = new AudioPico();
-#else
-    audio = new AudioPi();
-#endif
+    audio = Audio::create_instance();
     player = new AudioPlayer(audio);
 
     while (1) {

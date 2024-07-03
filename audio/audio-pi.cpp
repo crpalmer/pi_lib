@@ -22,6 +22,10 @@ struct alsa_dataS {
 
 static inline int flags(bool playback) { return (playback ? PCM_OUT : PCM_IN) | PCM_MONOTONIC; }
 
+Audio *Audio::create_instance() {
+    return new AudioPi();
+}
+
 AudioPi::AudioPi(bool playback, int card, int device) : card(card), device(device), playback(playback) {
     alsa = (alsa_data_t *) fatal_malloc(sizeof(*alsa));
     alsa->pcm = NULL;

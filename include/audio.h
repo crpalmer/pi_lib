@@ -20,6 +20,8 @@ public:
     int get_num_channels() override = 0;
     int get_rate() override = 0;
     int get_bytes_per_sample() = 0;
+
+    static Audio *create_instance();
 };
 
 #ifdef PLATFORM_pico
