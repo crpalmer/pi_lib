@@ -3,20 +3,10 @@ add_compile_definitions("CYW43_CONFIG_FILE=\"cyw43_config_pico.h\"")
 add_compile_definitions("MG_ARCH=MG_ARCH_CUSTOM")
 
 if("${PLATFORM}" STREQUAL "pico")
-  set(BTSTACK_3RD_PARTY_PATH "/home/crpalmer/pico/pico-sdk/lib/btstack/3rd-party")
+  include("${CMAKE_CURRENT_LIST_DIR}/bluetooth/bluetooth.cmake")
+
   target_sources(lib-pi PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/bluetooth/a2dp-sink.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/bluetooth/avrcp.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/bluetooth/avrcp-connection.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/bluetooth/bluetooth.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/bluetooth/sbc-configuration.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/bluetooth/sbc-decoder.cpp
     ${CMAKE_CURRENT_LIST_DIR}/wifi.c
-    ${CMAKE_CURRENT_LIST_DIR}/bluetooth/junk.cpp
-  )
-  target_include_directories(lib-pi PUBLIC
-    ${BTSTACK_3RD_PARTY_PATH}/hxcmod-player
-    ${BTSTACK_3RD_PARTY_PATH}/hxcmod-player/mods
   )
 endif()
 
@@ -25,7 +15,6 @@ target_include_directories(lib-pi PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/bluetooth
   ${EXTERNAL_DIR}/mongoose/
 )
-
 
 target_sources(lib-pi PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/httpd-filesystem-handler.cpp
