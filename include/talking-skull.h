@@ -15,7 +15,13 @@ public:
 
 class TalkingSkull : PiThread {
 public:
-    TalkingSkull(const char *thread_name = "talking-skull", int bytes_per_op = 2);
+    TalkingSkull(const char *thread_name = "talking-skull", int bytes_per_op =
+#ifdef PLATFORM_pico
+      1
+#else
+      2
+#endif
+    );
     ~TalkingSkull();
 
     void set_ops(TalkingSkullOps *ops);
