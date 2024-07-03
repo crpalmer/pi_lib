@@ -31,8 +31,7 @@ main()
 
     seed_random();
 
-    i2c_init_bus(0, 400*1000);
-    i2c_config_gpios(4, 5);
+    i2c_init_bus(0, 4, 5, 400*1000);
 
     printf("Creating SSD1306\n");
     display = new SSD1306(1);

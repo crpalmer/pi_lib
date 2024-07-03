@@ -4,8 +4,7 @@
 #include <stdint.h>
 
 /* init_bus and config_gpios are no-ops on the PI (only for the pico) */
-int i2c_init_bus(int bus, int bus_speed = 100*1000);
-void i2c_config_gpios(int sda, int scl);
+void i2c_init_bus(int bus = 1, int sda = 2, int scl = 3, int bus_speed = 100*1000);
 
 int i2c_open(int bus, int addr);
 void i2c_close(int fd);

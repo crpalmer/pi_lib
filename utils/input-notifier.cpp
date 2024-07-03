@@ -33,8 +33,7 @@ static void ensure_mcp() {
     if (mcp) return;
 
     printf("Initializing mcp...\n");
-    i2c_init_bus(1);
-    i2c_config_gpios(2, 3);
+    i2c_init_bus();
 
     mcp = new MCP23017(MCP23017_DEFAULT_ADDRESS, 6, 7);
     printf("Initialized.\n");

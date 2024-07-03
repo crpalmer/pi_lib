@@ -16,13 +16,9 @@ static i2c_data_t i2c_data[MAX_I2C];
 
 static inline i2c_inst_t *i2c_inst(int bus) { return bus ? i2c1 : i2c0; }
 
-int i2c_init_bus(int bus, int speed)
+void i2c_init_bus(int bus, int sda, int scl, int speed)
 {
-    return i2c_init(i2c_inst(bus), speed);
-}
-
-void i2c_config_gpios(int sda, int scl)
-{
+    i2c_init(i2c_inst(bus), speed);
     gpio_set_function(sda, GPIO_FUNC_I2C);
     gpio_set_function(scl, GPIO_FUNC_I2C);
 }

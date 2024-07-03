@@ -8,18 +8,11 @@
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
 
-
-int i2c_init_bus(int bus, int speed)
+void i2c_init_bus(int bus, int sda, int scl, int speed)
 {
     if (speed != 100*1000) {
 	fprintf(stderr, "Warning: Ignoring bus speed request.\n");
     }
-
-    return 0;
-}
-
-void i2c_config_gpios(int sda, int scl)
-{
 }
 
 int i2c_open(int bus, int addr)

@@ -30,8 +30,7 @@ main(int argc, char **argv)
 {
     pi_init();
 
-    i2c_init_bus(1);
-    i2c_config_gpios(2, 3);
+    i2c_init_bus();
 
 #ifdef PLATFORM_pico
     if (0) {

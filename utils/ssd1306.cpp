@@ -15,8 +15,7 @@ main()
 {
     pi_init();
 
-    i2c_init_bus(1, 400*1000);
-    i2c_config_gpios(2, 3);
+    i2c_init_bus(1, 2, 3, 400*1000);
 
     printf("Creating SSD1306\n");
     display = new SSD1306(1);

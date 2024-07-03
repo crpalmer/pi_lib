@@ -36,8 +36,7 @@ int main()
 
     printf("Initializing the i2c bus.\n");
 
-    i2c_init_bus(1);
-    i2c_config_gpios(2, 3);
+    i2c_init_bus();
 
     printf("Initializing the ADC.\n");
     ADC *adc = new_adc();
