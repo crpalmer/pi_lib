@@ -1,7 +1,8 @@
-#include <stdio.h>
+#include <dirent.h>
 #include <stdarg.h>
-#include <unistd.h>
-
+#include <string.h>
+#include "pi.h"
+#include "string-utils.h"
 #include "file.h"
 
 off_t file_size(const char *fname) {
@@ -50,3 +51,21 @@ bool file_seek_rel(file_t *file, long delta) { return fseek(file, delta, SEEK_CU
 void file_close(file_t *file) { fclose(file); }
 
 bool file_is_eof(file_t *file) { return feof(file) != 0; }
+
+bool FileForeach::foreach(const char *dir) {
+    DIR *d;
+    struct dirent *dirent;
+
+    if ((d = opendir(dir)) == NULL) return false;
+    while ((dirent = readdir(d)) != NULL) {
+	if (strcmp(dirent->d_name, ".") == 0 || strcmp(dirent->d_name, "..") == 0) continue;
+	char *fullname = maprintf("%s/%s", dir, dirent->d_name);
+	if (dirent->d_type == DT_DIR) directory(fullname);
+	else if (dirent->d_type == DT_LNK) symbolic_link(fullname);
+	else if (dirent->d_type == DT_REG) file(fullname);
+	free(fullname);
+    }
+
+    closedir(d);
+    return true;
+}

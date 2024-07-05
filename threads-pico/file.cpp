@@ -30,9 +30,18 @@ static const char *root = "/sd0";
 
 static const char *filename_to_sd_filename(const char *fname) {
     if (fname[0] != '/') return fname;
-
+    if (strncmp(fname, root, strlen(root)) == 0) {
+	if (strlen(fname) == strlen(root)) return fname;
+	if (fname[strlen(root)] == '/') return fname;
+    }
     char *full_fname = (char *) fatal_malloc(strlen(root) + strlen(fname) + 1);
     sprintf(full_fname, "%s%s", root, fname);
+    int i = 1, j = 1;
+    while (full_fname[i]) {
+	if (full_fname[i] != '/' || full_fname[j-1] != '/') full_fname[j++] = full_fname[i];
+	i++;
+    }
+    full_fname[j] = '\0';
     return full_fname;
 }
 
@@ -69,6 +78,8 @@ C_DECL void file_init(void) {
 }
 
 off_t file_size(const char *fname) {
+    init_once();
+
     FF_Stat_t stat;
     off_t size;
     const char *full_fname = filename_to_sd_filename(fname);
@@ -85,6 +96,8 @@ off_t file_size(const char *fname) {
 bool
 file_exists(const char *fname)
 {
+    init_once();
+
     FF_Stat_t stat;
     const char *full_fname = filename_to_sd_filename(fname);
 
@@ -199,4 +212,26 @@ C_DECL bool file_is_eof(file_t *file) {
    bool ret = ff_feof((FF_FILE *) file);
    unlock();
    return ret;
+}
+
+bool FileForeach::foreach(const char *dir) {
+    const char *fmt;
+
+    init_once();
+
+    if (dir == NULL || dir[0] == 0) dir = root;
+    if (dir[strlen(dir) - 1] == '/') fmt = "%s%s";
+    else fmt = "%s/%s";
+
+    FF_FindData_t data;
+    if (ff_findfirst(dir, &data) != 0) return false;
+    do {
+	if ((data.ucAttributes & (FF_FAT_ATTR_HIDDEN | FF_FAT_ATTR_SYSTEM)) != 0) continue;
+	if (strcmp(data.pcFileName, ".") == 0 || strcmp(data.pcFileName, "..") == 0) continue;
+	char *fullname = maprintf(fmt, dir, data.pcFileName);
+	if ((data.ucAttributes & FF_FAT_ATTR_DIR) != 0) directory(fullname);
+	else file(fullname);
+	free(fullname);
+    } while (ff_findnext(&data) == 0);
+    return true;
 }

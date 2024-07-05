@@ -33,6 +33,17 @@ bool file_is_eof(file_t *);
 
 #ifdef __cplusplus
 };
+
+#include <string>
+
+class FileForeach {
+public:
+    bool foreach(const char *dir = NULL);
+    virtual bool file(const char *fullname) { return true; }
+    virtual bool directory(const char *fullname) { return true; }
+    virtual bool symbolic_link(const char *fullname) { return true; }
+};
+
 #endif
 
 #endif
