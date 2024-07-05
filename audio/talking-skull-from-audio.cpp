@@ -24,11 +24,13 @@ bool TalkingSkullAudioOps::next(double *pos) {
     for (unsigned i_avg = 0; i_avg < n_to_avg; i_avg++) {
 	unsigned mx = 0;
 	for (unsigned i_max = 0; i_max < n_per_sample; i_max++) {
-	    int32_t l_signed, r_signed;
+	    int16_t l_signed, r_signed;
 
-	    if (! audio_buffer->next((uint32_t *) &l_signed, (uint32_t *) &r_signed)) return false;
+	    if (! audio_buffer->next(&l_signed, &r_signed)) return false;
 	    uint32_t l = l_signed < 0 ? -l_signed : l_signed;
 	    uint32_t r = r_signed < 0 ? -r_signed : r_signed;
+	    l <<= 16;
+	    r <<= 16;
 	    uint32_t val = l > r ? l : r;
 	    if (val > mx) mx = val;
 	}

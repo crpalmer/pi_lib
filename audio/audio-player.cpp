@@ -75,12 +75,9 @@ void AudioPlayer::main(void) {
 	while (! stop_requested) {
 	    size_t bytes = 0;
 	    for (bytes = 0; bytes < n; ) {
-	 	uint32_t l, r;
+		int16_t l, r;
 
 		if (! buffer->next(&l, &r)) break;
-
-		l >>= 16;
-		r >>= 16;
 
 		/* TODO: Is this the right order: r then l ? */
 		buf[bytes++] = r & 0xff;

@@ -31,7 +31,7 @@ public:
 
     virtual const char *get_fname() { return buffer->get_fname(); }
 
-    virtual bool next(uint32_t *l, uint32_t *r) {
+    virtual bool next(int16_t *l, int16_t *r) {
 	for (int lr = 0; lr < num_channels; lr++) {
 	    uint32_t val = 0;
 	    for (int i = 0; i < bytes_per_sample; i++) {
@@ -55,19 +55,19 @@ public:
 	return true;
     }
 
-    int get_num_channels() override { return num_channels; }
+    int get_num_channels() override { return 2; }
     int get_rate() override { return rate; }
-    int get_bytes_per_sample() { return bytes_per_sample; }
+    int get_bytes_per_sample() { return 2; }
 
     int get_n_samples() {
 	return buffer->get_n() / num_channels / get_bytes_per_sample();
     }
 
     unsigned get_duration_ms() {
-	int n_frames = get_n_samples() / get_num_channels();
+	int n_samples = get_n_samples();
 	int rate = get_rate();
-	int sec = n_frames / rate;
-	int ms = ((1000*1000 / rate) * (n_frames % rate) + 999) / 1000;
+	int sec = n_samples / rate;
+	int ms = ((1000*1000 / rate) * (n_samples % rate) + 999) / 1000;
 
 	return sec*1000 + ms;
     }
