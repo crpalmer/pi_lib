@@ -21,7 +21,6 @@ target_sources(lib-pi PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/httpd-server.cpp
   ${CMAKE_CURRENT_LIST_DIR}/net.c
   ${CMAKE_CURRENT_LIST_DIR}/net-console.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/net-line-reader.c
   ${CMAKE_CURRENT_LIST_DIR}/net-listener.cpp
   ${CMAKE_CURRENT_LIST_DIR}/net-reader.cpp
   ${CMAKE_CURRENT_LIST_DIR}/net-writer.cpp
