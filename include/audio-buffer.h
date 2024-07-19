@@ -43,8 +43,8 @@ public:
 		val = val | (byte << 8*i);
 	    }
 	    val = val << (8 * (4 - bytes_per_sample));
-	    if (lr == 0) *l = *r = val;
-	    else *r = val;
+	    if (lr == 0) *l = *r = val >> 16;
+	    else *r = val >> 16;
 	}
 	return true;
     }
