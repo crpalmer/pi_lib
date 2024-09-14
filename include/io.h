@@ -8,8 +8,14 @@ public:
      virtual ~Output() {}
      virtual void set(bool value) = 0;
      virtual void pwm(double pct_on) { set(pct_on >= 0.5); }
-     virtual void on() { set(1); }
-     virtual void off() { set(0); }
+     virtual void on() { set(is_inverted ? 0 : 1); }
+     virtual void off() { set(is_inverted ? 1 : 0); }
+     virtual void set_is_inverted(bool new_is_inverted = true) {
+	is_inverted = new_is_inverted;
+     }
+
+private:
+     bool is_inverted = false;
 };
 
 class InputNotifier {
@@ -27,7 +33,7 @@ public:
      virtual void set_pullup_down() = 0;
      virtual void clear_pullup() = 0;
 
-     void set_inverted(int set_inverted = true) { is_inverted = set_inverted; }
+     void set_is_inverted(bool set_inverted = true) { is_inverted = set_inverted; }
      void set_debounce(unsigned ms) { debounce_ms = ms; }
  
      unsigned get() {
@@ -62,7 +68,7 @@ protected:
     }
 
     unsigned debounce_ms;
-    int is_inverted;
+    bool is_inverted;
 };
 
 #endif
