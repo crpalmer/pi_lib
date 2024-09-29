@@ -22,7 +22,7 @@ typedef struct {
 
 static gpio_t gpios[NUM_GPIOS];
 
-#define N_PWM_SLICES   8
+#define N_PWM_SLICES   12
 
 typedef struct {
     int channel_pins[2];
