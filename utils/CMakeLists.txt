@@ -17,7 +17,7 @@ function(util_cpp targetName)
 endfunction()
 
 if("${PLATFORM}" STREQUAL pico)
-  if($(PICO_BOARD) STREQUAL pico_w)
+  if(HAVE_NETWORKING)
     util_cpp(a2dp-sink)
     util_cpp(a2dp-source)
     util_cpp(httpd)

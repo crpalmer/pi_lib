@@ -6,6 +6,11 @@ if("${PLATFORM}" STREQUAL pico)
   endif()
   include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
   #include($ENV{PICO_EXTRAS_PATH}/external/pico_extras_import.cmake)
+  if ("${PICO_BOARD}" STREQUAL "pico_w")
+    set(HAVE_NETWORKING ON)
+  endif()
+else()
+  set(HAVE_NETWORKING ON)
 endif()
 
 add_subdirectory(external)
@@ -43,7 +48,7 @@ if(${PLATFORM} STREQUAL pico)
     hardware_pwm
     hardware_rtc
   )
-  if($(PICO_BOARD) STREQUAL pico_w)
+  if(HAVE_NETWORKING)
     target_link_libraries(lib-pi PRIVATE
       pico_btstack_sbc_decoder
       pico_btstack_sbc_encoder
@@ -70,8 +75,8 @@ target_include_directories(lib-pi
 include(audio/audio.cmake)
 include(core/core.cmake)
 include(core-${PLATFORM_DIR}/platform.cmake)
-if ("${PLATFORM}" STREQUAL pi OR "${PICO_BOARD}" STREQUAL pico_w)
-message("********** WIFI ***********")
+if (HAVE_NETWORKING)
+  message("LIB Networking code is available")
   include(net/net.cmake)
 endif()
 include(threads/threads.cmake)
