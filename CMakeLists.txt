@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 if("${PLATFORM}" STREQUAL pico)
+  set(PICO_BOARD pico_w)
   include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
   #include($ENV{PICO_EXTRAS_PATH}/external/pico_extras_import.cmake)
 endif()
@@ -32,12 +33,6 @@ if(${PLATFORM} STREQUAL pico)
   )
   target_link_libraries(lib-pi PRIVATE
     pico_stdlib
-    pico_cyw43_arch_lwip_sys_freertos
-    pico_btstack_ble
-    pico_btstack_classic
-    pico_btstack_cyw43
-    pico_btstack_sbc_decoder
-    pico_btstack_sbc_encoder
     hardware_adc
     hardware_dma
     hardware_i2c
@@ -46,6 +41,16 @@ if(${PLATFORM} STREQUAL pico)
     hardware_pwm
     hardware_rtc
   )
+  if($(PICO_BOARD) STREQUAL pico_w)
+    target_link_libraries(lib-pi PRIVATE
+      pico_btstack_sbc_decoder
+      pico_btstack_sbc_encoder
+      pico_cyw43_arch_lwip_sys_freertos
+      pico_btstack_ble
+      pico_btstack_classic
+      pico_btstack_cyw43
+    )
+  endif()
 else()
   target_link_libraries(lib-pi PUBLIC pthread usb rt pthread png16 gpiod)
   if ("${PLATFORM}" STREQUAL pi)
@@ -63,7 +68,10 @@ target_include_directories(lib-pi
 include(audio/audio.cmake)
 include(core/core.cmake)
 include(core-${PLATFORM_DIR}/platform.cmake)
-include(net/net.cmake)
+if ("${PLATFORM}" STREQUAL pi OR "${PICO_BOARD}" STREQUAL pico_w)
+message("********** WIFI ***********")
+  include(net/net.cmake)
+endif()
 include(threads/threads.cmake)
 include(threads-${PLATFORM_DIR}/platform.cmake)
 
