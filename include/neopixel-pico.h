@@ -19,6 +19,7 @@ public:
 
     void set_all(unsigned char r, unsigned char g, unsigned char b);
     void set_led(int led, unsigned char r, unsigned char g, unsigned char b);
+    void set_led(int led, unsigned char v) { set_led(led, v, v, v); }
 
     void set_brightness(double pct);
 
