@@ -68,7 +68,7 @@ public:
 	fatal_free(raw);
     }
 
-    RGB32 get_pixel(int x, int y) {
+    RGB24 get_pixel(int x, int y) {
 	uint8_t *p = &raw[byte_of(x, y)];
 	return (*p & (1 << bit_of(x, y))) != 0;
     }
@@ -120,7 +120,7 @@ public:
 	}
     }
 
-    RGB32 get_pixel(int x, int y) {
+    RGB24 get_pixel(int x, int y) {
 	Page *page = get_page(y);
 	return page->get_pixel(x, row_of_page(y));
     }

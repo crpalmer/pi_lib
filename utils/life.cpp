@@ -51,7 +51,7 @@ main()
 	for (int x = 0; x < w; x++) {
 	    for (int y = 0; y < h; y++) {
 		if (random_number_in_range(1,4) == 1) {
-		    canvas[index]->set_pixel(x, y, 1);
+		    canvas[index]->set_pixel24(x, y, WHITE);
 		    n_alive++;
 		}
 	    }
@@ -65,18 +65,18 @@ main()
 	    Canvas *c_next = canvas[index];
 	    printf("Starting iteration with index = %d\n", index);
 
-	    c_next->fill(0);
+	    c_next->fill24(BLACK);
 	    n_alive = 0;
 	    for (int x = 0; x < w; x++) {
 		for (int y = 0; y < h; y++) {
 		    int n_neighbours = get_n_neighbours(c_last, x, y, w, h);
 		    if (c_last->get_pixel(x, y)) {
 			if (n_neighbours == 2 || n_neighbours == 3) {
-			    c_next->set_pixel(x, y, 1);
+			    c_next->set_pixel24(x, y, WHITE);
 			    n_alive++;
 			}
 		    } else if (n_neighbours == 3) {
-			c_next->set_pixel(x, y, 1);
+			c_next->set_pixel24(x, y, WHITE);
 			n_alive++;
 		    }
 		}

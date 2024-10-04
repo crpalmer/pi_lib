@@ -33,25 +33,25 @@ void Canvas::fill(Byte r, Byte g, Byte b, int x0, int y0, int xw, int yh)
     }
 }
 
-void Canvas::up_down_line(int x, int y, int len, int lw, RGB32 color)
+void Canvas::up_down_line(int x, int y, int len, int lw, RGB24 color)
 {
     for (int draw_x = x; draw_x < x + lw; draw_x++) {
 	for (int draw_y = y; draw_y < y + len; draw_y++) {
-	   set_pixel(draw_x, draw_y, color);
+	   set_pixel24(draw_x, draw_y, color);
 	}
     }
 }
 
-void Canvas::left_right_line(int x, int y, int len, int lw, RGB32 color)
+void Canvas::left_right_line(int x, int y, int len, int lw, RGB24 color)
 {
     for (int draw_x = x; draw_x < x + len; draw_x++) {
 	for (int draw_y = y; draw_y < y + lw; draw_y++) {
-	   set_pixel(draw_x, draw_y, color);
+	   set_pixel24(draw_x, draw_y, color);
 	}
     }
 }
 
-void Canvas::nine_segment(int digit, int x, int y, int w, int h, RGB32 c)
+void Canvas::nine_segment(int digit, int x, int y, int w, int h, RGB24 c)
 {
     int lw;
 
@@ -85,7 +85,7 @@ void Canvas::import(Canvas *other, int x0, int y0, int w, int h)
 
     for (int y = y0; y < y0+h; y++) {
 	for (int x = x0; x < x0+w; x++) {
-	    set_pixel(x, y, other->get_pixel(x*scale_x, y*scale_y));
+	    set_pixel24(x, y, other->get_pixel(x*scale_x, y*scale_y));
  	}
     }
 }
