@@ -12,7 +12,7 @@ public:
 
     int is_valid() { return !had_error; }
 
-    RGB32 get_pixel(int x, int y);
+    RGB24 get_pixel(int x, int y);
     void set_pixel(int x, int y, Byte r, Byte g, Byte b);
 
 private:

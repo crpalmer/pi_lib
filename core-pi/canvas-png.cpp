@@ -73,13 +73,13 @@ fail:
     file_close(f);
 }
 
-RGB32 CanvasPNG::get_pixel(int x, int y)
+RGB24 CanvasPNG::get_pixel(int x, int y)
 {
     png_byte *line = data[y];
     png_byte *rgb = &line[x*bytes_per_pixel];
 
     if (bytes_per_pixel >= 4 && rgb[3] == 0) return 0;
-    else return rgb32(rgb[0], rgb[1], rgb[2]);
+    else return RGB24_of(rgb[0], rgb[1], rgb[2]);
 }
 
 void CanvasPNG::set_pixel(int x, int y, Byte r, Byte g, Byte b)

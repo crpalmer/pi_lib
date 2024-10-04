@@ -43,13 +43,8 @@ static inline int gpioSetPullUpDown(unsigned gpio, unsigned updown) { return pi_
 static inline int gpioSetMode(unsigned gpio, unsigned mode) { return pi_gpio_set_direction(gpio, mode); }
 static inline int gpioPWM(unsigned gpio, unsigned dutycycle) { assert(0); return -1; }
 
-/* TODO */
-
-// int spiWrite(int, char *, unsigned);
-// int spiOpen(int, int, int);
-
 #endif
- 
+
 #ifdef __cplusplus
 };
 #endif

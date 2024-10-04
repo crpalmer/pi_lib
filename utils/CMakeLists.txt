@@ -40,6 +40,7 @@ endif()
 
 util_cpp(adc)
 util_cpp(digital-counter)
+util_cpp(il9341)
 util_cpp(input-notifier)
 util_cpp(life)
 util_cpp(mcp23017)

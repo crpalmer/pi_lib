@@ -11,6 +11,7 @@ target_sources(lib-pi PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/pi-gpio-pi-servo.c
   ${CMAKE_CURRENT_LIST_DIR}/pi-usb.c
   ${CMAKE_CURRENT_LIST_DIR}/pico-slave.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/spi.cpp
   ${CMAKE_CURRENT_LIST_DIR}/st7735s.cpp
   ${CMAKE_CURRENT_LIST_DIR}/time-utils.c
 )

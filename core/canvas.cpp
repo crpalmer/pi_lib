@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "pi.h"
 #include "canvas.h"
 
 static int
