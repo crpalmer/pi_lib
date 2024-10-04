@@ -141,85 +141,6 @@ IL9341::IL9341(SPI *spi, Output *reset_pin, Output *backlight, int width, int he
 
     reset();
 
-#if 0
-    spi->write_cmd(IDLE_OFF);
-    spi->write_data(0);		// WHY?
-
-    spi->write_cmd(SLEEP_OUT);
-    spi->write_data(0x70);	// WHY?
-
-    spi->write_cmd(COLMOD);	// Pixel format
-    spi->write_data(5);		// 16 bits/pixel
-
-    spi->write_cmd(FRAME_RATE_CONTROL_IDLE);
-    spi->write_data(0x0c);
-    spi->write_data(0x0c);
-    spi->write_data(0x00);
-    spi->write_data(0x33);
-    spi->write_data(0x33);
-
-    spi->write_cmd(ENTRY_MODE_SET);
-    spi->write_data(0x35);
-
-    spi->write_cmd(BACKLIGHT_CONTROL_4);
-    spi->write_data(0x35);
-
-    spi->write_cmd(POWER_CONTROL_1);
-    spi->write_data(0x2C);
-
-    spi->write_cmd(0xC2); 	// NOT IN DATASHEET?
-    spi->write_data(0x01);
-
-    spi->write_cmd(0xC3); 	// NOT IN DATASHEET?
-    spi->write_data(0x13);
-
-    spi->write_cmd(0xC4); 	// NOT IN DATASHEET?
-    spi->write_data(0x20);
-
-    spi->write_cmd(0xC6); 	// NOT IN DATASHEET?
-    spi->write_data(0x0F);
-
-    spi->write_cmd(NV_MEMORY_WRITE);
-    spi->write_data(0xA4);
-    spi->write_data(0xA1);
-
-    spi->write_cmd(0xD6);	// NOT IN DATASHEET?
-    spi->write_data(0xA1);
-
-    spi->write_cmd(POSITIVE_GAMMA_CORRECTION);
-    spi->write_data(0xF0);
-    spi->write_data(0x00);
-    spi->write_data(0x04);
-    spi->write_data(0x04);
-    spi->write_data(0x04);
-    spi->write_data(0x05);
-    spi->write_data(0x29);
-    spi->write_data(0x33);
-    spi->write_data(0x3E);
-    spi->write_data(0x38);
-    spi->write_data(0x12);
-    spi->write_data(0x12);
-    spi->write_data(0x28);
-    spi->write_data(0x30);
-
-    spi->write_cmd(NEGATIVE_GAMMA_CORRECTION);
-    spi->write_data(0xF0);
-    spi->write_data(0x07);
-    spi->write_data(0x0A);
-    spi->write_data(0x0D);
-    spi->write_data(0x0B);
-    spi->write_data(0x07);
-    spi->write_data(0x28);
-    spi->write_data(0x33);
-    spi->write_data(0x3E);
-    spi->write_data(0x36);
-    spi->write_data(0x14);
-    spi->write_data(0x14);
-    spi->write_data(0x29);
-    spi->write_data(0x32);
-
-    spi->write_cmd(DISPLAY_INVERSION_ON);
-#else
     for (int i = 0; i < n_init_cmds; i++) {
 	spi->write_cmd(init_cmds[i].cmd);
 	if (init_cmds[i].n_data) spi->write_data(init_cmds[i].data, init_cmds[i].n_data);
@@ -229,7 +150,6 @@ IL9341::IL9341(SPI *spi, Output *reset_pin, Output *backlight, int width, int he
     ms_sleep(150);
     spi->write_cmd(DISPLAY_ON);
     ms_sleep(150);
-#endif
 
     backlight->on();
 }
