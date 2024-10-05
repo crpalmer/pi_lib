@@ -7,7 +7,7 @@
 
 class IL9341 : public Display {
 public:
-    IL9341(SPI *spi, Output *reset, Output *backlight, int width = 240, int height = 320);
+    IL9341(SPI *spi, Output *reset, Output *backlight, int width = 320, int height = 240);
     void reset();
 
     Canvas *create_canvas() override;

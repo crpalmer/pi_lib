@@ -6,6 +6,13 @@
 #include "il9341.h"
 
 const uint8_t RDDMADCTL = 0x0b;
+const uint8_t RDDMADCTL_BOTTOM_TO_TOP = 0x80;
+const uint8_t RDDMADCTL_RIGHT_TO_LEFT = 0x40;
+const uint8_t RDDMADCTL_REVERSE = 0x20;
+const uint8_t RDDMADCTL_LCD_BOTTOM_TO_TOP = 0x10;
+const uint8_t RDDMADCTL_BGR = 0x08;
+const uint8_t RDDMADCTL_LCD_RIGHT_TO_LEFT = 0x04;
+
 const uint8_t SLEEP_OUT = 0x11;
 const uint8_t DISPLAY_INVERSION_ON = 0x21;
 const uint8_t GAMMA_SET = 0x26;
@@ -13,7 +20,15 @@ const uint8_t DISPLAY_ON = 0x29;
 const uint8_t COLUMN_ADDRESS_SET = 0x2a;
 const uint8_t PAGE_ADDRESS_SET = 0x2b;
 const uint8_t MEMORY_WRITE = 0x2c;
+
 const uint8_t MEMORY_ACCESS_CONTROL = 0x36;
+const uint8_t MEMORY_ACCESS_CONTROL_MY = 0x80;
+const uint8_t MEMORY_ACCESS_CONTROL_MX = 0x40;
+const uint8_t MEMORY_ACCESS_CONTROL_MV = 0x20;
+const uint8_t MEMORY_ACCESS_CONTROL_ML = 0x10;
+const uint8_t MEMORY_ACCESS_CONTROL_BGR = 0x08;
+const uint8_t MEMORY_ACESS_CONTROL_MH = 0x04;
+
 const uint8_t VERTICAL_SCROLLING_START = 0x37;
 const uint8_t IDLE_OFF = 0x38;
 const uint8_t COLMOD = 0x3a;
@@ -54,11 +69,11 @@ const struct {
     POWER_CONTROL_2, 1, { 0x10},	   	// Power control SAP[2:0];BT[3:0]
     VCOM_CONTROL_1, 2, { 0x3e, 0x28},
     VCOM_CONTROL_2, 1, { 0x86},
-    RDDMADCTL, 1, { 0x48 },		   	// Memory Access Control
-    MEMORY_ACCESS_CONTROL, 1, { 8 },
+    RDDMADCTL, 2, { RDDMADCTL_RIGHT_TO_LEFT | RDDMADCTL_BGR, RDDMADCTL_RIGHT_TO_LEFT | RDDMADCTL_BGR },		   	// Memory Access Control
+    MEMORY_ACCESS_CONTROL, 1, { MEMORY_ACCESS_CONTROL_MV | MEMORY_ACCESS_CONTROL_BGR },
     VERTICAL_SCROLLING_START, 0, { 0x00 },	// Vertical scroll zero
     COLMOD, 1, { 0x55 },			// 16bpp
-    FRAME_RATE_CONTROL_NORMAL, 2, { 0x00, 0x18 },
+    FRAME_RATE_CONTROL_NORMAL, 2, { 0x00, 0x1b },
     DISPLAY_CONTROL_FUNCTION, 3, { 0x08, 0x82, 0x27 },					 // Display Function Control
     ENABLE_3G, 1, { 0x00 },								 // 3Gamma Function Disable
     GAMMA_SET, 1, { 0x01 },								 // Gamma curve selected
@@ -89,22 +104,17 @@ public:
     }
 
     RGB16 get_pixel16(int x, int y) override {
-	return byte_swap(data[y*w + x]);
+	return data[y*w + x];
     }
 
     void set_pixel(int x, int y, Byte r, Byte g, Byte b) override {
-	data[y*w + x] = byte_swap(RGB16_of(r, g, b));
+	data[y*w + x] = RGB16_of(r, g, b);
     }
 
     RGB16 *get_raw() { return data; }
 
 private:
     RGB16 *data;
-
-    RGB16 byte_swap(RGB16 rgb) {
-	//return (rgb & 0xff) << 8 | (rgb >> 8);
-	return rgb;
-    }
 };
 
 Canvas *IL9341::create_canvas() {
@@ -130,8 +140,6 @@ void IL9341::paint(Canvas *generic_canvas) {
     spi->write_cmd(PAGE_ADDRESS_SET);
     spi->write_data(row_address, 4);
 
-RGB24 rgb = canvas->get_pixel(200, 211);
-printf("%02x %02x %02x\n", RGB24_r(rgb), RGB24_g(rgb), RGB24_b(rgb));
     spi->write_cmd(MEMORY_WRITE);
     spi->write_data16(canvas->get_raw(), width * height);
 }
