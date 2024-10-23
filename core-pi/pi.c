@@ -15,6 +15,7 @@ pi_init(void)
 void
 pi_init_no_reboot(void)
 {
+    pi_init();
 }
 
 void
