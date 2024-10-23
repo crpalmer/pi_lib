@@ -37,8 +37,6 @@ int pi_gpio_set_irq_handler(unsigned gpio, pi_gpio_irq_handler_t irq_handler, vo
  * clean.
  */
 
-static inline int gpioInitialise() { pi_gpio_init(); return 0; }
-static inline int gpioInitialize() { pi_gpio_init(); return 0; }
 static inline int gpioRead(unsigned gpio) { return pi_gpio_get(gpio); }
 static inline int gpioWrite(unsigned gpio, uint8_t value) { return pi_gpio_set(gpio, value); }
 static inline int gpioSetPullUpDown(unsigned gpio, unsigned updown) { return pi_gpio_set_pullup(gpio, updown); }
