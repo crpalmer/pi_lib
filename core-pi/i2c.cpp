@@ -41,6 +41,7 @@ void i2c_close(int fd)
 
 int i2c_read(int fd, unsigned char reg, void *data, int n_bytes)
 {
+    if (write(fd, &reg, 1) != 1) return -1;
     return read(fd, data, n_bytes);
 }
 
