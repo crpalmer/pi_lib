@@ -60,8 +60,10 @@ bool AudioPlayer::wait_current_done(const struct timespec *abstime) {
 void AudioPlayer::main(void) {
     mutex->lock();
     while (1) {
-	while (! buffer) {
+	while (true) {
 	    start_cond->wait(mutex);
+	    if (buffer) break;
+	    stop_requested = false;
 	}
 
 	mutex->unlock();
