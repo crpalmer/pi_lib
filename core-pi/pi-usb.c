@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <usb.h>
 #include <fcntl.h>
+#include <termios.h>
 #include "pi.h"
 #include "pi-usb.h"
 
@@ -64,6 +65,12 @@ pi_usb_open_tty(unsigned vendor_id, unsigned product_id)
 	    if ((fd = open(fname, O_RDWR)) >= 0) {
 		file_close(f);
 		fprintf(stderr, "Opened tty: %s\n", fname);
+
+		struct termios cfg;
+		tcgetattr(fd, &cfg);
+		cfg.c_lflag &= ~(ICANON | ECHO);
+		tcsetattr(fd, TCSANOW, &cfg);
+
 		return fd;
 	    } else {
 		perror(fname);
