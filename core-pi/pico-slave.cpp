@@ -8,6 +8,7 @@
 
 PicoSlave::PicoSlave() {
     tty = -1;
+    ensure_tty();
 }
 
 void
@@ -28,7 +29,29 @@ PicoSlave::ensure_tty()
     if (tty < 0) {
 	tty = pi_usb_open_tty(VENDOR_ID, 0);
 	if (tty < 0) return false;
-	writeline("");
     }
+    return true;
+}
+
+bool
+PicoSlave::readline(char *buf, int len)
+{
+    if (tty < 0) {
+	fprintf(stderr, "PicoSlave: not connected.\n");
+	return false;
+    }
+
+    int i;
+    for (i = 0; i < len - 1; i++) {
+	if (read(tty, &buf[i], 1) != 1) {
+	    perror("read");
+	    close(tty);
+	    return false;
+	}
+	if (buf[i] == '\n' || buf[i] == '\r') break;
+    }
+
+    buf[i] = '\0';
+
     return true;
 }

@@ -5,6 +5,7 @@ class PicoSlave {
 public:
     PicoSlave();
     void writeline(const char *l);
+    bool readline(char *buf, int len);
 
 private:
     bool ensure_tty(void);
