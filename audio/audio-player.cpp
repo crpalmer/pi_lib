@@ -23,7 +23,7 @@ bool AudioPlayer::play(AudioBuffer *audio_buffer) {
     if (player_is_active) {
 	stop_requested = true;
 	start_cond->signal();
-	while (player_is_active) start_cond->wait(mutex);
+	while (player_is_active) stop_cond->wait(mutex);
     }
 
     if (! audio->configure(audio_buffer)) return false;
