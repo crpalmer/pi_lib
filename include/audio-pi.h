@@ -21,6 +21,7 @@ private:
 
     int bytes_to_pcm_format(int bytes);
     int pcm_format_to_bytes(int format);
+    void setup_mixer(int this_card);
 };
 
 #endif
