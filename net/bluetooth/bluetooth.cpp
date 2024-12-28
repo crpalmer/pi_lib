@@ -3,7 +3,7 @@
 #include "btstack.h"
 #include "bluetooth/bluetooth.h"
 
-static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size){
+static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
     if (packet_type != HCI_EVENT_PACKET) return;
 
     switch(hci_event_packet_get_type(packet)){ 
@@ -14,6 +14,10 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 	printf("BTstack up and running on %s.\n", bd_addr_to_str(local_addr));
 	break;
     }
+    case HCI_EVENT_USER_CONFIRMATION_REQUEST:
+	printf("SSP User Confirmation Request with numeric value '%06u'\n", (unsigned) hci_event_user_confirmation_request_get_numeric_value(packet));
+	log_info("SSP User Confirmation Auto accept\n");
+	break;
     default:
 	break;
     }
@@ -49,7 +53,7 @@ void bluetooth_start(uint32_t service_class, const char *name) {
     gap_set_local_name(name);
     gap_discoverable_control(1);
     gap_set_class_of_device(service_class);
-    // gap_set_default_link_policy_settings(LM_LINK_POLICY_ENABLE_ROLE_SWITCH | LM_LINK_POLICY_ENABLE_SNIFF_MODE);
+    gap_set_default_link_policy_settings(LM_LINK_POLICY_ENABLE_ROLE_SWITCH | LM_LINK_POLICY_ENABLE_SNIFF_MODE);
     gap_set_allow_role_switch(true);
 
     hci_power_control(HCI_POWER_ON);
