@@ -33,7 +33,7 @@ void bluetooth_init() {
 
     // When using freertos this seems to deadlock when trying to write a connection
     // key to flash memory.  Turning off bondable_mode seems to fix that.
-    gap_set_bondable_mode(false);
+    //gap_set_bondable_mode(false);
 
     // init protocols
     l2cap_init();
