@@ -27,7 +27,6 @@ static void hid_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * 
 
 HID::HID(const char *name, uint8_t *hid_descriptor, uint16_t hid_descriptor_len, uint16_t subclass, bool hid_virtual_cable, bool hid_remote_wake, bool hid_reconnect_initiate, bool hid_normally_connectable) {
     const uint8_t hid_boot_device = 0;
-
     hid_sdp_record_t hid_params = {
         subclass, 
         33, // hid country code 33 US
@@ -59,6 +58,10 @@ HID::HID(const char *name, uint8_t *hid_descriptor, uint16_t hid_descriptor_len,
     hid = this;
 }
 
+void HID::request_can_send_now() {
+    hid_device_request_can_send_now_event(cid);
+}
+
 void HID::connected(class HID *hid, uint16_t cid) {
     hid->cid = cid;
 }
@@ -71,7 +74,8 @@ void HID::disconnected(class HID *hid) {
     hid->cid = 0;
 }
 
-void HID::send_report(uint8_t id, uint8_t *data, int n_data) {
+void HID::send_report(uint8_t *data, int n_data) {
+    hid_device_send_interrupt_message(cid, data, n_data);
 }
 
 void hid_init() {

@@ -9,8 +9,10 @@ public:
 
     bool is_connected() { return cid != 0; }
 
-    void send_report(uint8_t id, uint8_t *data, int n_data);
+    void send_report(uint8_t *data, int n_data);
     virtual void can_send_now() = 0;
+
+    void request_can_send_now();
 
     static void connected(class HID *hid, uint16_t cid);
     static void can_send_now(class HID *hid);
