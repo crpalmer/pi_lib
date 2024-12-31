@@ -17,7 +17,7 @@
 #define SAMPLES_PER_BUFFER 256
 
 static inline PIO PIOx(int pio) { return pio == 0 ? pio0 : pio1; }
-static inline gpio_function GPIO_FUNC_PIOx(int pio) { return pio == 0 ? GPIO_FUNC_PIO0 : GPIO_FUNC_PIO1; }
+static inline gpio_function_t GPIO_FUNC_PIOx(int pio) { return pio == 0 ? GPIO_FUNC_PIO0 : GPIO_FUNC_PIO1; }
 
 static uint8_t dma_channel = -1;
 
