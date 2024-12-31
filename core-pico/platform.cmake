@@ -1,5 +1,6 @@
 target_sources(lib-pi PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/call-every.c
+  ${CMAKE_CURRENT_LIST_DIR}/deep-sleep.c
   ${CMAKE_CURRENT_LIST_DIR}/distance.cpp
   ${CMAKE_CURRENT_LIST_DIR}/i2c.cpp
   ${CMAKE_CURRENT_LIST_DIR}/light-sensor.cpp

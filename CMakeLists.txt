@@ -5,7 +5,7 @@ if("${PLATFORM}" STREQUAL pico)
      set(PICO_BOARD pico_w)
   endif()
   include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
-  #include($ENV{PICO_EXTRAS_PATH}/external/pico_extras_import.cmake)
+  include($ENV{PICO_EXTRAS_PATH}/external/pico_extras_import.cmake)
   if ("${PICO_BOARD}" STREQUAL "pico_w")
     set(HAVE_NETWORKING ON)
   endif()
@@ -47,6 +47,7 @@ if(${PLATFORM} STREQUAL pico)
     hardware_pio
     hardware_pwm
     hardware_rtc
+    hardware_sleep
   )
   if(HAVE_NETWORKING)
     target_link_libraries(lib-pi PRIVATE

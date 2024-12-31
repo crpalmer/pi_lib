@@ -31,7 +31,7 @@ if (NOT PICO_EXTRAS_PATH)
                 GIT_TAG master
         )
         if (NOT pico_extras)
-            message("Downloading Raspberry Pi Pico Extras")
+            message("Downloading PICO EXTRAS")
             FetchContent_Populate(pico_extras)
             set(PICO_EXTRAS_PATH ${pico_extras_SOURCE_DIR})
         endif ()
