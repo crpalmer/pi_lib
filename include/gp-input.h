@@ -35,6 +35,8 @@ public:
 	return pi_gpio_set_irq_handler(gpio, GPInput::on_change_wrapper, this) == 0;
     }
 
+    int get_gpio() { return gpio; }
+
 private:
     static void on_change_wrapper(void *self, unsigned gpio_unused, unsigned events) {
 	GPInput *input = (GPInput *) self;
