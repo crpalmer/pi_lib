@@ -68,11 +68,11 @@ void HID::connected(class HID *hid, uint16_t cid) {
 
 void HID::can_send_now(class HID *hid) {
     hid->can_send_now();
-    hid->on_disconnect();
 }
 
 void HID::disconnected(class HID *hid) {
     hid->cid = 0;
+    hid->on_disconnect();
 }
 
 void HID::send_report(uint8_t *data, int n_data) {
