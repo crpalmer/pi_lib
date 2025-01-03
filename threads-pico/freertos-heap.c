@@ -73,8 +73,8 @@ void vApplicationGetPassiveIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer,
     /* If the buffers to be provided to the Idle task are declared inside this
        function then they must be declared static - otherwise they will be allocated on
        the stack and so not exists after this function exits. */
-    static StaticTask_t xIdleTaskTCB[configNUMBER_OF_CORES];
-    static StackType_t uxIdleTaskStack[configNUMBER_OF_CORES][configMINIMAL_STACK_SIZE];
+    static StaticTask_t xIdleTaskTCB[configNUMBER_OF_CORES-1];
+    static StackType_t uxIdleTaskStack[configNUMBER_OF_CORES-1][configMINIMAL_STACK_SIZE];
 
     /* Pass out a pointer to the StaticTask_t structure in which the Idle task's
        state will be stored. */
