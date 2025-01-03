@@ -13,6 +13,8 @@ public:
     virtual void can_send_now() = 0;
 
     void request_can_send_now();
+    virtual void on_connect() { }
+    virtual void on_disconnect() { }
 
     static void connected(class HID *hid, uint16_t cid);
     static void can_send_now(class HID *hid);

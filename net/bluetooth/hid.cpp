@@ -64,10 +64,12 @@ void HID::request_can_send_now() {
 
 void HID::connected(class HID *hid, uint16_t cid) {
     hid->cid = cid;
+    hid->on_connect();
 }
 
 void HID::can_send_now(class HID *hid) {
     hid->can_send_now();
+    hid->on_disconnect();
 }
 
 void HID::disconnected(class HID *hid) {
