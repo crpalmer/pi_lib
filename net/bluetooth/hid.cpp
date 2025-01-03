@@ -19,7 +19,6 @@ static void hid_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * 
  	if (hid) HID::disconnected(hid);
 	break;
     case HID_SUBEVENT_CAN_SEND_NOW:
-	printf("hid can send now\n");
  	if (hid) HID::can_send_now(hid);
 	break;
     }
