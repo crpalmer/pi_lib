@@ -81,7 +81,7 @@
 #define configHEAP_CLEAR_MEMORY_ON_FREE         0
 
 /* Hook function related definitions. */
-#define configCHECK_FOR_STACK_OVERFLOW          1
+#define configCHECK_FOR_STACK_OVERFLOW          2
 #define configUSE_MALLOC_FAILED_HOOK            1
 #define configUSE_DAEMON_TASK_STARTUP_HOOK      0
 
