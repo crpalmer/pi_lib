@@ -42,6 +42,7 @@ if(${PLATFORM} STREQUAL pico)
     pico_stdlib
     hardware_adc
     hardware_dma
+    hardware_exception
     hardware_i2c
     hardware_pio
     hardware_pio

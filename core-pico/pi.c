@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pico/stdlib.h>
+#include <hardware/exception.h>
 #include <hardware/watchdog.h>
 #include <sys/time.h>
 #include "pi-gpio.h"
@@ -75,9 +76,7 @@ pi_reboot_bootloader()
 void
 pi_abort()
 {
-    assert(0);
-    watchdog_enable(1, 1);
-    while (1) {}
+    __breakpoint();
 }
 
 void
@@ -91,6 +90,7 @@ pi_init(void)
 void
 pi_init_no_reboot(void)
 {
+    exception_set_exclusive_handler(HARDFAULT_EXCEPTION, pi_abort);
     stdio_init_all();
     adc_init();
     pi_gpio_init();
