@@ -49,7 +49,9 @@ PiThread::~PiThread() {
 
 PiThread *PiThread::start(int priority, int core_affinity) {
     xTaskCreate(PiThread::thread_entry, name ? name : "pi-thread", STACK_SIZE, this, priority, (TaskHandle_t *) &task);
+#if configUSE_CORE_AFFINITY
     if (core_affinity > 0) vTaskCoreAffinitySet((TaskHandle_t) task, core_affinity);
+#endif
     return this;
 }
 
@@ -185,9 +187,11 @@ pi_threads_dump_state() {
     consoles_printf(" #  Task Name        State Prio Stack Cores Run Time\n");
     consoles_printf("--- ---------------- ----- ---- ----- ----- --------\n");
     for (int i = 0; i < n_tasks; i++) {
-	UBaseType_t aff;
+	UBaseType_t aff = -1;
 
+#if configUSE_CORE_AFFINITY
 	aff = vTaskCoreAffinityGet(status[i].xHandle);
+#endif
 
 	consoles_printf("%3d %-16s %-5s %4d %4d  %d%d %11.3f\n", (int) status[i].xTaskNumber, status[i].pcTaskName, task_state_to_str(status[i].eCurrentState), (int) status[i].uxCurrentPriority, (int) status[i].usStackHighWaterMark, (int) (aff&1), (int) ((aff>>1)&1), status[i].ulRunTimeCounter / 1000.0);
     }
@@ -209,10 +213,12 @@ pi_threads_get_state() {
     std::string response = " #  Task Name        State Prio Stack Cores\n";
     response +=            "--- ---------------- ----- ---- ----- -----\n";
     for (int i = 0; i < n_tasks; i++) {
-	UBaseType_t aff;
+	UBaseType_t aff = -1;
 	char buffer[100];
 
+#if configUSE_CORE_AFFINITY
 	aff = vTaskCoreAffinityGet(status[i].xHandle);
+#endif
 
 	snprintf(buffer, sizeof(buffer), "%3d %-16s %-5s %4d %4d  %d%d\n", (int) status[i].xTaskNumber, status[i].pcTaskName, task_state_to_str(status[i].eCurrentState), (int) status[i].uxCurrentPriority, (int) status[i].usStackHighWaterMark, (int) (aff&1), (int) ((aff>>1)&1));
 	response += buffer;
