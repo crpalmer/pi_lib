@@ -2,6 +2,9 @@
 #include "net.h"
 #include "btstack.h"
 #include "bluetooth/bluetooth.h"
+#include "time-utils.h"
+
+static bool is_initialized = false;
 
 static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
     if (packet_type != HCI_EVENT_PACKET) return;
@@ -12,6 +15,15 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
         bd_addr_t local_addr; 
 	gap_local_bd_addr(local_addr);
 	printf("BTstack up and running on %s.\n", bd_addr_to_str(local_addr));
+	is_initialized = true;
+	break;
+    }
+    case HCI_EVENT_PIN_CODE_REQUEST: {
+	// pre-ssp: inform about pin code request
+        printf("Pin code request - using '0000'\n");
+        bd_addr_t address;
+        hci_event_pin_code_request_get_bd_addr(packet, address);
+        gap_pin_code_response(address, "0000");
 	break;
     }
     case HCI_EVENT_USER_CONFIRMATION_REQUEST:
@@ -57,5 +69,9 @@ void bluetooth_start(uint32_t service_class, const char *name) {
     gap_set_allow_role_switch(true);
 
     hci_power_control(HCI_POWER_ON);
+
+    printf("Waiting for the stack to initialize\n");
+    while (! is_initialized) ms_sleep(1);
+    printf("bluetooth started.\n");
 }
 
