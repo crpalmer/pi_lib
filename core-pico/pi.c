@@ -67,6 +67,12 @@ reboot_on_button_press(void *unused)
 }
 
 void
+pi_reboot() {
+    printf("Using watchdog to reboot.\n");
+    watchdog_reboot(0, 0, 0);
+}
+
+void
 pi_reboot_bootloader()
 {
     fprintf(stderr, "rebooting to bootsel mode\n");
