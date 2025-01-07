@@ -51,12 +51,17 @@ PiThread *PiThread::start(int priority, int core_affinity) {
     xTaskCreate(PiThread::thread_entry, name ? name : "pi-thread", STACK_SIZE, this, priority, (TaskHandle_t *) &task);
 #if configUSE_CORE_AFFINITY
     if (core_affinity > 0) vTaskCoreAffinitySet((TaskHandle_t) task, core_affinity);
+    resume();
 #endif
     return this;
 }
 
 void PiThread::thread_entry(void *vp) {
     PiThread *t = (PiThread *) vp;
+#if configUSE_CORE_AFFINITY
+    t->pause();
+#endif
+
     vTaskSetThreadLocalStoragePointer(NULL, PI_THREAD_LOCAL_PI_THREAD, t);
     t->main();
     vTaskDelete(NULL);
