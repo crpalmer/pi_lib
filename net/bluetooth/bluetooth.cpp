@@ -16,7 +16,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
     }
     case HCI_EVENT_USER_CONFIRMATION_REQUEST:
 	printf("SSP User Confirmation Request with numeric value '%06u'\n", (unsigned) hci_event_user_confirmation_request_get_numeric_value(packet));
-	log_info("SSP User Confirmation Auto accept\n");
+	printf("SSP User Confirmation Auto accept\n");
 	break;
     default:
 	break;
