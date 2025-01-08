@@ -46,10 +46,11 @@
 #define configUSE_TICKLESS_IDLE                 0
 #define configUSE_IDLE_HOOK                     0
 #define configUSE_PASSIVE_IDLE_HOOK             0
-#define configUSE_TICK_HOOK                     0 // currently not needed
+#define configUSE_TICK_HOOK                     0
 #define configTICK_RATE_HZ                      ( ( TickType_t ) 1000 )
-#define configMAX_PRIORITIES                    8
-#define configMINIMAL_STACK_SIZE                ( configSTACK_DEPTH_TYPE ) 1024
+#define configMAX_PRIORITIES                    32
+#define configMAX_SYSCALL_INTERRUPT_PRIORITY    16
+#define configMINIMAL_STACK_SIZE                ( configSTACK_DEPTH_TYPE ) 512
 #define configUSE_16_BIT_TICKS                  0
 
 #define configIDLE_SHOULD_YIELD                 1
@@ -62,16 +63,13 @@
 #define configQUEUE_REGISTRY_SIZE               8
 #define configUSE_QUEUE_SETS                    1
 #define configUSE_TIME_SLICING                  1
-#define configUSE_NEWLIB_REENTRANT              1
+#define configUSE_NEWLIB_REENTRANT              0
 #define configENABLE_BACKWARD_COMPATIBILITY     1
 #define configNUM_THREAD_LOCAL_STORAGE_POINTERS 5
 
 /* System */
-#define configMAX_TASK_NAME_LEN 		16
 #define configSTACK_DEPTH_TYPE                  uint32_t
 #define configMESSAGE_BUFFER_LENGTH_TYPE        size_t
-#define configUSE_EVENT_GROUPS    		1
-#define configUSE_STREAM_BUFFERS		0
 
 /* Memory allocation related definitions. */
 #define configSUPPORT_STATIC_ALLOCATION         1
@@ -93,19 +91,6 @@
 #define RUN_TIME_STAT_time_us_64Divider 1000			// stat granularity is mS
 #define portGET_RUN_TIME_COUNTER_VALUE() (time_us_64()/RUN_TIME_STAT_time_us_64Divider)	// runtime counter in mS
 
-/* Software timer related definitions. */
-#define configUSE_TIMERS                        1
-#define configTIMER_TASK_PRIORITY               ( configMAX_PRIORITIES - 1 )
-#define configTIMER_QUEUE_LENGTH                10
-#define configTIMER_TASK_STACK_DEPTH            1024
-
-/* Interrupt nesting behaviour configuration. */
-/*
-#define configKERNEL_INTERRUPT_PRIORITY         [dependent of processor]
-#define configMAX_SYSCALL_INTERRUPT_PRIORITY    [dependent on processor and application]
-#define configMAX_API_CALL_INTERRUPT_PRIORITY   [dependent on processor and application]
-*/
-
 /* Co-routine related definitions. */
 #define configUSE_CO_ROUTINES                   0
 #define configMAX_CO_ROUTINE_PRIORITIES         1
@@ -118,7 +103,7 @@
 
 /* SMP port only */
 #define configNUMBER_OF_CORES                   2
-#define configNUM_CORES				configNUMBER_OF_CORES	/* pico-sdk needs to be updated (https://github.com/raspberrypi/pico-sdk/pull/1530/) */
+#define configNUM_CORES				configNUMBER_OF_CORES
 #define configTICK_CORE                         0
 #define configRUN_MULTIPLE_PRIORITIES           1
 #define configUSE_CORE_AFFINITY                 1
@@ -127,15 +112,15 @@
 #define configSUPPORT_PICO_SYNC_INTEROP         1
 #define configSUPPORT_PICO_TIME_INTEROP         1
 
-/* Define to trap errors during development. */
-#ifdef __cplusplus
-extern "C"
-#endif
-void pi_thread_asserted(const char *expr, const char *filename, int line);
-#define configASSERT(x)                         do { if (! (x)) pi_thread_asserted(#x, __FILE__, __LINE__); } while(0)
+#define configASSERT(x)                         assert(x)
 
-/* ERRNO */
-#define configUSE_POSIX_ERRNO                  0
+#if PICO_RP2350
+#define configENABLE_MPU                        0
+#define configENABLE_TRUSTZONE                  0
+#define configRUN_FREERTOS_SECURE_ONLY          1
+#define configENABLE_FPU                        1
+#define configMAX_SYSCALL_INTERRUPT_PRIORITY    16
+#endif
 
 /* Set the following definitions to 1 to include the API function, or zero
 to exclude the API function. */
