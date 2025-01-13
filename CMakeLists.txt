@@ -6,7 +6,7 @@ if("${PLATFORM}" STREQUAL pico)
   endif()
   include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
   include($ENV{PICO_EXTRAS_PATH}/external/pico_extras_import.cmake)
-  if ("${PICO_BOARD}" STREQUAL "pico_w")
+  if ("${PICO_BOARD}" STREQUAL "pico_w" OR "${PICO_BOARD}" STREQUAL "pico2_w")
     set(HAVE_NETWORKING ON)
   endif()
 else()
@@ -28,6 +28,12 @@ set(EXTERNAL_DIR "${CMAKE_CURRENT_LIST_DIR}/external")
 add_library(lib-pi STATIC)
 
 target_compile_definitions(lib-pi PRIVATE LIB_PI_INTERNAL)
+if ("${PICO_BOARD}" STREQUAL "pico" OR "${PICO_BOARD}" STREQUAL "pico_w")
+  target_compile_definitions(lib-pi PRIVATE HAVE_RTC)
+  target_link_libraries(lib-pi PRIVATE
+    hardware_rtc
+  )
+endif()
 
 if(${PLATFORM} STREQUAL pico)
   SDK_INTERFACE_LIBS(lib-pi

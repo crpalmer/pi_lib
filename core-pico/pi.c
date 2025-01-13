@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "pi.h"
 #include <pico/stdlib.h>
 #include <hardware/exception.h>
 #include <hardware/watchdog.h>
@@ -7,15 +6,15 @@
 #include "pi-gpio.h"
 #include "time-utils.h"
 
-#include "pi.h"
-
 #include "call-every.h"
 #include "hardware/adc.h"
 #include "hardware/sync.h"
 #include "hardware/structs/ioqspi.h"
 #include "hardware/structs/sio.h"
-#include "hardware/rtc.h"
 #include <pico/bootrom.h>
+#ifdef HAVE_RTC
+#include "hardware/rtc.h"
+#endif
 
 bool __no_inline_not_in_flash_func(get_bootsel_button)() {
     const uint CS_PIN_INDEX = 1;
@@ -133,6 +132,7 @@ pi_readline(char *buf, size_t buf_len)
 void
 pico_set_rtc(time_t secs)
 {
+#ifdef HAVE_RTC
     struct tm tm;
     datetime_t dt;
 
@@ -149,4 +149,7 @@ pico_set_rtc(time_t secs)
 
     struct timeval tv = {.tv_sec = secs, };
     settimeofday(&tv, NULL);
+#else
+    assert(0);
+#endif
 }
