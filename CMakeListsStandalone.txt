@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.12)
+
+project(lib-pi ASM C CXX)
+include(platform.cmake)
+add_subdirectory(.)

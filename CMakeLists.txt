@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.12)
-
-project(lib-pi)
-
-include(platform.cmake)
-
 set(EXTERNAL_DIR "${CMAKE_CURRENT_LIST_DIR}/external")
 
 add_subdirectory(external)
