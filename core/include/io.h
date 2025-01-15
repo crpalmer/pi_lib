@@ -26,7 +26,6 @@ public:
 
 class Input {
 public:
-     Input() { debounce_ms = 0; is_inverted = 0; }
      virtual ~Input() {}
      virtual unsigned get_fast() = 0;
      virtual void set_pullup_up() = 0;
@@ -67,8 +66,8 @@ protected:
 	return is_inverted ? ! v : v;
     }
 
-    unsigned debounce_ms;
-    bool is_inverted;
+    unsigned debounce_ms = 0;
+    bool is_inverted = false;
 };
 
 #endif
