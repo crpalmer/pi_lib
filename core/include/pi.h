@@ -25,14 +25,10 @@ void pi_abort();
 void pi_reboot();
 void pi_reboot_bootloader();
 
-typedef void (*sleep_fn_t)(unsigned ms);
-
-void pico_set_sleep_fn(sleep_fn_t new_sleep_fn);
-
-void pico_set_rtc(time_t seconds_since_epoch);
-
 #ifdef __cplusplus
 };
 #endif
+
+#include "pi-platform.h"
 
 #endif

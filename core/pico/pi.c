@@ -15,6 +15,23 @@
 #include "hardware/rtc.h"
 #endif
 
+static int (*pre_set_irq_fn)() = NULL;
+static void (*post_set_irq_fn)(int saved) = NULL;
+
+int pico_pre_set_irq() {
+    if (pre_set_irq_fn) return pre_set_irq_fn();
+    return 0;
+}
+
+void pico_post_set_irq(int saved) {
+    if (post_set_irq_fn) post_set_irq_fn(saved);
+}
+
+void pico_set_irq_hook_functions(int (*pre)(), void (*post)(int)) {
+    pre_set_irq_fn = pre;
+    post_set_irq_fn = post;
+}
+
 bool __no_inline_not_in_flash_func(get_bootsel_button)() {
     const uint CS_PIN_INDEX = 1;
 

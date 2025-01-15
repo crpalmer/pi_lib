@@ -18,9 +18,20 @@ const char *get_task_name() {
    return pcTaskGetName(NULL);
 }
 
+static int pre_set_irq_fn() {
+    int affinity = vTaskCoreAffinityGet(NULL);
+    vTaskCoreAffinitySet(NULL, 1);	// Always do IRQ processing on core 0
+    return affinity;
+}
+
+static void post_set_irq_fn(int old_affinity) {
+    vTaskCoreAffinitySet(NULL, old_affinity);
+}
+
 static void init_with_threads(void *main_as_vp) {
     malloc_lock_init();
     pico_set_sleep_fn(rtos_sleep);
+    pico_set_irq_hook_functions(pre_set_irq_fn, post_set_irq_fn);
     set_consoles_lock();
     mem_set_get_task_name(get_task_name);
     file_init();
@@ -48,20 +59,18 @@ PiThread::~PiThread() {
 }
 
 PiThread *PiThread::start(int priority, int core_affinity) {
-    xTaskCreate(PiThread::thread_entry, name ? name : "pi-thread", STACK_SIZE, this, priority, (TaskHandle_t *) &task);
 #if configUSE_CORE_AFFINITY
-    if (core_affinity > 0) vTaskCoreAffinitySet((TaskHandle_t) task, core_affinity);
-    resume();
+    if (core_affinity > 0) {
+        xTaskCreateAffinitySet(PiThread::thread_entry, name ? name : "pi-thread", STACK_SIZE, this, priority, core_affinity, (TaskHandle_t *) &task);
+    } else
 #endif
+    xTaskCreate(PiThread::thread_entry, name ? name : "pi-thread", STACK_SIZE, this, priority, (TaskHandle_t *) &task);
+
     return this;
 }
 
 void PiThread::thread_entry(void *vp) {
     PiThread *t = (PiThread *) vp;
-#if configUSE_CORE_AFFINITY
-    t->pause();
-#endif
-
     vTaskSetThreadLocalStoragePointer(NULL, PI_THREAD_LOCAL_PI_THREAD, t);
     t->main();
     vTaskDelete(NULL);

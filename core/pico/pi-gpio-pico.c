@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "pi.h"
 #include <pico/stdlib.h>
 #include <hardware/clocks.h>
 #include <hardware/gpio.h>
@@ -98,7 +97,9 @@ int pi_gpio_set_irq_handler(unsigned gpio, pi_gpio_irq_handler_t irq_handler, vo
     irq->f = irq_handler;
     irq->arg = irq_handler_arg;
 
+    int saved = pico_pre_set_irq();
     gpio_set_irq_enabled_with_callback(gpio, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &gpio_callback);
+    pico_post_set_irq(saved);
 
     return 0;
 }

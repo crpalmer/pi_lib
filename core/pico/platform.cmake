@@ -5,6 +5,8 @@ if ("${PICO_BOARD}" STREQUAL "pico" OR "${PICO_BOARD}" STREQUAL "pico_w")
   )
 endif()
 
+target_include_directories(lib-pi INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+
 target_sources(lib-pi INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/call-every.c
   ${CMAKE_CURRENT_LIST_DIR}/deep-sleep.c

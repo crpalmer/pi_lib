@@ -18,6 +18,8 @@ target_sources(lib-pi INTERFACE
 
 target_compile_definitions(lib-pi INTERFACE NO_PIGPIO_EMULATION Wall Werror)
 
+target_include_directories(lib-pi INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
+
 target_link_libraries(lib-pi INTERFACE
     tinyalsa
     -lgpiod
