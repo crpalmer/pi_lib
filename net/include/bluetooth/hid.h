@@ -5,7 +5,7 @@ static const uint16_t hid_subclass_mouse = 0x2580;
 
 class HID {
 public:
-    HID(const char *name, uint8_t *hid_descriptor, uint16_t hid_descriptor_len, uint16_t subclass, bool hid_virtual_cable = false, bool hid_remote_wake = true, bool hid_reconnect_initiate = true, bool hid_normally_connectable = true);
+    void initialize(const char *name, const uint8_t *hid_descriptor, uint16_t hid_descriptor_len, uint16_t subclass, bool hid_virtual_cable = false, bool hid_remote_wake = true, bool hid_reconnect_initiate = true, bool hid_normally_connectable = true);
 
     bool is_connected() { return cid != 0; }
 

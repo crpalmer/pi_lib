@@ -24,7 +24,7 @@ static void hid_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * 
     }
 }
 
-HID::HID(const char *name, uint8_t *hid_descriptor, uint16_t hid_descriptor_len, uint16_t subclass, bool hid_virtual_cable, bool hid_remote_wake, bool hid_reconnect_initiate, bool hid_normally_connectable) {
+void HID::initialize(const char *name, const uint8_t *hid_descriptor, uint16_t hid_descriptor_len, uint16_t subclass, bool hid_virtual_cable, bool hid_remote_wake, bool hid_reconnect_initiate, bool hid_normally_connectable) {
     const uint8_t hid_boot_device = 0;
     hid_sdp_record_t hid_params = {
         subclass, 
