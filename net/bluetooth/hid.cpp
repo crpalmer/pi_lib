@@ -1,6 +1,7 @@
 #include "pi.h"
 #include "btstack.h"
 #include "bluetooth/hid.h"
+#include "pi-threads.h"
 
 class HID *hid = NULL;
 
@@ -23,6 +24,44 @@ static void hid_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t * 
 	break;
     }
 }
+
+class CanSendNowThread : public PiThread {
+public:
+    CanSendNowThread(HID *hid) : PiThread("csn-thread"), hid(hid) {
+	// HACK!
+	// The async context running the bluetooth stack is on core 1 with priority 4.
+	// We only run on the same core and at a lower priority which means we can only
+	// request can send now when the bluetooth stack isn't running.
+	lock = new PiMutex();
+	cond = new PiCond();
+	start(3, 1<<1);
+    }
+
+    void main(void) {
+	while (1) {
+	    while (can_send_now) {
+		can_send_now = false;
+		lock->unlock();
+		hid_device_request_can_send_now_event(hid->cid);
+		lock->lock();
+	    }
+	    cond->wait(lock);
+	}
+    }
+
+    void request_can_send_now() {
+	lock->lock();
+	can_send_now = true;
+	cond->signal();
+	lock->unlock();
+    }
+
+private:
+    HID *hid;
+    PiMutex *lock;
+    PiCond *cond;
+    bool can_send_now = true;
+};
 
 void HID::initialize(const char *name, const uint8_t *hid_descriptor, uint16_t hid_descriptor_len, uint16_t subclass, bool hid_virtual_cable, bool hid_remote_wake, bool hid_reconnect_initiate, bool hid_normally_connectable) {
     const uint8_t hid_boot_device = 0;
@@ -53,12 +92,14 @@ void HID::initialize(const char *name, const uint8_t *hid_descriptor, uint16_t h
     hid_device_init(hid_boot_device, hid_descriptor_len, hid_descriptor);
     hid_device_register_packet_handler(&hid_packet_handler);
 
+    csn_thread = new CanSendNowThread(this);
+
     // TODO how to differentiate different devices
     hid = this;
 }
 
 void HID::request_can_send_now() {
-    hid_device_request_can_send_now_event(cid);
+    csn_thread->request_can_send_now();
 }
 
 void HID::connected(class HID *hid, uint16_t cid) {

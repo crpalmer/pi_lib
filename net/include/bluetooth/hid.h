@@ -22,6 +22,9 @@ public:
 
 protected:
     uint16_t cid = 0;
+    class CanSendNowThread *csn_thread;
+
+    friend class CanSendNowThread;
 };
 
 void hid_init();
