@@ -13,8 +13,8 @@ void pico_enter_deep_sleep_until(int gpio) {
         printf("Going dormant until GPIO %d goes edge high\n", gpio);
         uart_default_tx_wait_blocking();
 
-        // Go to sleep until we see a high edge on GPIO 10
-        sleep_goto_dormant_until_edge_high(gpio);
+        // Go to sleep until we see a low edge on GPIO #gpio
+        sleep_goto_dormant_until_pin(gpio, true, false);
 
         // Re-enabling clock sources and generators.
         sleep_power_up();
