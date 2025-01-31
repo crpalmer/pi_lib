@@ -1,5 +1,4 @@
 include(${EXTERNAL_DIR}/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
-target_compile_options(FreeRTOS+FAT+CLI INTERFACE -Wno-error)
 
 target_sources(lib-pi-threads INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/deep-sleep.cpp

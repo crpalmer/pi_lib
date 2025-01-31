@@ -89,6 +89,12 @@
 #define configUSE_STATS_FORMATTING_FUNCTIONS    1
 #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() 
 #define RUN_TIME_STAT_time_us_64Divider 1000			// stat granularity is mS
+
+#ifdef __cplusplus
+extern "C"
+#endif
+uint64_t time_us_64();
+
 #define portGET_RUN_TIME_COUNTER_VALUE() (time_us_64()/RUN_TIME_STAT_time_us_64Divider)	// runtime counter in mS
 
 /* Co-routine related definitions. */

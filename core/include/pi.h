@@ -1,6 +1,10 @@
 #ifndef __PI_H__
 #define __PI_H__
 
+#ifdef __GNUC__
+#pragma GCC diagnostic error "-Wall"
+#endif
+
 #include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
