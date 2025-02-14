@@ -43,7 +43,3 @@ pi_readline(char *buf, size_t buf_len)
     }
     return ret;
 }
-
-void pico_set_sleep_fn(sleep_fn_t new_sleep_fn) {}
-
-void pico_set_rtc(time_t seconds_since_epoch) {}

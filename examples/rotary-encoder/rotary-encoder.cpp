@@ -33,7 +33,6 @@ int
 main()
 {
     pi_init();
-    pi_gpio_init();
 
     re = new RotaryEncoder(17, 16, 18);
     re->set_notifier(new Notifier());
