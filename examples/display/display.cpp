@@ -4,34 +4,44 @@
 #include <string.h>
 #include "pi.h"
 #include "gp-output.h"
+#include "i2c.h"
 #include "il9341.h"
+#include "image-png.h"
+#include "pi-threads.h"
+#include "ssd1306.h"
+#include "st7735s.h"
 #include "spi.h"
 
 static Display *display;
 static Canvas *canvas;
 static char buf[128];
 
-int
-main()
-{
-    pi_init();
+enum { USE_SSD1306, USE_IL9341, USE_ST7735S } which_display = USE_IL9341;
 
-ms_sleep(2000);
+static void create_display() {
+    if (which_display == USE_SSD1306) {
+        i2c_init_bus(1, 2, 3, 400*1000);
+        display = new SSD1306(1);
+    } else {
+        spi_init_bus(1, 10, -1, 11, 64*1024*1024);
 
-    spi_init_bus(1, 10, -1, 11);
+        Output *bl = new GPOutput(6);
+        Output *reset = new GPOutput(7);
+        Output *dc = new GPOutput(8);
 
-    printf("Creating IL9341\n");
+        SPI *spi = new SPI(1, 9, dc);
 
-    Output *bl = new GPOutput(6);
-    Output *reset = new GPOutput(7);
-    Output *dc = new GPOutput(8);
+        if (which_display == USE_IL9341) {
+            display = new IL9341(spi, reset, bl);
+        } else {
+            display = new ST7735S(spi, reset, bl);
+        }
+    }
+}
 
-    SPI *spi = new SPI(1, 9, dc);
-    display = new IL9341(spi, reset, bl);
-
-    printf("Success!\n");
+static void threads_main(int argc, char **argv) {
+    create_display();
     canvas = display->create_canvas();
-    canvas->flush();
 
     while (pi_readline(buf, sizeof(buf)) != NULL) {
 	double pct;
@@ -62,6 +72,10 @@ ms_sleep(2000);
 	    } else {
 		printf("9seg r g b digits\n");
 	    }
+	} else if (strncmp(buf, "png ", 4) == 0) {
+	    ImagePNG *png = new ImagePNG(&buf[4]);
+	    canvas->import(png);
+	    canvas->flush();
 	} else if (strcmp(buf, "bootsel") == 0) {
             pi_reboot_bootloader();
 	} else if (buf[0] == '?') {
@@ -70,9 +84,16 @@ ms_sleep(2000);
 	    printf("brightness 0.0-1.0\n");
 	    printf("fill r g b [ x y [ w h ] ]- fill the canvas with the value\n");
 	    printf("set x y r g b - set a pixel to the value\n");
+	    printf("png filename\n");
 	    printf("bootsel\n");
 	} else if (buf[0] && buf[0] != '\n') {
 	    printf("invalid command\n");
 	}
     }
+}
+
+int
+main()
+{
+    pi_init_with_threads(threads_main, 0, NULL);
 }

@@ -16,3 +16,6 @@
 	url = git@github.com:crpalmer/FreeRTOS-Kernel.git
 [submodule "FreeRTOS-FAT-CLI-for-RPi-Pico/"]
 	branch = master
+[submodule "external/pngle"]
+	path = external/pngle
+	url = git@github.com:kikuchan/pngle.git

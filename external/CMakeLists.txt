@@ -4,3 +4,5 @@ if("${PLATFORM}" STREQUAL "pico")
 else()
   add_subdirectory(tinyalsa)
 endif()
+
+include(pngle.cmake)
