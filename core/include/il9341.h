@@ -14,7 +14,7 @@ public:
     void set_brightness(double pct) override;
 
 protected:
-    void draw(uint16_t *raw);
+    void draw(int x0, int y, int x_max, uint16_t *raw);
     friend class IL9341_Canvas;
 
 private:

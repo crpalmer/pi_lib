@@ -92,7 +92,8 @@ void IL9341::reset() {
 class IL9341_Canvas : public Canvas {
 public:
     IL9341_Canvas(IL9341 *display, int w, int h) : Canvas(w, h), display(display) {
-	data = (uint16_t *) fatal_malloc(w * h * sizeof(*data));
+	data = (uint16_t *) fatal_malloc(w * sizeof(*data));
+	dirty_x = -1;
     }
 
     ~IL9341_Canvas() {
@@ -100,14 +101,29 @@ public:
     }
 
     void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) override {
-	data[y*w + x] = RGB16_of(r, g, b);
+	if (dirty_x >= 0 && (dirty_y != y || x < dirty_x || x > dirty_x_max+1)) {
+	    flush();
+	}
+
+	if (dirty_x < 0) {
+	    dirty_x = dirty_x_max = x;
+	    dirty_y = y;
+	}
+
+	if (x > dirty_x_max) dirty_x_max = x;
+
+	data[x] = RGB16_of(r, g, b);
     }
 
     void flush() override {
-	display->draw(data);
+	if (dirty_x >= 0) {
+	    display->draw(dirty_x, dirty_y, dirty_x_max, &data[dirty_x]);
+	    dirty_x = -1;
+	}
     }
 
 private:
+    int dirty_x, dirty_y, dirty_x_max;
     IL9341 *display;
     uint16_t *data;
 };
@@ -121,11 +137,9 @@ void IL9341::set_brightness(double pct) {
     else backlight->on();
 }
 
-void IL9341::draw(uint16_t *raw) {
-    int end_column = width-1;
-    int end_row = height-1;
-    uint8_t column_address[4] = { 0, 0, (uint8_t) (end_column >> 8), (uint8_t) (end_column & 0xff) };
-    uint8_t row_address[4] = { 0, 0, (uint8_t) (end_row >> 8), (uint8_t) (end_row & 0xff) };
+void IL9341::draw(int x0, int y, int x_max, uint16_t *raw) {
+    uint8_t column_address[4] = { (uint8_t) (x0 >> 8), (uint8_t) (x0 & 0xff), (uint8_t) (x_max >> 8), (uint8_t) (x_max & 0xff) };
+    uint8_t row_address[4] = { (uint8_t) (y >> 8), (uint8_t) (y & 0xff), (uint8_t) (y >> 8), (uint8_t) (y & 0xff) };
 
     spi->write_cmd(COLUMN_ADDRESS_SET);
     spi->write_data(column_address, 4);
@@ -134,7 +148,7 @@ void IL9341::draw(uint16_t *raw) {
     spi->write_data(row_address, 4);
 
     spi->write_cmd(MEMORY_WRITE);
-    spi->write_data16(raw, width * height);
+    spi->write_data16(raw, (x_max - x0 + 1));
 }
 
 IL9341::IL9341(SPI *spi, Output *reset_pin, Output *backlight, int width, int height) : spi(spi), reset_pin(reset_pin), backlight(backlight), width(width), height(height) {
