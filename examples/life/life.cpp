@@ -23,7 +23,7 @@ static void create_display() {
         i2c_init_bus(1, 2, 3, 400*1000);
         display = new SSD1306(1);
     } else {
-        spi_init_bus(1, 10, -1, 11);
+        spi_init_bus(1, 10, -1, 11, 64*1024*1024);
 
         Output *bl = new GPOutput(6);
         Output *reset = new GPOutput(7);
