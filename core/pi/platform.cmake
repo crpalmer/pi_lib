@@ -12,7 +12,6 @@ target_sources(lib-pi INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/pi-usb.c
   ${CMAKE_CURRENT_LIST_DIR}/pico-slave.cpp
   ${CMAKE_CURRENT_LIST_DIR}/spi.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/st7735s.cpp
   ${CMAKE_CURRENT_LIST_DIR}/time-utils.c
 )
 

@@ -18,6 +18,7 @@ target_sources(lib-pi INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/mem.c
   ${CMAKE_CURRENT_LIST_DIR}/pca9685.cpp
   ${CMAKE_CURRENT_LIST_DIR}/ssd1306.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/st7735s.cpp
   ${CMAKE_CURRENT_LIST_DIR}/string-utils.c
   ${CMAKE_CURRENT_LIST_DIR}/random-utils.c
 )

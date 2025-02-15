@@ -7,6 +7,7 @@
 #include "i2c.h"
 #include "il9341.h"
 #include "ssd1306.h"
+#include "st7735s.h"
 #include "pi.h"
 #include "pi-gpio.h"
 #include "time-utils.h"
@@ -15,23 +16,27 @@
 static Display *display;
 static Canvas *canvas;
 
+enum { USE_SSD1306, USE_IL9341, USE_ST7735S } which_display = USE_ST7735S;
+
 static void create_display() {
-#if USE_SSD1306
-    i2c_init_bus(1, 2, 3, 400*1000);
+    if (which_display == USE_SSD1306) {
+        i2c_init_bus(1, 2, 3, 400*1000);
+        display = new SSD1306(1);
+    } else {
+        spi_init_bus(1, 10, -1, 11);
 
-    display = new SSD1306(1);
-#else
-    spi_init_bus(1, 10, -1, 11);
+        Output *bl = new GPOutput(6);
+        Output *reset = new GPOutput(7);
+        Output *dc = new GPOutput(8);
 
-    printf("Creating IL9341\n");
+	SPI *spi = new SPI(1, 9, dc);
 
-    Output *bl = new GPOutput(6);
-    Output *reset = new GPOutput(7);
-    Output *dc = new GPOutput(8);
-
-    SPI *spi = new SPI(1, 9, dc);
-    display = new IL9341(spi, reset, bl);
-#endif
+	if (which_display == USE_IL9341) {
+	    display = new IL9341(spi, reset, bl);
+	} else {
+	    display = new ST7735S(spi, reset, bl);
+	}
+    }
 }
 
 static int w, h;

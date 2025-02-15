@@ -1,20 +1,13 @@
 #ifndef __ST7735S__
 #define __ST7735S__
 
-#include <assert.h>
-
-#include "canvas.h"
 #include "display.h"
-#include "gp-output.h"
-#include "mem.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "io.h"
+#include "spi.h"
 
 class ST7735S : public Display {
 public:
-    ST7735S();
+    ST7735S(SPI *spi, Output *reset, Output *backlight);
     ~ST7735S() { }
 
     Canvas *create_canvas() override;
@@ -25,7 +18,8 @@ protected:
     friend class ST7735S_Canvas;
 
 private:
-    GPOutput *RST, *DC, *BL;
+    SPI *spi;
+    Output *RST, *BL;
 
     void write_reg(unsigned char reg);
     void write_byte(unsigned char byte);
@@ -34,11 +28,6 @@ private:
     void init_reg();
     void init_scan_direction();
     void set_window(unsigned char x, unsigned char y, unsigned char x_end, unsigned char y_end);
-
 };
-
-#ifdef __cplusplus
-};
-#endif
 
 #endif

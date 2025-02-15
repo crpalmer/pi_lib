@@ -1,15 +1,8 @@
 #include "pi.h"
 #include "consoles.h"
-#ifndef PLATFORM_linux
-#include <pigpio.h>
-#else
-static inline int spiWrite(int spi, void *ptr, int n) { return 0; }
-static inline int spiOpen(int spi, int speed, int flags) { return 0; }
-#endif
+#include "spi.h"
 
 #include "st7735s.h"
-
-#define SPI 0
 
 #define WIDTH 160
 #define HEIGHT 120
@@ -17,7 +10,7 @@ static inline int spiOpen(int spi, int speed, int flags) { return 0; }
 
 class ST7735S_Canvas : public Canvas {
 public:
-    ST7735S_Canvas(ST7735S *display) : Canvas(WIDTH, HEIGHT) {
+    ST7735S_Canvas(ST7735S *display) : Canvas(WIDTH, HEIGHT), display(display) {
         raw = (unsigned char *) fatal_malloc(WIDTH * HEIGHT * BYTES_PER_PIXEL);
     }
 
@@ -49,14 +42,12 @@ Canvas *ST7735S::create_canvas() {
 
 void ST7735S::write_reg(unsigned char reg)
 {
-    DC->set(0);
-    spiWrite(SPI, (char *) &reg, 1);
+    spi->write_cmd(reg);
 }
 
 void ST7735S::write_byte(unsigned char byte)
 {
-    DC->set(1);
-    spiWrite(SPI, (char *) &byte, 1);
+    spi->write_data(&byte, 1);
 }
 
 #if 0
@@ -67,7 +58,7 @@ static void write_word(unsigned short word)
     DC->set(1);
     data[0] = (word >> 8);
     data[1] = (word & 0xff);
-    spiWrite(SPI, (char *) data, 2);
+    spi->write_data((char *) data, 2);
 }
 #endif
 
@@ -183,16 +174,7 @@ void ST7735S::init_scan_direction()
     ms_sleep(200);
 }
 
-ST7735S::ST7735S()
-{
-    RST = new GPOutput(27);
-    DC = new GPOutput(22);
-    BL = new GPOutput(17);
-
-    if (spiOpen(SPI, 20*1000*1000, 0) < 0) {
-	consoles_fatal_printf("Failed to open SPI!\n");
-    }
-
+ST7735S::ST7735S(SPI *spi, Output *RST, Output *BL) : spi(spi), RST(RST), BL(BL) {
     set_brightness(0);
 
     reset();
@@ -232,6 +214,5 @@ void ST7735S::set_brightness(double brightness)
 
 void ST7735S::draw(int x0, int y0, int w, uint8_t *data) {
     set_window(x0, y0, w-1, 0);
-    DC->set(1);
-    spiWrite(SPI, data, w * BYTES_PER_PIXEL);
+    spi->write_data(data, w * BYTES_PER_PIXEL);
 }
