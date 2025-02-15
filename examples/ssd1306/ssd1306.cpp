@@ -37,8 +37,10 @@ main()
 	    int x, y, v;
 	    if (sscanf(&buf[3], "%d %d %d", &v, &x, &y) != 3) {
 		printf("set [0|1] x y\n");
+	    } else if (v) {
+		canvas->set_pixel(x, y, COLOR_WHITE);
 	    } else {
-		canvas->set_pixel24(x, y, v ? WHITE : BLACK);
+		canvas->set_pixel(x, y, COLOR_BLACK);
 	    }
 	} else if (strcmp(buf, "bootsel") == 0) {
             pi_reboot_bootloader();

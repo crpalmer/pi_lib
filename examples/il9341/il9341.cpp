@@ -57,8 +57,8 @@ ms_sleep(2000);
 	} else if (strncmp(buf, "9seg", 4) == 0) {
 	    int r, g, b, d;
 	    if (sscanf(&buf[4], "%d %d %d %d", &r, &g, &b, &d) == 4) {
-		if (d >= 10) canvas->nine_segment_2(d, RGB24_of(r, g, b));
-		else canvas->nine_segment_1(d, RGB24_of(r, g, b));
+		if (d >= 10) canvas->nine_segment_2(d, r, g, b);
+		else canvas->nine_segment_1(d, r, g, b);
 	    } else {
 		printf("9seg r g b digits\n");
 	    }

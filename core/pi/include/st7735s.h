@@ -29,15 +29,7 @@ public:
     int get_height() { return h; }
     int get_bytes_per_pixel() { return bpp; }
 
-    RGB24 get_pixel(int x, int y) {
-	unsigned char *pixel = get_raw(x, y);
-	Byte r = pixel[0] >> 3;
-	Byte g = (pixel[0] & 0x07) << 3 | (pixel[1] >> 5);
-	Byte b = pixel[1] >> 3;
-	return RGB24_of(r, g, b);
-    }
-
-    void set_pixel(int x, int y, Byte r, Byte g, Byte b) {
+    void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
 	unsigned char *pixel = get_raw(x, y);
 	pixel[0] = (r & 0xf8) | (g >> 5);
 	pixel[1] = ((g & 0xfc) << 5) | (b >> 3);

@@ -68,11 +68,6 @@ public:
 	fatal_free(raw);
     }
 
-    RGB24 get_pixel(int x, int y) {
-	uint8_t *p = &raw[byte_of(x, y)];
-	return (*p & (1 << bit_of(x, y))) != 0;
-    }
-
     void set_pixel(int x, int y, int value) {
 	uint8_t *p = &raw[byte_of(x, y)];
 	int bit_value = 1<<bit_of(x, y);
@@ -120,12 +115,7 @@ public:
 	}
     }
 
-    RGB24 get_pixel(int x, int y) {
-	Page *page = get_page(y);
-	return page->get_pixel(x, row_of_page(y));
-    }
-
-    void set_pixel(int x, int y, Byte r, Byte g, Byte b) {
+    void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
 	Page *page = get_page(y);
 	page->set_pixel(x, row_of_page(y), r + g + b > 0);
     }

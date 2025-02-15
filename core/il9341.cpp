@@ -103,18 +103,14 @@ public:
 	fatal_free(data);
     }
 
-    RGB16 get_pixel16(int x, int y) override {
-	return data[y*w + x];
-    }
-
-    void set_pixel(int x, int y, Byte r, Byte g, Byte b) override {
+    void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) override {
 	data[y*w + x] = RGB16_of(r, g, b);
     }
 
-    RGB16 *get_raw() { return data; }
+    uint16_t *get_raw() { return data; }
 
 private:
-    RGB16 *data;
+    uint16_t *data;
 };
 
 Canvas *IL9341::create_canvas() {

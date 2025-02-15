@@ -28,14 +28,14 @@ main(int argc, char **argv)
     display->paint(canvas);
 #elif 0
    //canvas->nine_segment_2(29);
-   canvas->left_right_line(0, 0, 90, 20, WHITE);
+   canvas->left_right_line(0, 0, 90, 20, COLOR_WHITE);
    display->paint(canvas);
 #elif 1
     for (int s = 30; s >= 0; s--) {
 	ms_sleep(1000);
 	canvas->blank();
-	if (s >= 10) canvas->nine_segment_2(s);
-	else canvas->nine_segment_1(s, 0xff0000);
+	if (s >= 10) canvas->nine_segment_2(s, COLOR_WHITE);
+	else canvas->nine_segment_1(s, COLOR_WHITE);
 	display->paint(canvas);
     }
 #else
