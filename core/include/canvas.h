@@ -1,6 +1,8 @@
 #ifndef __CANVAS_H__
 #define __CANVAS_H__
 
+#include "image.h"
+
 typedef unsigned char Byte;
 typedef uint32_t RGB24;
 typedef uint16_t RGB16;
@@ -80,7 +82,7 @@ public:
 	nine_segment(digits % 10, 0.55*w, 0.05*h, w*0.4, h*0.9);
      }
 
-     void import(Canvas *other, int x = 0, int y = 0, int w = -1, int h = -1);
+     void import(Image *image, int x = 0, int y = 0, int w = -1, int h = -1);
 
 protected:
      int w, h, bpp;

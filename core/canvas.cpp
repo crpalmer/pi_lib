@@ -73,20 +73,23 @@ void Canvas::nine_segment(int digit, int x, int y, int w, int h, RGB24 c)
     if (digits[digit][8]) up_down_line(x+w-lw,     y+h/2+lw, h/2-lw*2, lw, c);
 }
 
-void Canvas::import(Canvas *other, int x0, int y0, int w, int h)
+void Canvas::import(Image *image, int x0, int y0, int w, int h)
 {
     if (w <= 0 || w > x0+this->w) w = this->w - x0;
     if (h <= 0 || h > y0+this->h) h = this->h - y0;
 
-    int o_w = other->get_width();
-    int o_h = other->get_height();
+    int o_w = image->get_width();
+    int o_h = image->get_height();
 
     double scale_x = ((double) o_w) / w;
     double scale_y = ((double) o_h) / h;
 
     for (int y = y0; y < y0+h; y++) {
 	for (int x = x0; x < x0+w; x++) {
-	    set_pixel24(x, y, other->get_pixel(x*scale_x, y*scale_y));
+	    uint8_t r, g, b;
+	    if (image->get_pixel(x*scale_x, y*scale_y, &r, &g, &b)) {
+		set_pixel(x, y, r, g, b);
+	    }
  	}
     }
 }

@@ -5,9 +5,9 @@
 #include "mem.h"
 #include "pi.h"
 
-#include "canvas-png.h"
+#include "image-png.h"
 
-CanvasPNG::CanvasPNG(const char *fname)
+ImagePNG::ImagePNG(const char *fname)
 {
     file_t *f;
     unsigned char header[8];
@@ -73,21 +73,16 @@ fail:
     file_close(f);
 }
 
-RGB24 CanvasPNG::get_pixel(int x, int y)
+bool ImagePNG::get_pixel(int x, int y, uint8_t *r, uint8_t *g, uint8_t *b)
 {
     png_byte *line = data[y];
     png_byte *rgb = &line[x*bytes_per_pixel];
 
-    if (bytes_per_pixel >= 4 && rgb[3] == 0) return 0;
-    else return RGB24_of(rgb[0], rgb[1], rgb[2]);
-}
+    if (bytes_per_pixel >= 4 && rgb[3] == 0) return false;
 
-void CanvasPNG::set_pixel(int x, int y, Byte r, Byte g, Byte b)
-{
-    png_byte *line = data[y];
-    png_byte *rgb = &line[x*bytes_per_pixel];
-    rgb[0] = r;
-    rgb[1] = g;
-    rgb[2] = b;
-}
+    *r = rgb[0];
+    *g = rgb[1];
+    *b = rgb[2];
 
+    return false;
+}
