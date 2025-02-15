@@ -26,24 +26,24 @@ void Canvas::fill(uint8_t r, uint8_t g, uint8_t b, int x0, int y0, int xw, int y
     if (xw == 0 || x0 + xw > w) xw = w - x0;
     if (yh == 0 || y0 + yh > h) yh = h - y0;
 
-    for (int x = 0; x < xw; x++) {
-	for (int y = 0; y < yh; y++) {
+    for (int y = 0; y < yh; y++) {
+	for (int x = 0; x < xw; x++) {
 	    set_pixel(x+x0, y+y0, r, g, b);
 	}
     }
 }
 
 void Canvas::up_down_line(int x, int y, int len, int lw, uint8_t r, uint8_t g, uint8_t b) {
-    for (int draw_x = x; draw_x < x + lw; draw_x++) {
-	for (int draw_y = y; draw_y < y + len; draw_y++) {
+    for (int draw_y = y; draw_y < y + len; draw_y++) {
+	for (int draw_x = x; draw_x < x + lw; draw_x++) {
 	   set_pixel(draw_x, draw_y, r, g, b);
 	}
     }
 }
 
 void Canvas::left_right_line(int x, int y, int len, int lw, uint8_t r, uint8_t g, uint8_t b) {
-    for (int draw_x = x; draw_x < x + len; draw_x++) {
-	for (int draw_y = y; draw_y < y + lw; draw_y++) {
+    for (int draw_y = y; draw_y < y + lw; draw_y++) {
+	for (int draw_x = x; draw_x < x + len; draw_x++) {
 	   set_pixel(draw_x, draw_y, r, g, b);
 	}
     }
