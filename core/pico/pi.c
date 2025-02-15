@@ -62,25 +62,6 @@ bool __no_inline_not_in_flash_func(get_bootsel_button)() {
     return button_state;
 }
 
-static call_every_t *call_every;
-
-static int pushed = 0;
-
-static void
-reboot_on_button_press(void *unused)
-{
-    if (get_bootsel_button()) {
-	if (pushed) {
-	     fprintf(stderr, "Button long pressed, ");
-	     pi_reboot_bootloader();
-	} else {
-	     pushed = 1;
-	}
-    } else {
-	pushed = 0;
-    }
-}
-
 void
 pi_reboot() {
     printf("Using watchdog to reboot.\n");
@@ -104,8 +85,6 @@ void
 pi_init(void)
 {
     pi_init_no_reboot();
-    call_every = call_every_new(1000, reboot_on_button_press, NULL);
-    call_every_start(call_every);
 }
 
 void
