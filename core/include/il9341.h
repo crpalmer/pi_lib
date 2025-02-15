@@ -12,7 +12,10 @@ public:
 
     Canvas *create_canvas() override;
     void set_brightness(double pct) override;
-    void paint(Canvas *canvas) override;
+
+protected:
+    void draw(uint16_t *raw);
+    friend class IL9341_Canvas;
 
 private:
     SPI *spi;

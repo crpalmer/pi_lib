@@ -122,7 +122,7 @@ main()
 		}
 	    }
 	    printf("%d alive\n", n_alive);
-	    display->paint(canvas);
+	    canvas->flush();
 	    ms_sleep(100);
 	} while (n_alive > 0);
     }

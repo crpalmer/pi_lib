@@ -91,11 +91,7 @@ void IL9341::reset() {
 
 class IL9341_Canvas : public Canvas {
 public:
-    IL9341_Canvas(int w, int h) {
-	this->w = w;
-	this->h = h;
-	this->bpp = 16;
-
+    IL9341_Canvas(IL9341 *display, int w, int h) : Canvas(w, h), display(display) {
 	data = (uint16_t *) fatal_malloc(w * h * sizeof(*data));
     }
 
@@ -107,14 +103,17 @@ public:
 	data[y*w + x] = RGB16_of(r, g, b);
     }
 
-    uint16_t *get_raw() { return data; }
+    void flush() override {
+	display->draw(data);
+    }
 
 private:
+    IL9341 *display;
     uint16_t *data;
 };
 
 Canvas *IL9341::create_canvas() {
-    return new IL9341_Canvas(width, height);
+    return new IL9341_Canvas(this, width, height);
 }
 
 void IL9341::set_brightness(double pct) {
@@ -122,9 +121,7 @@ void IL9341::set_brightness(double pct) {
     else backlight->on();
 }
 
-void IL9341::paint(Canvas *generic_canvas) {
-    IL9341_Canvas *canvas = (IL9341_Canvas *) generic_canvas;
-
+void IL9341::draw(uint16_t *raw) {
     int end_column = width-1;
     int end_row = height-1;
     uint8_t column_address[4] = { 0, 0, (uint8_t) (end_column >> 8), (uint8_t) (end_column & 0xff) };
@@ -137,7 +134,7 @@ void IL9341::paint(Canvas *generic_canvas) {
     spi->write_data(row_address, 4);
 
     spi->write_cmd(MEMORY_WRITE);
-    spi->write_data16(canvas->get_raw(), width * height);
+    spi->write_data16(raw, width * height);
 }
 
 IL9341::IL9341(SPI *spi, Output *reset_pin, Output *backlight, int width, int height) : spi(spi), reset_pin(reset_pin), backlight(backlight), width(width), height(height) {

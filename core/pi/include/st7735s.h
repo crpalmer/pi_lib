@@ -12,51 +12,17 @@
 extern "C" {
 #endif
 
-class ST7735S_Canvas : public Canvas {
-public:
-    ST7735S_Canvas() {
-	w = 160;
-	h = 128;
-	bpp = 2;
-	raw = (unsigned char *) fatal_malloc(w*h*bpp);
-    }
-
-    ~ST7735S_Canvas() {
-	fatal_free(raw);
-    }
-
-    int get_width() { return w; }
-    int get_height() { return h; }
-    int get_bytes_per_pixel() { return bpp; }
-
-    void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
-	unsigned char *pixel = get_raw(x, y);
-	pixel[0] = (r & 0xf8) | (g >> 5);
-	pixel[1] = ((g & 0xfc) << 5) | (b >> 3);
-    }
-
-    unsigned char *get_raw(int x, int y) {
-	assert(x >= 0 && x < w);
-	assert(y >= 0 && y < h);
-	return &raw[bpp*(y * w + x)];
-    }
-
-private:
-    unsigned char *raw;
-
-    friend class ST7735S;
-};
-
 class ST7735S : public Display {
 public:
     ST7735S();
     ~ST7735S() { }
 
-    Canvas *create_canvas() { return new ST7735S_Canvas(); }
+    Canvas *create_canvas() override;
+    void set_brightness(double pct) override;
 
-    void set_brightness(double pct);
-
-    void paint(Canvas *canvas);
+protected:
+    void draw(int x0, int y0, int w, uint8_t *data);
+    friend class ST7735S_Canvas;
 
 private:
     GPOutput *RST, *DC, *BL;

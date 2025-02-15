@@ -31,13 +31,13 @@ ms_sleep(2000);
 
     printf("Success!\n");
     canvas = display->create_canvas();
-    display->paint(canvas);
+    canvas->flush();
 
     while (pi_readline(buf, sizeof(buf)) != NULL) {
 	double pct;
 
 	if (strcmp(buf, "paint") == 0) {
-            display->paint(canvas);
+	    canvas->flush();
  	} else if (strncmp(buf, "brightness", 10) == 0 && sscanf(&buf[10], "%lf", &pct) == 1) {
 	    display->set_brightness(pct);
 	} else if (strncmp(buf, "fill", 4) == 0) {

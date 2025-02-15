@@ -21,11 +21,11 @@ main()
     display = new SSD1306(1);
     printf("Success!\n");
     canvas = display->create_canvas();
-    display->paint(canvas);
+    canvas->flush();
 
     while (pi_readline(buf, sizeof(buf)) != NULL) {
 	if (strcmp(buf, "paint") == 0) {
-            display->paint(canvas);
+            canvas->flush();
 	} else if (strncmp(buf, "fill", 4) == 0) {
 	    int v, x, y, w, h;
 	    int n = sscanf(&buf[4], "%d %d %d %d %d", &v, &x, &y, &w, &h);

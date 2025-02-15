@@ -102,10 +102,7 @@ private:
 
 class SSD1306_Canvas : public Canvas {
 public:
-    SSD1306_Canvas() {
-	w = 128;
-	h = 64;
-	bpp = 0;
+    SSD1306_Canvas(SSD1306 *display) : display(display), Canvas(128, 64) {
 	for (int page = 0; page < N_PAGES; page++) pages[page] = new Page();
     }
 
@@ -120,13 +117,15 @@ public:
 	page->set_pixel(x, row_of_page(y), r + g + b > 0);
     }
 
-    uint8_t *get_raw_if_dirty(int page)
-    {
-	if (pages[page]->is_dirty()) return pages[page]->get_raw();
-	else return NULL;
+    
+    void flush() {
+	for (int page = 0; page < N_PAGES; page++) {
+	    if (pages[page]->is_dirty()) display->draw(page, pages[page]->get_raw());
+	}
     }
 
 private:
+    SSD1306 *display;
     Page *pages[N_PAGES];
 
     Page *get_page(int row) {
@@ -191,24 +190,16 @@ SSD1306::SSD1306(int bus, int addr)
 
 Canvas *SSD1306::create_canvas()
 {
-    return new SSD1306_Canvas();
+    return new SSD1306_Canvas(this);
 }
 
 void SSD1306::set_brightness(double pct)
 {
 }
 
-void SSD1306::paint(Canvas *canvas)
-{
-    SSD1306_Canvas *c = (SSD1306_Canvas *) canvas;
-
-    for (int page = 0; page < N_PAGES; page++) {
-	uint8_t *raw = c->get_raw_if_dirty(page);
-	if (raw) {
-	    write_cmd(SET_PAGE_START_ADDRESS_MASK | page);
-	    write_cmd(SET_COLUMN_START_LOW_MASK | 0);
-	    write_cmd(SET_COLUMN_START_HIGH_MASK | 0);
-	    write_data(raw, BYTES_PER_PAGE);
-	}
-    }
+void SSD1306::draw(int page, uint8_t *raw) {
+    write_cmd(SET_PAGE_START_ADDRESS_MASK | page);
+    write_cmd(SET_COLUMN_START_LOW_MASK | 0);
+    write_cmd(SET_COLUMN_START_HIGH_MASK | 0);
+    write_data(raw, BYTES_PER_PAGE);
 }

@@ -11,6 +11,42 @@ static inline int spiOpen(int spi, int speed, int flags) { return 0; }
 
 #define SPI 0
 
+#define WIDTH 160
+#define HEIGHT 120
+#define BYTES_PER_PIXEL 2
+
+class ST7735S_Canvas : public Canvas {
+public:
+    ST7735S_Canvas(ST7735S *display) : Canvas(WIDTH, HEIGHT) {
+        raw = (unsigned char *) fatal_malloc(WIDTH * HEIGHT * BYTES_PER_PIXEL);
+    }
+
+    ~ST7735S_Canvas() {
+        fatal_free(raw);
+    }
+
+    void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+        unsigned char *pixel = &raw[(y * WIDTH + x) * BYTES_PER_PIXEL];
+        pixel[0] = (r & 0xf8) | (g >> 5);
+        pixel[1] = ((g & 0xfc) << 5) | (b >> 3);
+    }
+
+    void flush() {
+	// TODO: maintain a window of dirty pixels and only flush that
+	for (int row = HEIGHT-1; row >= 0; row--) {
+	    display->draw(0, row, WIDTH, &raw[row * WIDTH * BYTES_PER_PIXEL]);
+	}
+    }
+
+private:
+    ST7735S *display;
+    unsigned char *raw;
+};
+
+Canvas *ST7735S::create_canvas() {
+    return new ST7735S_Canvas(this);
+}
+
 void ST7735S::write_reg(unsigned char reg)
 {
     DC->set(0);
@@ -194,16 +230,8 @@ void ST7735S::set_brightness(double brightness)
     BL->pwm(brightness);
 }
 
-void ST7735S::paint(Canvas *generic_c)
-{
-    ST7735S_Canvas *c = (ST7735S_Canvas *) generic_c;
-    int w = c->get_width();
-    int h = c->get_height();
-    int bpp = c->get_bpp();
-
-    set_window(0, 0, w-1, h-1);
+void ST7735S::draw(int x0, int y0, int w, uint8_t *data) {
+    set_window(x0, y0, w-1, 0);
     DC->set(1);
-    for (int row = h-1; row >= 0; row--) {
-       spiWrite(SPI, (char *) c->get_raw(0, row), w * bpp);
-    }
+    spiWrite(SPI, data, w * BYTES_PER_PIXEL);
 }

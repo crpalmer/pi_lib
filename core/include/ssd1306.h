@@ -18,7 +18,10 @@ public:
 
     Canvas *create_canvas();
     void set_brightness(double pct);
-    void paint(Canvas *canvas);
+
+protected:
+    void draw(int page, uint8_t *raw);
+    friend class SSD1306_Canvas;
 
 private:
     void write_cmd(uint8_t cmd);

@@ -12,14 +12,37 @@ static inline uint16_t RGB16_of(uint8_t r, uint8_t g, uint8_t b) { return ((r >>
 #define COLOR_GREEN 0, 0xff, 0
 #define COLOR_BLUE 0, 0, 0xff
 
+class CanvasData {
+public:
+     virtual void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b);
+
+     virtual void flush(void) {}
+};
+
 class Canvas {
+public:
+     Canvas(int w, int h) : w(w), h(h) {}
+     Canvas() : Canvas(0, 0) {}
+
+     virtual void flush() {}
+
+     virtual void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) = 0;
+
+     virtual void set_pixels(int x0, int y0, int w, int h, uint8_t *rgb) {
+	for (int x = x0; x < x0 + w; x++) {
+	    for (int y = y0; y < y0 + h; y++) {
+		set_pixel(x, y, rgb[0], rgb[1], rgb[2]);
+		rgb += 3;
+	    }
+	}
+     }
+
+     virtual void fill(uint8_t r, uint8_t g, uint8_t b, int x0 = 0, int y0 = 0, int xw = 0, int yh = 0);
+
 public:
      int get_width() { return w; }
      int get_height() { return h; }
-     int get_bpp() { return bpp; }
 
-     virtual void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) = 0;
-     virtual void fill(uint8_t r, uint8_t g, uint8_t b, int x0 = 0, int y0 = 0, int xw = 0, int yh = 0);
      void blank(int x0 = 0, int y0 = 0, int xw = 0, int yh = 0) { fill(0, 0, 0, x0, y0, xw, yh); }
 
      void up_down_line(int x, int y, int len, int lw, uint8_t r, uint8_t g, uint8_t b);
@@ -39,7 +62,7 @@ public:
      void import(Image *image, int x = 0, int y = 0, int w = -1, int h = -1);
 
 protected:
-     int w, h, bpp;
+     int w, h;
 };
 
 #endif

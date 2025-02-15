@@ -7,7 +7,6 @@ class Display {
 public:
     virtual Canvas *create_canvas() = 0;
     virtual void set_brightness(double pct) = 0;
-    virtual void paint(Canvas *canvas) = 0;
 };
 
 #endif
