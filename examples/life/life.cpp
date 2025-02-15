@@ -16,7 +16,7 @@
 static Display *display;
 static Canvas *canvas;
 
-enum { USE_SSD1306, USE_IL9341, USE_ST7735S } which_display = USE_ST7735S;
+enum { USE_SSD1306, USE_IL9341, USE_ST7735S } which_display = USE_IL9341;
 
 static void create_display() {
     if (which_display == USE_SSD1306) {
@@ -108,10 +108,10 @@ main()
 	    printf("Starting iteration\n");
 	    start_next_generation();
 
-	    canvas->fill(COLOR_BLACK);
 	    n_alive = 0;
-	    for (int x = 0; x < w; x++) {
-		for (int y = 0; y < h; y++) {
+	    for (int y = 0; y < h; y++) {
+		for (int x = 0; x < w; x++) {
+		    canvas->set_pixel(x, y, COLOR_BLACK);
 		    int n_neighbours = get_n_neighbours(x, y, w, h);
 		    if (was_alive(x, y)) {
 			if (n_neighbours == 2 || n_neighbours == 3) {
@@ -119,7 +119,7 @@ main()
 			    canvas->set_pixel(x, y, n_neighbours == 2 ? 0xff : 0, n_neighbours != 2 ? 0xff : 0, 0);
 			    n_alive++;
 			}
-		    } else if (n_neighbours == 3) {
+		    } else if (n_neighbours == 4) {
 			set_is_alive(x, y);
 			canvas->set_pixel(x, y, COLOR_BLUE);
 			n_alive++;
