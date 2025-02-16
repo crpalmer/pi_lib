@@ -5,7 +5,7 @@
 
 class Display {
 public:
-    virtual Canvas *create_canvas() = 0;
+    virtual Canvas *create_canvas(bool prefer_unbuffered = false) = 0;
     virtual void set_brightness(double pct) = 0;
 };
 

@@ -10,7 +10,7 @@ public:
     ST7735S(SPI *spi, Output *reset, Output *backlight);
     ~ST7735S() { }
 
-    Canvas *create_canvas() override;
+    Canvas *create_canvas(bool prefer_unbuffered) override;
     void set_brightness(double pct) override;
 
 protected:

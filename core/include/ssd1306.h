@@ -16,7 +16,7 @@ public:
     SSD1306(int bus = 0, int addr = 0x3c);
     ~SSD1306() { }
 
-    Canvas *create_canvas();
+    Canvas *create_canvas(bool prefer_unbuffered);
     void set_brightness(double pct);
 
 protected:

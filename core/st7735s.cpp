@@ -36,7 +36,7 @@ private:
     unsigned char *raw;
 };
 
-Canvas *ST7735S::create_canvas() {
+Canvas *ST7735S::create_canvas(bool prefer_unbuffered) {
     return new ST7735S_Canvas(this);
 }
 

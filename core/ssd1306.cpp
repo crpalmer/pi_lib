@@ -188,7 +188,7 @@ SSD1306::SSD1306(int bus, int addr)
     write_cmd(SET_DISPLAY_ON);
 }
 
-Canvas *SSD1306::create_canvas()
+Canvas *SSD1306::create_canvas(bool prefer_unbuffered)
 {
     return new SSD1306_Canvas(this);
 }

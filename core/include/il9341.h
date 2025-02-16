@@ -10,12 +10,13 @@ public:
     IL9341(SPI *spi, Output *reset, Output *backlight, int width = 320, int height = 240);
     void reset();
 
-    Canvas *create_canvas() override;
+    Canvas *create_canvas(bool prefer_unbuffered) override;
     void set_brightness(double pct) override;
 
 protected:
-    void draw(int x0, int y, int x_max, uint16_t *raw);
+    void draw(int x0, int y, int x_max, int y_max, uint16_t *raw);
     friend class IL9341_Canvas;
+    friend class IL9341_BufferedCanvas;
 
 private:
     SPI *spi;

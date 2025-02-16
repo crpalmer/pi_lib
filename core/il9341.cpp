@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "pi.h"
 #include "mem.h"
 #include "spi.h"
@@ -117,7 +118,7 @@ public:
 
     void flush() override {
 	if (dirty_x >= 0) {
-	    display->draw(dirty_x, dirty_y, dirty_x_max, &data[dirty_x]);
+	    display->draw(dirty_x, dirty_y, dirty_x_max, dirty_y, &data[dirty_x]);
 	    dirty_x = -1;
 	}
     }
@@ -128,8 +129,36 @@ private:
     uint16_t *data;
 };
 
-Canvas *IL9341::create_canvas() {
-    return new IL9341_Canvas(this, width, height);
+class IL9341_BufferedCanvas : public Canvas {
+public:
+    IL9341_BufferedCanvas(IL9341 *display, int w, int h) : Canvas(w, h), display(display) {
+	data = (uint16_t *) fatal_malloc(w * h * sizeof(*data));
+	memset(data, 0, w * h * sizeof(*data));
+    }
+
+    ~IL9341_BufferedCanvas() {
+	fatal_free(data);
+    }
+
+    void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) override {
+	data[x + y*w] = RGB16_of(r, g, b);
+    }
+
+    void flush() override {
+	display->draw(0, 0, w-1, h-1, data);
+    }
+
+private:
+    IL9341 *display;
+    uint16_t *data;
+};
+
+Canvas *IL9341::create_canvas(bool prefer_unbuffered) {
+    if (prefer_unbuffered) {
+	return new IL9341_Canvas(this, width, height);
+    } else {
+	return new IL9341_BufferedCanvas(this, width, height);
+    }
 }
 
 void IL9341::set_brightness(double pct) {
@@ -137,9 +166,9 @@ void IL9341::set_brightness(double pct) {
     else backlight->on();
 }
 
-void IL9341::draw(int x0, int y, int x_max, uint16_t *raw) {
+void IL9341::draw(int x0, int y0, int x_max, int y_max, uint16_t *raw) {
     uint8_t column_address[4] = { (uint8_t) (x0 >> 8), (uint8_t) (x0 & 0xff), (uint8_t) (x_max >> 8), (uint8_t) (x_max & 0xff) };
-    uint8_t row_address[4] = { (uint8_t) (y >> 8), (uint8_t) (y & 0xff), (uint8_t) (y >> 8), (uint8_t) (y & 0xff) };
+    uint8_t row_address[4] = { (uint8_t) (y0 >> 8), (uint8_t) (y0 & 0xff), (uint8_t) (y_max >> 8), (uint8_t) (y_max & 0xff) };
 
     spi->write_cmd(COLUMN_ADDRESS_SET);
     spi->write_data(column_address, 4);
@@ -148,7 +177,7 @@ void IL9341::draw(int x0, int y, int x_max, uint16_t *raw) {
     spi->write_data(row_address, 4);
 
     spi->write_cmd(MEMORY_WRITE);
-    spi->write_data16(raw, (x_max - x0 + 1));
+    spi->write_data16(raw, (x_max - x0 + 1)*(y_max - y0 + 1));
 }
 
 IL9341::IL9341(SPI *spi, Output *reset_pin, Output *backlight, int width, int height) : spi(spi), reset_pin(reset_pin), backlight(backlight), width(width), height(height) {

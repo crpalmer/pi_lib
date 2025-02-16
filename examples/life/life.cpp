@@ -17,6 +17,7 @@ static Display *display;
 static Canvas *canvas;
 
 enum { USE_SSD1306, USE_IL9341, USE_ST7735S } which_display = USE_IL9341;
+bool prefer_unbuffered = false;
 
 static void create_display() {
     if (which_display == USE_SSD1306) {
@@ -79,7 +80,7 @@ main()
     seed_random();
 
     create_display();
-    canvas = display->create_canvas();
+    canvas = display->create_canvas(prefer_unbuffered);
 
     w = canvas->get_width();
     h = canvas->get_height();
