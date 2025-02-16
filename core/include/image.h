@@ -5,6 +5,8 @@ class Image {
 public:
     Image(int w, int h) : w(w), h(h) {}
     Image() {}
+    virtual ~Image() {}
+
     virtual int is_valid() { return true; }
     virtual bool get_pixel(int x, int y, uint8_t *r, uint8_t *g, uint8_t *b) = 0;
 

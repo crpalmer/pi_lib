@@ -73,9 +73,14 @@ static void threads_main(int argc, char **argv) {
 		printf("9seg r g b digits\n");
 	    }
 	} else if (strncmp(buf, "png ", 4) == 0) {
-	    ImagePNG *png = new ImagePNG(&buf[4]);
-	    canvas->import(png);
-	    canvas->flush();
+	    Image *png = image_png_load(&buf[4]);
+	    if (png) {
+		canvas->import(png);
+	    	canvas->flush();
+		delete png;
+	    }
+	} else if (strcmp(buf, "free") == 0) {
+            printf("%d free bytes\n", pi_threads_get_free_ram());
 	} else if (strcmp(buf, "bootsel") == 0) {
             pi_reboot_bootloader();
 	} else if (buf[0] == '?') {
@@ -85,6 +90,7 @@ static void threads_main(int argc, char **argv) {
 	    printf("fill r g b [ x y [ w h ] ]- fill the canvas with the value\n");
 	    printf("set x y r g b - set a pixel to the value\n");
 	    printf("png filename\n");
+	    printf("free\n");
 	    printf("bootsel\n");
 	} else if (buf[0] && buf[0] != '\n') {
 	    printf("invalid command\n");
