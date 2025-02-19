@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "pi.h"
 #include "i2c.h"
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
@@ -21,6 +19,8 @@ void i2c_init_bus(int bus, int sda, int scl, int speed)
     i2c_init(i2c_inst(bus), speed);
     gpio_set_function(sda, GPIO_FUNC_I2C);
     gpio_set_function(scl, GPIO_FUNC_I2C);
+    gpio_pull_up(sda);
+    gpio_pull_up(scl);
 }
 
 int i2c_open(int bus, int addr)
