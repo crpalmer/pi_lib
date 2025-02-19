@@ -60,3 +60,8 @@ int i2c_write(int fd, unsigned char reg, const void *data, int n_bytes)
     }
     return i2c_write_blocking(i2c_inst(i2c->bus), i2c->addr, msg, n_bytes+1, false);
 }
+
+bool i2c_exists(int bus, int addr) {
+    uint8_t dummy;
+    return i2c_read_blocking(i2c_inst(bus), addr, &dummy, 1, false) == 1;
+}

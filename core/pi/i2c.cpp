@@ -89,3 +89,12 @@ int i2c_write(int fd, unsigned char reg, const void *data, int n_bytes)
 
     return ret;
 }
+
+bool i2c_exists(int bus, int addr) {
+    int fd = i2c_open(bus, addr);
+    if (fd < 0) return false;
+    uint8_t dummy;
+    bool ret = read(fd, &dummy, 1);
+    i2c_close(fd);
+    return ret;
+}
