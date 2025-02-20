@@ -50,9 +50,9 @@ static void dump_word_reg(int i2c, const char *str, int reg) {
 }
 #endif
 
-class EventHandler : public PiThread {
+class TouchscreenEventHandler : public PiThread {
 public:
-    EventHandler(int i2c, const char *name = "event-handler") : PiThread(name), i2c(i2c) {
+    TouchscreenEventHandler(int i2c, const char *name = "event-handler") : PiThread(name), i2c(i2c) {
 	if (i2c_write_byte(i2c, G_MODE, G_MODE_POLLING) < 0) {
 	    fprintf(stderr, "Failed to set the g-mode\n");
 	}
@@ -81,9 +81,7 @@ public:
 	}
     }
 
-    virtual void on_touch(int x, int y) {
-	    printf("touch (%d, %d)\n", x, y);
-    }
+    virtual void on_touch(int x, int y) = 0;
 
 private:
     int i2c;
@@ -115,7 +113,6 @@ private:
 		fprintf(stderr, "Read of touch %d failed.\n", i);
 		return -1;
 	    }
-	    transform_position(&x, &y);
 	    on_touch(x, y);
 	}
 	last_n_touches = n_touches;
@@ -129,19 +126,11 @@ private:
 	*val = b1 | (((uint16_t) (b2 & 0x07)) << 8);
 	return 1;
     }
-
-    void transform_position(uint16_t *x, uint16_t *y) {
-	uint16_t tmp = *x;
-	*x = *y;
-	*y = tmp;
-
-	*y = 320 - *y;
-    }
 };
 
-class InterruptNotifier : public ThreadInterruptNotifier {
+class TouchscreenInterruptNotifier : public ThreadInterruptNotifier {
 public:
-    InterruptNotifier(Input *interrupt, EventHandler *event_handler) : interrupt(interrupt), event_handler(event_handler) {
+    TouchscreenInterruptNotifier(Input *interrupt, TouchscreenEventHandler *event_handler) : interrupt(interrupt), event_handler(event_handler) {
         interrupt->set_notifier(this);
     }
 
@@ -151,7 +140,27 @@ public:
 
 private:
     Input *interrupt;
-    EventHandler *event_handler;
+    TouchscreenEventHandler *event_handler;
+};
+
+class EventHandler : public TouchscreenEventHandler {
+public:
+    EventHandler(int i2c) : TouchscreenEventHandler(i2c) {
+    }
+
+    void on_touch(int x, int y) override {
+	transform_position(&x, &y);
+	printf("%d, %d\n", x, y);
+    }
+
+private:
+    void transform_position(int *x, int *y) {
+	uint16_t tmp = *x;
+	*x = *y;
+	*y = tmp;
+
+	*y = 320 - *y;
+    }
 };
 
 void threads_main(int argc, char **argv) {
@@ -204,7 +213,7 @@ void threads_main(int argc, char **argv) {
 
     EventHandler *event_handler = new EventHandler(i2c);
     GPInput *interrupt = new GPInput(4);
-    new InterruptNotifier(interrupt, event_handler);
+    new TouchscreenInterruptNotifier(interrupt, event_handler);
 }
 
 int main(int argc, char **argv) {
