@@ -4,6 +4,7 @@
  */
 
 #include "pi.h"
+#include <string.h>
 #include "gp-input.h"
 #include "gp-output.h"
 #include "i2c.h"
@@ -89,6 +90,7 @@ private:
     PiCond *cond;
     bool is_touched = false;
     uint8_t last_n_touches = 0;
+    uint16_t last_touches[2][2];
 
     int report_touches() {
 	uint8_t n_touches;
@@ -102,6 +104,8 @@ private:
 	    printf("No touches\n");
 	}
 
+	uint16_t cur_touches[2][2];
+
 	for (int i = 0; i < n_touches; i++) {
 	    uint16_t x, y;
 	    uint8_t weight, misc;
@@ -113,8 +117,12 @@ private:
 		fprintf(stderr, "Read of touch %d failed.\n", i);
 		return -1;
 	    }
-	    on_touch(x, y);
+	    cur_touches[i][0] = x;
+	    cur_touches[i][1] = y;
+	    if (! is_current_touch(x, y)) on_touch(x,y);
 	}
+ 
+	memcpy(last_touches, cur_touches, sizeof(last_touches));
 	last_n_touches = n_touches;
 	return n_touches;
     }
@@ -125,6 +133,13 @@ private:
 	if (i2c_read_byte(i2c, reg+1, &b1) < 0 || i2c_read_byte(i2c, reg, &b2) < 0) return -1;
 	*val = b1 | (((uint16_t) (b2 & 0x07)) << 8);
 	return 1;
+    }
+
+    bool is_current_touch(int x, int y) {
+	for (int i = 0; i < last_n_touches; i++) {
+	    if (last_touches[i][0] == x && last_touches[i][1] == y) return true;
+	}
+	return false;
     }
 };
 
