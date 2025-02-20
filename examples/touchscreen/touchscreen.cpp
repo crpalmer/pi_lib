@@ -8,7 +8,7 @@
 #include "gp-output.h"
 #include "i2c.h"
 #include "time-utils.h"
-//#include "thread-interrupt-notifier.h"
+#include "thread-interrupt-notifier.h"
 
 #define GEST_ID		0x01
 #define TD_STATUS	0x02
@@ -18,8 +18,11 @@
 #define P1_MISC		0x08
 #define P2_DELTA	6
 #define TH_GROUP	0x80
+#define G_MODE		0xa4
 
 #define TOUCH_THRESHOLD	7
+#define G_MODE_POLLING	0
+#define G_MODE_TRIGGER	1
 
 #define DEBUG 0
 
@@ -47,35 +50,111 @@ static void dump_word_reg(int i2c, const char *str, int reg) {
 }
 #endif
 
-#if 0
-class InterruptNotifier : public ThreadInputNotifier {
+class EventHandler : public PiThread {
 public:
-    void on_change_safe() {
+    EventHandler(int i2c, const char *name = "event-handler") : PiThread(name), i2c(i2c) {
+	if (i2c_write_byte(i2c, G_MODE, G_MODE_POLLING) < 0) {
+	    fprintf(stderr, "Failed to set the g-mode\n");
+	}
+
+	lock = new PiMutex();
+	cond = new PiCond();
+	start();
+    }
+
+    void set_touch_state(bool is_touched) {
+	lock->lock();
+	this->is_touched = is_touched;
+	cond->signal();
+	lock->unlock();
+    }
+
+    void main() {
+	while (1) {
+	    lock->lock();
+	    while (! is_touched) {
+		cond->wait(lock);
+	    }
+	    lock->unlock();
+
+	    report_touches();
+	}
+    }
+
+    virtual void on_touch(int x, int y) {
+	    printf("touch (%d, %d)\n", x, y);
+    }
+
+private:
+    int i2c;
+    PiMutex *lock;
+    PiCond *cond;
+    bool is_touched = false;
+    uint8_t last_n_touches = 0;
+
+    int report_touches() {
+	uint8_t n_touches;
+
+	if (i2c_read_byte(i2c, TD_STATUS, &n_touches) < 0) {
+	    fprintf(stderr, "Read of TD_STATUS failed.\n");
+	    return -1;
+	}
+
+	if (n_touches == 0 && last_n_touches > 0) {
+	    printf("No touches\n");
+	}
+
+	for (int i = 0; i < n_touches; i++) {
+	    uint16_t x, y;
+	    uint8_t weight, misc;
+
+	    if (read_pos(i2c, P1_X + i*P2_DELTA, &x) < 0 ||
+		read_pos(i2c, P1_Y + i*P2_DELTA, &y) < 0 ||
+		i2c_read_byte(i2c, P1_WEIGHT + i*P2_DELTA, &weight) < 0 ||
+		i2c_read_byte(i2c, P1_MISC + i*P2_DELTA, &misc) < 0) {
+		fprintf(stderr, "Read of touch %d failed.\n", i);
+		return -1;
+	    }
+	    transform_position(&x, &y);
+	    on_touch(x, y);
+	}
+	last_n_touches = n_touches;
+	return n_touches;
+    }
+
+    int read_pos(int i2c, int reg, uint16_t *val) {
+	uint8_t b1, b2;
+
+	if (i2c_read_byte(i2c, reg+1, &b1) < 0 || i2c_read_byte(i2c, reg, &b2) < 0) return -1;
+	*val = b1 | (((uint16_t) (b2 & 0x07)) << 8);
+	return 1;
+    }
+
+    void transform_position(uint16_t *x, uint16_t *y) {
+	uint16_t tmp = *x;
+	*x = *y;
+	*y = tmp;
+
+	*y = 320 - *y;
     }
 };
-#endif
 
-static int read_pos(int i2c, int reg, uint16_t *val)
-{
-    uint8_t b1, b2;
+class InterruptNotifier : public ThreadInterruptNotifier {
+public:
+    InterruptNotifier(Input *interrupt, EventHandler *event_handler) : interrupt(interrupt), event_handler(event_handler) {
+        interrupt->set_notifier(this);
+    }
 
-    if (i2c_read_byte(i2c, reg+1, &b1) < 0 || i2c_read_byte(i2c, reg, &b2) < 0) return -1;
-    *val = b1 | (((uint16_t) (b2 & 0x07)) << 8);
-    return 1;
-}
+    void on_change_safe() {
+	event_handler->set_touch_state(interrupt->get());
+    }
 
-static void transform_position(uint16_t *x, uint16_t *y)
-{
-    uint16_t tmp = *x;
-    *x = *y;
-    *y = tmp;
+private:
+    Input *interrupt;
+    EventHandler *event_handler;
+};
 
-    *y = 320 - *y;
-}
-
-int main(int argc, char **argv) {
-    pi_init();
-
+void threads_main(int argc, char **argv) {
     ms_sleep(1000);
     printf("Starting.\n");
 
@@ -123,34 +202,12 @@ int main(int argc, char **argv) {
 	fprintf(stderr, "Failed to set the touch threshold\n");
     }
 
-    uint8_t last_n_touches = 0;
-    while (1) {
-	ms_sleep(100);
-	uint8_t n_touches;
-
-	if (i2c_read_byte(i2c, TD_STATUS, &n_touches) < 0) {
-	    fprintf(stderr, "Read of TD_STATUS failed.\n");
-	    continue;
-	}
-
-	if (n_touches == 0 && last_n_touches > 0) {
-	    printf("No touches\n");
-	}
-
-	for (int i = 0; i < n_touches; i++) {
-	    uint16_t x, y;
-	    uint8_t weight, misc;
-
-	    if (read_pos(i2c, P1_X + i*P2_DELTA, &x) < 0 ||
-		read_pos(i2c, P1_Y + i*P2_DELTA, &y) < 0 ||
-		i2c_read_byte(i2c, P1_WEIGHT + i*P2_DELTA, &weight) < 0 ||
-		i2c_read_byte(i2c, P1_MISC + i*P2_DELTA, &misc) < 0) {
-		fprintf(stderr, "Read of touch %d failed.\n", i);
-		continue;
-	    }
-	    transform_position(&x, &y);
-	    printf("touch #%d - (%d, %d), weight=%d, misc=0x%02x\n", i, x, y, weight, misc);
-	}
-	last_n_touches = n_touches;
-    }
+    EventHandler *event_handler = new EventHandler(i2c);
+    GPInput *interrupt = new GPInput(4);
+    new InterruptNotifier(interrupt, event_handler);
 }
+
+int main(int argc, char **argv) {
+    pi_init_with_threads(threads_main, argc, argv);
+}
+
