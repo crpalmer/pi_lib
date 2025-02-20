@@ -11,6 +11,7 @@ public:
     GPInput(unsigned gpio) {
 	this->gpio = gpio;
         pi_gpio_set_direction(gpio, PI_INPUT);
+	pi_gpio_set_pullup(gpio, PI_PUD_OFF);
     }
     ~GPInput() { }
 
