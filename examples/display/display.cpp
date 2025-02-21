@@ -13,37 +13,13 @@
 #include "st7796s.h"
 #include "spi.h"
 
-static Display *display;
-static Canvas *canvas;
+#include "../display-common.h"
+
 static char buf[128];
 
-enum { USE_SSD1306, USE_IL9341, USE_ST7735S, USE_ST7796S } which_display = USE_ST7796S;
-
-static void create_display() {
-    if (which_display == USE_SSD1306) {
-        i2c_init_bus(1, 2, 3, 400*1000);
-        display = new SSD1306(1);
-    } else {
-        spi_init_bus(1, 10, -1, 11, 10*1024*1024);
-
-        Output *bl = new GPOutput(6);
-        Output *reset = new GPOutput(7);
-        Output *dc = new GPOutput(8);
-
-        SPI *spi = new SPI(1, 9, dc);
-
-	switch (which_display) {
-        case USE_IL9341:  display = new IL9341(spi, reset, bl); break;
-        case USE_ST7735S: display = new ST7735S(spi, reset, bl); break;
-        case USE_ST7796S: display = new ST7796S(spi, reset, bl); break;
-	default: break;
-        }
-    }
-}
-
 static void threads_main(int argc, char **argv) {
-    create_display();
-    canvas = display->create_canvas();
+    Display *display = create_display(USE_ST7796S);
+    Canvas *canvas = display->create_canvas();
 
     while (pi_readline(buf, sizeof(buf)) != NULL) {
 	double pct;
