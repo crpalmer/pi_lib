@@ -11,26 +11,40 @@
 #include "time-utils.h"
 #include "touchscreen-ft6336.h"
 
+#include "../display-common.h"
+
+#define PIXELS_PER_TOUCH 5
+
 class EventHandler : public TouchscreenEventHandler {
 public:
     EventHandler(int i2c) : TouchscreenEventHandler(i2c) {
+	display = create_display(USE_ST7796S);
+	canvas = display->create_canvas(true);
+	canvas->fill(0, 0, 0);
+	canvas->flush();
     }
 
     void on_touch(touch_event_t event) override {
-	int x = event.x;
-	int y = event.y;
-	transform_position(&x, &y);
-	printf("touched  %d - %d, %d (%d ms)\n", event.id, x, y, nano_elapsed_ms_now(&event.touch_at));
+	transform_position(&event.x, &event.y);
+	canvas->fill(255, 255, 255, event.x / PIXELS_PER_TOUCH * PIXELS_PER_TOUCH, event.y / PIXELS_PER_TOUCH * PIXELS_PER_TOUCH, PIXELS_PER_TOUCH, PIXELS_PER_TOUCH);
+	canvas->flush();
     }
 
     void on_released(touch_event_t event) override {
-	int x = event.x;
-	int y = event.y;
-	transform_position(&x, &y);
-	printf("released %d - %d, %d (%d ms)\n", event.id, x, y, nano_elapsed_ms_now(&event.touch_at));
+	transform_position(&event.x, &event.y);
+	if (last_release_in_corner && nano_elapsed_ms_now(&released_at) < 300) {
+	     canvas->fill(0, 0, 0);
+	}
+	last_release_in_corner = event.x < 64 && event.y < 64;
+	if (last_release_in_corner) nano_gettime(&released_at);
     }
 
 private:
+    Display *display;
+    Canvas *canvas;
+    struct timespec released_at;
+    bool last_release_in_corner = false;
+
     void transform_position(int *x, int *y) {
 	uint16_t tmp = *x;
 	*x = *y;
