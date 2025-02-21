@@ -15,7 +15,8 @@ public:
 
 protected:
     void draw(uint16_t x0, uint16_t y0, uint16_t x_end, uint16_t y_end, uint8_t *data);
-    friend class ST7796S_Canvas;
+    friend class ST7796S_BufferedCanvas;
+    friend class ST7796S_UnbufferedCanvas;
 
 private:
     SPI *spi;
