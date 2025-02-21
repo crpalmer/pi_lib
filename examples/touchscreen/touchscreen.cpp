@@ -74,8 +74,6 @@ public:
 	while (1) {
 	    lock->lock();
 	    while (! is_touched) {
-		for (int i = 0; i < last_n_touches; i++) on_release(last_touches[i][0], last_touches[i][1]);
-		last_n_touches = 0;
 		cond->wait(lock);
 	    }
 	    lock->unlock();
@@ -84,8 +82,7 @@ public:
 	}
     }
 
-    virtual void on_touch(int x, int y) {}
-    virtual void on_release(int x, int y) {}
+    virtual void on_touch(int x, int y) = 0;
 
 private:
     int i2c;
@@ -122,12 +119,9 @@ private:
 	    }
 	    cur_touches[i][0] = x;
 	    cur_touches[i][1] = y;
-	    if (! in_touch_set(last_touches, x, y)) on_touch(x,y);
+	    if (! is_current_touch(x, y)) on_touch(x,y);
 	}
  
-	for (int i = 0; i < last_n_touches; i++) {
-	    if (! in_touch_set(cur_touches, last_touches[i][0], last_touches[i][1])) on_release(last_touches[i][0], last_touches[i][1]);
-	}
 	memcpy(last_touches, cur_touches, sizeof(last_touches));
 	last_n_touches = n_touches;
 	return n_touches;
@@ -141,9 +135,9 @@ private:
 	return 1;
     }
 
-    bool in_touch_set(uint16_t set[2][2], int x, int y) {
+    bool is_current_touch(int x, int y) {
 	for (int i = 0; i < last_n_touches; i++) {
-	    if (set[i][0] == x && set[i][1] == y) return true;
+	    if (last_touches[i][0] == x && last_touches[i][1] == y) return true;
 	}
 	return false;
     }
@@ -171,12 +165,7 @@ public:
 
     void on_touch(int x, int y) override {
 	transform_position(&x, &y);
-	printf("touch   %d, %d\n", x, y);
-    }
-
-    void on_release(int x, int y) override {
-	transform_position(&x, &y);
-	printf("release %d, %d\n", x, y);
+	printf("%d, %d\n", x, y);
     }
 
 private:
