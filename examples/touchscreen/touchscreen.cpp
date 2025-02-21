@@ -51,9 +51,17 @@ static void dump_word_reg(int i2c, const char *str, int reg) {
 }
 #endif
 
+#define MAX_TOUCHES 2
+
+typedef struct {
+    int id;
+    int x, y;
+    struct timespec touch_at;
+} touch_event_t;
+
 class TouchscreenEventHandler : public PiThread {
 public:
-    TouchscreenEventHandler(int i2c, const char *name = "event-handler") : PiThread(name), i2c(i2c) {
+    TouchscreenEventHandler(int i2c, int touch_delta = 3, const char *name = "event-handler") : PiThread(name), i2c(i2c), touch_delta(touch_delta) {
 	if (i2c_write_byte(i2c, G_MODE, G_MODE_POLLING) < 0) {
 	    fprintf(stderr, "Failed to set the g-mode\n");
 	}
@@ -82,48 +90,70 @@ public:
 	}
     }
 
-    virtual void on_touch(int x, int y) = 0;
+    virtual void on_touch(touch_event_t event) { }
+    virtual void on_released(touch_event_t event) { }
 
 private:
     int i2c;
+    int touch_delta;
+
     PiMutex *lock;
     PiCond *cond;
     bool is_touched = false;
-    uint8_t last_n_touches = 0;
-    uint16_t last_touches[2][2];
+
+    uint8_t n_touches = 0;
+    touch_event_t touches[MAX_TOUCHES * 2];
+    int touch_id = 0;
 
     int report_touches() {
-	uint8_t n_touches;
+	uint8_t cur_n_touches;
+	bool seen[MAX_TOUCHES] = { false, };
+	int new_n_touches = n_touches;
 
-	if (i2c_read_byte(i2c, TD_STATUS, &n_touches) < 0) {
+	if (i2c_read_byte(i2c, TD_STATUS, &cur_n_touches) < 0) {
 	    fprintf(stderr, "Read of TD_STATUS failed.\n");
 	    return -1;
 	}
 
-	if (n_touches == 0 && last_n_touches > 0) {
-	    printf("No touches\n");
-	}
-
-	uint16_t cur_touches[2][2];
-
-	for (int i = 0; i < n_touches; i++) {
+	for (int i = 0; i < cur_n_touches; i++) {
 	    uint16_t x, y;
-	    uint8_t weight, misc;
 
-	    if (read_pos(i2c, P1_X + i*P2_DELTA, &x) < 0 ||
-		read_pos(i2c, P1_Y + i*P2_DELTA, &y) < 0 ||
-		i2c_read_byte(i2c, P1_WEIGHT + i*P2_DELTA, &weight) < 0 ||
-		i2c_read_byte(i2c, P1_MISC + i*P2_DELTA, &misc) < 0) {
+	    if (read_pos(i2c, P1_X + i*P2_DELTA, &x) < 0 || read_pos(i2c, P1_Y + i*P2_DELTA, &y) < 0) {
 		fprintf(stderr, "Read of touch %d failed.\n", i);
 		return -1;
 	    }
-	    cur_touches[i][0] = x;
-	    cur_touches[i][1] = y;
-	    if (! is_current_touch(x, y)) on_touch(x,y);
+
+	    int j = 0;
+	    for (; j < n_touches; j++) {
+		if (is_same_touch_as(x, y, &touches[j])) {
+		    seen[j] = true;
+		    if (x != touches[j].x || y != touches[j].y) {
+			touches[j].x = x;
+			touches[j].y = y;
+			on_touch(touches[j]);
+		    }
+		    break;
+		}
+	    }
+
+	    if (j >= n_touches) {
+		touches[new_n_touches].id = touch_id++;
+		touches[new_n_touches].x  = x;
+		touches[new_n_touches].y  = y;
+		nano_gettime(&touches[new_n_touches].touch_at);
+		on_touch(touches[new_n_touches]);
+		new_n_touches++;
+	    }
 	}
  
-	memcpy(last_touches, cur_touches, sizeof(last_touches));
-	last_n_touches = n_touches;
+	int j = 0;
+	for (int i = 0; i < new_n_touches; i++) {
+	    if (i > j) touches[j] = touches[i];
+	    if (i < n_touches && ! seen[i]) on_released(touches[i]);
+	    else j++;
+	}
+
+	n_touches = j;
 	return n_touches;
     }
 
@@ -135,11 +165,12 @@ private:
 	return 1;
     }
 
-    bool is_current_touch(int x, int y) {
-	for (int i = 0; i < last_n_touches; i++) {
-	    if (last_touches[i][0] == x && last_touches[i][1] == y) return true;
-	}
-	return false;
+    bool is_same_touch_as(int x, int y, touch_event_t *event) {
+	return is_same_point(x, event->x) && is_same_point(y, event->y);
+    }
+
+    bool is_same_point(int a, int b) {
+	return (a > b ? a - b : b - a) <= touch_delta;
     }
 };
 
@@ -163,9 +194,18 @@ public:
     EventHandler(int i2c) : TouchscreenEventHandler(i2c) {
     }
 
-    void on_touch(int x, int y) override {
+    void on_touch(touch_event_t event) override {
+	int x = event.x;
+	int y = event.y;
 	transform_position(&x, &y);
-	printf("%d, %d\n", x, y);
+	printf("touched  %d - %d, %d (%d ms)\n", event.id, x, y, nano_elapsed_ms_now(&event.touch_at));
+    }
+
+    void on_released(touch_event_t event) override {
+	int x = event.x;
+	int y = event.y;
+	transform_position(&x, &y);
+	printf("released %d - %d, %d (%d ms)\n", event.id, x, y, nano_elapsed_ms_now(&event.touch_at));
     }
 
 private:
