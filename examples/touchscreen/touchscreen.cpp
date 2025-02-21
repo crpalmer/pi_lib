@@ -20,28 +20,42 @@ public:
     EventHandler(int i2c) : TouchscreenEventHandler(i2c) {
 	display = create_display(USE_ST7796S);
 	canvas = display->create_canvas(true);
-	canvas->fill(0, 0, 0);
-	canvas->flush();
+	w = canvas->get_width();
+	h = canvas->get_height();
+	n_bits = (w/PIXELS_PER_TOUCH+1)*(h/PIXELS_PER_TOUCH+1);
+	set = (uint8_t *) fatal_malloc(n_bits / 8 + 1);
+	clear_screen();
     }
 
     void on_touch(touch_event_t event) override {
 	transform_position(&event.x, &event.y);
-	canvas->fill(255, 255, 255, event.x / PIXELS_PER_TOUCH * PIXELS_PER_TOUCH, event.y / PIXELS_PER_TOUCH * PIXELS_PER_TOUCH, PIXELS_PER_TOUCH, PIXELS_PER_TOUCH);
-	canvas->flush();
+	int x = event.x / PIXELS_PER_TOUCH;
+	int y = event.y / PIXELS_PER_TOUCH;
+	int bit = x + y * (w / PIXELS_PER_TOUCH);
+	if (! (set[bit / 8] & (1 << (bit % 8)))) {
+	    canvas->fill(255, 255, 255, x * PIXELS_PER_TOUCH, y * PIXELS_PER_TOUCH, PIXELS_PER_TOUCH, PIXELS_PER_TOUCH);
+	    canvas->flush();
+	    set[bit / 8] |= (1 << (bit % 8));
+	}
     }
 
     void on_released(touch_event_t event) override {
 	transform_position(&event.x, &event.y);
 	if (last_release_in_corner && nano_elapsed_ms_now(&released_at) < 300) {
-	     canvas->fill(0, 0, 0);
+	    clear_screen();
 	}
-	last_release_in_corner = event.x < 64 && event.y < 64;
+	last_release_in_corner = event.x < (w/8) && event.y < (h/8);
 	if (last_release_in_corner) nano_gettime(&released_at);
     }
 
 private:
     Display *display;
     Canvas *canvas;
+    int w, h;
+
+    uint8_t *set;
+    int n_bits;
+
     struct timespec released_at;
     bool last_release_in_corner = false;
 
@@ -51,6 +65,12 @@ private:
 	*y = tmp;
 
 	*y = 320 - *y;
+    }
+
+    void clear_screen() {
+	canvas->fill(0, 0, 0);
+	canvas->flush();
+	memset(set, 0, n_bits / 8 + 1);
     }
 };
 

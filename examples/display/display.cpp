@@ -19,7 +19,7 @@ static char buf[128];
 
 static void threads_main(int argc, char **argv) {
     Display *display = create_display(USE_ST7796S);
-    Canvas *canvas = display->create_canvas();
+    Canvas *canvas = display->create_canvas(true);
 
     while (pi_readline(buf, sizeof(buf)) != NULL) {
 	double pct;
