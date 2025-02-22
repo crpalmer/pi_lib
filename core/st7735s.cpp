@@ -9,9 +9,23 @@
 #define HEIGHT 120
 #define BYTES_PER_PIXEL 2
 
-class ST7735S_Canvas : public BufferedCanvas {
+class ST7735S_BufferedCanvas : public BufferedCanvas {
 public:
-    ST7735S_Canvas(ST7735S *display) : BufferedCanvas(display, WIDTH, HEIGHT, BYTES_PER_PIXEL) {
+    ST7735S_BufferedCanvas(ST7735S *display) : BufferedCanvas(display, WIDTH, HEIGHT, BYTES_PER_PIXEL) {
+    }
+
+    void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) override {
+        uint16_t rgb = RGB16_of(r, g, b); 
+	uint8_t bytes[2];
+	bytes[0] = rgb >> 8;	
+	bytes[1] = rgb & 0xff;
+	set_pixel_raw(x, y, bytes);
+    }
+};
+
+class ST7735S_UnbufferedCanvas : public UnbufferedCanvas {
+public:
+    ST7735S_UnbufferedCanvas(ST7735S *display) : UnbufferedCanvas(display, WIDTH, HEIGHT, BYTES_PER_PIXEL, 16) {
     }
 
     void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) override {
@@ -24,7 +38,8 @@ public:
 };
 
 Canvas *ST7735S::create_canvas(bool prefer_unbuffered) {
-    return new ST7735S_Canvas(this);
+    if (prefer_unbuffered) return new ST7735S_UnbufferedCanvas(this);
+    else return new ST7735S_BufferedCanvas(this);
 }
 
 void ST7735S::write_reg(unsigned char reg)

@@ -56,7 +56,7 @@ main()
     seed_random();
 
     Display *display = create_display(USE_ST7796S);
-    Canvas *canvas = display->create_canvas(true);
+    Canvas *canvas = display->create_canvas();
 
     w = canvas->get_width();
     h = canvas->get_height();

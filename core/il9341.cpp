@@ -92,46 +92,19 @@ void IL9341::reset() {
     ms_sleep(150);
 }
 
-class IL9341_Canvas : public Canvas {
+class IL9341_UnbufferedCanvas : public UnbufferedCanvas {
 public:
-    IL9341_Canvas(IL9341 *display, int w, int h) : Canvas(w, h), display(display) {
-	data = (uint8_t *) fatal_malloc(w * sizeof(*data));
-	dirty_x = -1;
-    }
-
-    ~IL9341_Canvas() {
-	fatal_free(data);
+    IL9341_UnbufferedCanvas(IL9341 *display, int w, int h) : UnbufferedCanvas(display, w, h, 2, 16) {
     }
 
     void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) override {
-	if (dirty_x >= 0 && (dirty_y != y || x < dirty_x || x > dirty_x_max+1)) {
-	    flush();
-	}
-
-	if (dirty_x < 0) {
-	    dirty_x = dirty_x_max = x;
-	    dirty_y = y;
-	}
-
-	if (x > dirty_x_max) dirty_x_max = x;
-
 	uint16_t rgb = RGB16_of(r, g, b);
-	data[2*x] = rgb >> 8;
-	data[2*x+1] = rgb & 0xff;
+	uint8_t pixel[2];
+	pixel[0] = rgb >> 8;
+	pixel[1] = rgb & 0xff;
+	set_pixel_raw(x, y, pixel);
 
     }
-
-    void flush() override {
-	if (dirty_x >= 0) {
-	    display->draw(dirty_x, dirty_y, dirty_x_max, dirty_y, &data[dirty_x]);
-	    dirty_x = -1;
-	}
-    }
-
-private:
-    int dirty_x, dirty_y, dirty_x_max;
-    IL9341 *display;
-    uint8_t *data;
 };
 
 class IL9341_BufferedCanvas : public BufferedCanvas {
@@ -150,7 +123,7 @@ public:
 
 Canvas *IL9341::create_canvas(bool prefer_unbuffered) {
     if (prefer_unbuffered) {
-	return new IL9341_Canvas(this, width, height);
+	return new IL9341_UnbufferedCanvas(this, width, height);
     } else {
 	return new IL9341_BufferedCanvas(this, width, height);
     }

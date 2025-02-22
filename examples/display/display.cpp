@@ -24,9 +24,7 @@ static void threads_main(int argc, char **argv) {
     while (pi_readline(buf, sizeof(buf)) != NULL) {
 	double pct;
 
-	if (strcmp(buf, "paint") == 0) {
-	    canvas->flush();
- 	} else if (strncmp(buf, "brightness", 10) == 0 && sscanf(&buf[10], "%lf", &pct) == 1) {
+ 	if (strncmp(buf, "brightness", 10) == 0 && sscanf(&buf[10], "%lf", &pct) == 1) {
 	    display->set_brightness(pct);
 	} else if (strncmp(buf, "fill", 4) == 0) {
 	    int r, g, b, x, y, w, h;
@@ -62,7 +60,6 @@ static void threads_main(int argc, char **argv) {
 	} else if (strcmp(buf, "bootsel") == 0) {
             pi_reboot_bootloader();
 	} else if (buf[0] == '?') {
-	    printf("paint - draw the current canvas\n");
 	    printf("9seg r g b digits\n");
 	    printf("brightness 0.0-1.0\n");
 	    printf("fill r g b [ x y [ w h ] ]- fill the canvas with the value\n");
@@ -73,6 +70,7 @@ static void threads_main(int argc, char **argv) {
 	} else if (buf[0] && buf[0] != '\n') {
 	    printf("invalid command\n");
 	}
+	canvas->flush();
     }
 }
 

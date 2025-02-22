@@ -8,6 +8,7 @@
 #define WIDTH 480
 #define HEIGHT 320
 #define BYTES_PER_PIXEL 2
+#define BUFFERED_ROWS 16
 
 class ST7796S_BufferedCanvas : public BufferedCanvas {
 public:
@@ -23,76 +24,18 @@ public:
     }
 };
 
-class ST7796S_UnbufferedCanvas : public Canvas {
+class ST7796S_UnbufferedCanvas : public UnbufferedCanvas {
 public:
-    ST7796S_UnbufferedCanvas(ST7796S *display) : Canvas(WIDTH, HEIGHT), display(display) {
+    ST7796S_UnbufferedCanvas(ST7796S *display) : UnbufferedCanvas(display, WIDTH, HEIGHT, BYTES_PER_PIXEL, BUFFERED_ROWS) {
     }
 
-    void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
-	if (needs_to_be_flushed(x, y)) flush();
-
-	if (dirty_x < 0) {
-	    dirty_x = dirty_first_x_max = dirty_cur_x_max = x;
-	    dirty_y = dirty_y_max = y;
-	}
-
-	if (y == dirty_y_max+1) {
-	    dirty_y_max = y;
-	    dirty_cur_x_max = x;
-	}
-
-	if (x > dirty_cur_x_max) {
-	    if (dirty_y == dirty_y_max) dirty_first_x_max = x;
-	    dirty_cur_x_max = x;
-	}
-
-        unsigned char *pixel = dirty_at(x, y);
+    void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) override {
 	uint16_t rgb565 = RGB16_of(b, g, r);		// Always seems to BGR even though I request RGB
+        uint8_t pixel[2];
         pixel[0] = rgb565 >> 8;
         pixel[1] = rgb565 & 0xff;
+	set_pixel_raw(x, y, pixel);
     }
-
-    bool needs_to_be_flushed(int x, int y) {
-	if (dirty_x < 0) return false;			// First pixel, no flush
-
-	if (x < dirty_x) return true;			// To the left of the dirty window
-	if (x > dirty_cur_x_max + 1) return true;	// Skipping pixels on this line
-	if (y > dirty_y_max && dirty_cur_x_max < dirty_first_x_max) return true;  // Didn't finish the pixels on this line
-	if (dirty_y < dirty_y_max && x > dirty_first_x_max) return true;  // To the right of the dirty_window
-	if (y < dirty_y) return true;			// Above the window
-	if (y > dirty_y_max+1) return true;		// Below the dirty window
-
-	// Check that we have spacw for the new line
-	if (y > dirty_y_max && (dirty_first_x_max - dirty_x + 1) * (y - dirty_y + 1) > MAX_DIRTY_PIXELS) return true;
-
-	return false;
-    }
-
-    void flush() {
-	if (dirty_x >= 0) {
-	    if (dirty_cur_x_max == dirty_first_x_max) {
-		display->draw(dirty_x, dirty_y, dirty_first_x_max, dirty_y_max, dirty);
-	    } else {
-		display->draw(dirty_x, dirty_y, dirty_first_x_max, dirty_y_max-1, dirty);
-		display->draw(dirty_x, dirty_y_max, dirty_cur_x_max, dirty_y_max, dirty_at(dirty_x, dirty_y_max));
-	    }
-	    dirty_x = -1;
-	}
-    }
-
-    uint8_t *dirty_at(int x, int y) {
-	x -= dirty_x;
-	y -= dirty_y;
-	int x_per_row = (dirty_first_x_max - dirty_x + 1);
-	return &dirty[(x + y*x_per_row) * BYTES_PER_PIXEL];
-    }
-
-private:
-    static const int MAX_DIRTY_PIXELS = WIDTH * 16;
-    ST7796S *display;
-    uint8_t dirty[MAX_DIRTY_PIXELS * BYTES_PER_PIXEL];
-    int dirty_x = -1, dirty_first_x_max = -1, dirty_cur_x_max = -1;
-    int dirty_y = -1, dirty_y_max = -1;
 };
 
 Canvas *ST7796S::create_canvas(bool prefer_unbuffered) {

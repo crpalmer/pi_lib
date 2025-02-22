@@ -8,6 +8,7 @@ target_include_directories(lib-pi INTERFACE
 target_sources(lib-pi INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/buffer.cpp
   ${CMAKE_CURRENT_LIST_DIR}/canvas.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/canvas-impl.cpp
   ${CMAKE_CURRENT_LIST_DIR}/console.cpp
   ${CMAKE_CURRENT_LIST_DIR}/consoles.cpp
   ${CMAKE_CURRENT_LIST_DIR}/file.c
