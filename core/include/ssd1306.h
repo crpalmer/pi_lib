@@ -18,9 +18,12 @@ public:
 
     Canvas *create_canvas(bool prefer_unbuffered);
     void set_brightness(double pct);
+    void draw(int x0, int y0, int x_max, int y_max, uint8_t *raw) override {
+	assert(0);
+    }
 
 protected:
-    void draw(int page, uint8_t *raw);
+    void draw_page(int page, uint8_t *raw);
     friend class SSD1306_Canvas;
 
 private:

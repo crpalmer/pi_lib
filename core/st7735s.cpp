@@ -3,37 +3,24 @@
 #include "spi.h"
 
 #include "st7735s.h"
+#include "canvas-impl.h"
 
 #define WIDTH 160
 #define HEIGHT 120
 #define BYTES_PER_PIXEL 2
 
-class ST7735S_Canvas : public Canvas {
+class ST7735S_Canvas : public BufferedCanvas {
 public:
-    ST7735S_Canvas(ST7735S *display) : Canvas(WIDTH, HEIGHT), display(display) {
-        raw = (unsigned char *) fatal_malloc(WIDTH * HEIGHT * BYTES_PER_PIXEL);
+    ST7735S_Canvas(ST7735S *display) : BufferedCanvas(display, WIDTH, HEIGHT, BYTES_PER_PIXEL) {
     }
 
-    ~ST7735S_Canvas() {
-        fatal_free(raw);
+    void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) override {
+        uint16_t rgb = RGB16_of(r, g, b); 
+	uint8_t bytes[2];
+	bytes[0] = rgb >> 8;	
+	bytes[1] = rgb & 0xff;
+	set_pixel_raw(x, y, bytes);
     }
-
-    void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
-        unsigned char *pixel = &raw[(y * WIDTH + x) * BYTES_PER_PIXEL];
-        pixel[0] = (r & 0xf8) | (g >> 5);
-        pixel[1] = ((g & 0xfc) << 5) | (b >> 3);
-    }
-
-    void flush() {
-	// TODO: maintain a window of dirty pixels and only flush that
-	for (int row = HEIGHT-1; row >= 0; row--) {
-	    display->draw(0, row, WIDTH, &raw[row * WIDTH * BYTES_PER_PIXEL]);
-	}
-    }
-
-private:
-    ST7735S *display;
-    unsigned char *raw;
 };
 
 Canvas *ST7735S::create_canvas(bool prefer_unbuffered) {
@@ -212,7 +199,7 @@ void ST7735S::set_brightness(double brightness)
     BL->pwm(brightness);
 }
 
-void ST7735S::draw(int x0, int y0, int w, uint8_t *data) {
-    set_window(x0, y0, w-1, 0);
-    spi->write_data(data, w * BYTES_PER_PIXEL);
+void ST7735S::draw(int x0, int y0, int x_max, int y_max, uint8_t *data) {
+    set_window(x0, y0, x_max-1, y_max-1);
+    spi->write_data(data, (x_max - x0 + 1) * (y_max - y0 + 1) * BYTES_PER_PIXEL);
 }

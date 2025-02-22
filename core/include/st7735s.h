@@ -12,10 +12,7 @@ public:
 
     Canvas *create_canvas(bool prefer_unbuffered) override;
     void set_brightness(double pct) override;
-
-protected:
-    void draw(int x0, int y0, int w, uint8_t *data);
-    friend class ST7735S_Canvas;
+    void draw(int x0, int y0, int x_max, int y_max, uint8_t *data) override;
 
 private:
     SPI *spi;

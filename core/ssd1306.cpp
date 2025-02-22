@@ -120,7 +120,7 @@ public:
     
     void flush() {
 	for (int page = 0; page < N_PAGES; page++) {
-	    if (pages[page]->is_dirty()) display->draw(page, pages[page]->get_raw());
+	    if (pages[page]->is_dirty()) display->draw_page(page, pages[page]->get_raw());
 	}
     }
 
@@ -197,7 +197,7 @@ void SSD1306::set_brightness(double pct)
 {
 }
 
-void SSD1306::draw(int page, uint8_t *raw) {
+void SSD1306::draw_page(int page, uint8_t *raw) {
     write_cmd(SET_PAGE_START_ADDRESS_MASK | page);
     write_cmd(SET_COLUMN_START_LOW_MASK | 0);
     write_cmd(SET_COLUMN_START_HIGH_MASK | 0);

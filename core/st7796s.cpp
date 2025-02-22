@@ -3,35 +3,24 @@
 #include "spi.h"
 
 #include "st7796s.h"
+#include "canvas-impl.h"
 
 #define WIDTH 480
 #define HEIGHT 320
 #define BYTES_PER_PIXEL 2
 
-class ST7796S_BufferedCanvas : public Canvas {
+class ST7796S_BufferedCanvas : public BufferedCanvas {
 public:
-    ST7796S_BufferedCanvas(ST7796S *display) : Canvas(WIDTH, HEIGHT), display(display) {
-        raw = (uint8_t *) fatal_malloc(WIDTH * HEIGHT * BYTES_PER_PIXEL);
-    }
-
-    ~ST7796S_BufferedCanvas() {
-        fatal_free(raw);
+    ST7796S_BufferedCanvas(ST7796S *display) : BufferedCanvas(display, WIDTH, HEIGHT, BYTES_PER_PIXEL) {
     }
 
     void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
-        unsigned char *pixel = &raw[(y * WIDTH + x) * BYTES_PER_PIXEL];
 	uint16_t rgb565 = RGB16_of(b, g, r);		// Always seems to BGR even though I request RGB
+        uint8_t pixel[2];
         pixel[0] = rgb565 >> 8;
         pixel[1] = rgb565 & 0xff;
+	set_pixel_raw(x, y, pixel);
     }
-
-    void flush() {
-	display->draw(0, 0, WIDTH-1, HEIGHT-1, raw);
-    }
-
-private:
-    ST7796S *display;
-    uint8_t *raw;
 };
 
 class ST7796S_UnbufferedCanvas : public Canvas {
@@ -283,7 +272,7 @@ void ST7796S::set_brightness(double brightness)
     BL->pwm(brightness);
 }
 
-void ST7796S::draw(uint16_t x0, uint16_t y0, uint16_t x_end, uint16_t y_end, uint8_t *data) {
+void ST7796S::draw(int x0, int y0, int x_end, int y_end, uint8_t *data) {
     set_window(x0, y0, x_end, y_end);
     spi->write_data(data, (x_end - x0 + 1) * (y_end - y0 + 1) * BYTES_PER_PIXEL);
 }

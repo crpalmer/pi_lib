@@ -12,11 +12,7 @@ public:
 
     Canvas *create_canvas(bool prefer_unbuffered) override;
     void set_brightness(double pct) override;
-
-protected:
-    void draw(uint16_t x0, uint16_t y0, uint16_t x_end, uint16_t y_end, uint8_t *data);
-    friend class ST7796S_BufferedCanvas;
-    friend class ST7796S_UnbufferedCanvas;
+    void draw(int x0, int y0, int x_end, int y_end, uint8_t *data) override;
 
 private:
     SPI *spi;

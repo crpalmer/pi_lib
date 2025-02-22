@@ -29,8 +29,8 @@ public:
      virtual void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) = 0;
 
      virtual void set_pixels(int x0, int y0, int w, int h, uint8_t *rgb) {
-	for (int x = x0; x < x0 + w; x++) {
-	    for (int y = y0; y < y0 + h; y++) {
+	for (int y = y0; y < y0 + h; y++) {
+	    for (int x = x0; x < x0 + w; x++) {
 		set_pixel(x, y, rgb[0], rgb[1], rgb[2]);
 		rgb += 3;
 	    }
