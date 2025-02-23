@@ -112,7 +112,7 @@ public:
 	}
     }
 
-    void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+    void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) override {
 	Page *page = get_page(y);
 	page->set_pixel(x, row_of_page(y), r + g + b > 0);
     }
