@@ -25,7 +25,7 @@ public:
 	}
     }
 
-    virtual void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b);
+    virtual void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) = 0;
 
 protected:
      Display *display;
@@ -46,7 +46,7 @@ public:
     void flush() override;
 
     void set_pixel_raw(int x, int y, uint8_t *pixel);
-    virtual void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b);
+    virtual void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) = 0;
 
 protected:
     Display *display;
