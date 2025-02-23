@@ -17,6 +17,7 @@ typedef void (*pi_threads_main_t)(int argc, char **argv);
  * there is no commandline for a pico.
  */
 void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv);
+void platform_init_with_threads(pi_threads_main_t main, int argc, char **argv);
 
 size_t pi_threads_get_free_ram();
 void pi_threads_dump_state();

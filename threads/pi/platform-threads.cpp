@@ -13,30 +13,8 @@ static pthread_mutex_t at_lock = PTHREAD_MUTEX_INITIALIZER;
 static std::list<PiThread *> active_threads;
 static pthread_key_t pi_thread_local;
 
-#define MAX_BUS 10
-static PiMutex *i2c_bus_lock[MAX_BUS];
-static PiMutex *i2c_lock;
-
-static void i2c_lock_impl(int bus) {
-    if (i2c_bus_lock[bus] == NULL) {
-        i2c_lock->lock();
-	if (i2c_bus_lock[bus] == NULL) i2c_bus_lock[bus] = new PiMutex();
-	i2c_lock->unlock();
-    }
-    i2c_bus_lock[bus]->lock();
-}
-
-static void i2c_unlock_impl(int bus) {
-    i2c_bus_lock[bus]->unlock();
-}
-
-void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
-    pi_init();
+void platform_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
     pthread_key_create(&pi_thread_local, NULL);
-
-    i2c_lock = new PiMutex();
-    i2c_lock_fn = i2c_lock_impl;
-    i2c_unlock_fn = i2c_unlock_impl;
 
     main(argc, argv);
 

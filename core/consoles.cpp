@@ -2,7 +2,7 @@
 #include <list>
 #include <stdarg.h>
 #include "consoles.h"
-#include "consoles-lock.h"
+#include "core-lock.h"
 #include "pi.h"
 #include "time-utils.h"
 
@@ -13,33 +13,29 @@ public:
         return instance;
     }
 
-    void set_consoles_lock(ConsolesLock *l) {
-        lock = l;
-    }
-
     void add(Console *c) {
-	lock->lock();
+	core_lock_lock(lock);
         active.push_back(c);
-	lock->unlock();
+	core_lock_unlock(lock);
     }
 
     void remove(Console *c) {
-	lock->lock();
+	core_lock_lock(lock);
 	active.remove(c);
-	lock->unlock();
+	core_lock_unlock(lock);
     }
 
     int write_str(const char *str) override {
-	lock->lock();
+	core_lock_lock(lock);
 	for (Console *c : active) c->write_str(str);
 	if (active.empty()) fwrite(str, 1, strlen(str), stderr);
-	lock->unlock();
+	core_lock_unlock(lock);
 	return 0;
     }
 
 private:
    std::list<Console *> active;
-   ConsolesLock *lock = new ConsolesLock();
+   core_lock_t lock = core_lock_create();
 };
 
 void consoles_add(Console *c) {
@@ -73,8 +69,4 @@ void consoles_fatal_printf(const char *fmt, ...) {
    ms_sleep(5000);
 
    pi_abort();
-}
-
-void consoles_set_consoles_lock(ConsolesLock *l) {
-   Consoles::get().set_consoles_lock(l);
 }

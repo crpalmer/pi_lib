@@ -4,7 +4,6 @@
 #include "consoles.h"
 #include "freertos-heap.h"
 #include "pi-threads.h"
-#include "set-consoles-lock.h"
 #include "time-utils.h"
 #include "FreeRTOS.h"
 #include "semphr.h"
@@ -32,7 +31,6 @@ static void init_with_threads(void *main_as_vp) {
     malloc_lock_init();
     pico_set_sleep_fn(rtos_sleep);
     pico_set_irq_hook_functions(pre_set_irq_fn, post_set_irq_fn);
-    set_consoles_lock();
     mem_set_get_task_name(get_task_name);
     file_init();
 
@@ -45,8 +43,7 @@ static void init_with_threads(void *main_as_vp) {
     
 #define STACK_SIZE 1024
 
-void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
-    pi_init_no_reboot();
+void platform_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
     ms_sleep(100);	// 1ms seems to be enough
     xTaskCreate(init_with_threads, "main", STACK_SIZE, (void *) main, 1, NULL);
     vTaskStartScheduler();

@@ -180,11 +180,16 @@ ST7735S::ST7735S(SPI *spi, Output *RST, Output *BL) : spi(spi), RST(RST), BL(BL)
     set_brightness(0);
 
     reset();
+
+    spi->lock();
+
     init_reg();
     init_scan_direction();
     write_reg(0x11);   // sleep out ?
     ms_sleep(120);
     write_reg(0x29);   // turn on the lcd display
+
+    spi->unlock();
 
     set_brightness(1);
 }
@@ -193,7 +198,7 @@ void ST7735S::set_window(unsigned char x, unsigned char y, unsigned char x_end, 
 {
 #if 1
 #define X_OFFSET 1
-#define Y_OFFSET 3
+#define Y_OFFSET 2
 
     x += X_OFFSET;
     y += Y_OFFSET;
@@ -222,6 +227,8 @@ void ST7735S::set_brightness(double brightness)
 }
 
 void ST7735S::draw(int x0, int y0, int x_max, int y_max, uint8_t *data) {
+    spi->lock();
     set_window(x0, y0, x_max, y_max);
     spi->write_data(data, (x_max - x0 + 1) * (y_max - y0 + 1) * BYTES_PER_PIXEL);
+    spi->unlock();
 }

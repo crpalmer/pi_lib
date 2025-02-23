@@ -1,6 +1,19 @@
+#include "pi.h"
+#include "core-lock.h"
 #include "pi-threads.h"
 
 #define C_DECL extern "C"
+
+core_lock_t core_lock_create_impl() { return pi_mutex_new(); }
+void core_lock_lock_impl(core_lock_t lock) { pi_mutex_lock((pi_mutex_t *) lock); }
+void core_lock_unlock_impl(core_lock_t lock) { pi_mutex_unlock((pi_mutex_t *) lock); }
+void core_lock_destroy_impl(core_lock_t lock) { pi_mutex_destroy((pi_mutex_t *) lock); }
+
+void pi_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
+    pi_init_no_reboot();
+    core_lock_init(&core_lock_create_impl, &core_lock_lock_impl, &core_lock_unlock_impl, &core_lock_destroy_impl);
+    platform_init_with_threads(main, argc, argv);
+}
 
 class PiThreadWrapper : public PiThread {
 public:

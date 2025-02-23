@@ -184,11 +184,16 @@ ST7796S::ST7796S(SPI *spi, Output *RST, Output *BL) : spi(spi), RST(RST), BL(BL)
     set_brightness(0);
 
     reset();
+
+    spi->lock();
+
     init_reg();
     init_scan_direction();
     write_reg(0x11);   // sleep out ?
     ms_sleep(120);
     write_reg(0x29);   // turn on the lcd display
+
+    spi->unlock();
 
     set_brightness(1);
 }
@@ -216,6 +221,8 @@ void ST7796S::set_brightness(double brightness)
 }
 
 void ST7796S::draw(int x0, int y0, int x_end, int y_end, uint8_t *data) {
+    spi->lock();
     set_window(x0, y0, x_end, y_end);
     spi->write_data(data, (x_end - x0 + 1) * (y_end - y0 + 1) * BYTES_PER_PIXEL);
+    spi->unlock();
 }

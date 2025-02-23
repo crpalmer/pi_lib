@@ -11,23 +11,23 @@
 #include <linux/i2c-dev.h>
 
 const int MAX_FD = 4096;
-static int fd_bus[MAX_FD];
+const int MAX_BUS = 10;
 
-void (*i2c_lock_fn)(int bus) = NULL;
-void (*i2c_unlock_fn)(int bus) = NULL;
+static int fd_bus[MAX_FD];
+static core_lock lock[MAX_BUS];
 
 static void i2c_lock(int fd) {
     assert(fd < MAX_FD);
     int bus = fd_bus[fd];
     assert(bus >= 0);
-    if (i2c_lock_fn) i2c_lock_fn(bus);
+    core_lock_lock(lock[bus]);
 }
 
 static void i2c_unlock(int fd) {
     assert(fd < MAX_FD);
     int bus = fd_bus[fd];
     assert(bus >= 0);
-    if (i2c_unlock_fn) i2c_unlock_fn(bus);
+    core_lock_lock(lock[bus]);
 }
 
 void i2c_init_bus(int bus, int sda, int scl, int speed)
@@ -35,6 +35,7 @@ void i2c_init_bus(int bus, int sda, int scl, int speed)
     if (speed != 100*1000) {
 	fprintf(stderr, "Warning: Ignoring bus speed request.\n");
     }
+    lock[bus] = core_lock_create();
 }
 
 int i2c_open(int bus, int addr)

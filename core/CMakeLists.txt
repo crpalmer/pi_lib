@@ -11,6 +11,7 @@ target_sources(lib-pi INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/canvas-impl.cpp
   ${CMAKE_CURRENT_LIST_DIR}/console.cpp
   ${CMAKE_CURRENT_LIST_DIR}/consoles.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/core-lock.cpp
   ${CMAKE_CURRENT_LIST_DIR}/file.c
   ${CMAKE_CURRENT_LIST_DIR}/grove.cpp
   ${CMAKE_CURRENT_LIST_DIR}/il9341.cpp

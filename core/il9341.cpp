@@ -137,20 +137,20 @@ void IL9341::draw(int x0, int y0, int x_max, int y_max, uint8_t *raw) {
     uint8_t column_address[4] = { (uint8_t) (x0 >> 8), (uint8_t) (x0 & 0xff), (uint8_t) (x_max >> 8), (uint8_t) (x_max & 0xff) };
     uint8_t row_address[4] = { (uint8_t) (y0 >> 8), (uint8_t) (y0 & 0xff), (uint8_t) (y_max >> 8), (uint8_t) (y_max & 0xff) };
 
-    spi->write_cmd(COLUMN_ADDRESS_SET);
-    spi->write_data(column_address, 4);
-
-    spi->write_cmd(PAGE_ADDRESS_SET);
-    spi->write_data(row_address, 4);
-
+    spi->lock();
+    spi->write_cmd(COLUMN_ADDRESS_SET, column_address, 4);
+    spi->write_cmd(PAGE_ADDRESS_SET, row_address, 4);
     spi->write_cmd(MEMORY_WRITE);
     spi->write_data(raw, (x_max - x0 + 1)*(y_max - y0 + 1) * 2);
+    spi->unlock();
 }
 
 IL9341::IL9341(SPI *spi, Output *reset_pin, Output *backlight, int width, int height) : spi(spi), reset_pin(reset_pin), backlight(backlight), width(width), height(height) {
     backlight->off();
 
     reset();
+
+    spi->lock();
 
     for (int i = 0; i < n_init_cmds; i++) {
 	spi->write_cmd(init_cmds[i].cmd);
@@ -161,6 +161,8 @@ IL9341::IL9341(SPI *spi, Output *reset_pin, Output *backlight, int width, int he
     ms_sleep(150);
     spi->write_cmd(DISPLAY_ON);
     ms_sleep(150);
+
+    spi->unlock();
 
     backlight->on();
 }
