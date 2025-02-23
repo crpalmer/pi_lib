@@ -20,9 +20,7 @@ public:
 
     void set_pixel_raw(int x, int y, uint8_t *pixel) {
 	uint8_t *pixels = &buffer[(x + y * w) * bytes_per_pixel];
-	for (int i = 0; i < bytes_per_pixel; i++) {
-	    pixels[i] = pixel[bytes_per_pixel-i-1];
-	}
+	for (int i = 0; i < bytes_per_pixel; i++) pixels[i] = pixel[i];
     }
 
     virtual void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) = 0;

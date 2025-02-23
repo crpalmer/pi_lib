@@ -6,7 +6,7 @@
 #include "canvas-impl.h"
 
 #define WIDTH 160
-#define HEIGHT 120
+#define HEIGHT 128
 #define BYTES_PER_PIXEL 2
 
 class ST7735S_BufferedCanvas : public BufferedCanvas {
@@ -17,7 +17,7 @@ public:
     void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) override {
         uint16_t rgb = RGB16_of(r, g, b); 
 	uint8_t bytes[2];
-	bytes[0] = rgb >> 8;	
+	bytes[0] = rgb >> 8;
 	bytes[1] = rgb & 0xff;
 	set_pixel_raw(x, y, bytes);
     }
@@ -31,7 +31,7 @@ public:
     void set_pixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) override {
         uint16_t rgb = RGB16_of(r, g, b); 
 	uint8_t bytes[2];
-	bytes[0] = rgb >> 8;	
+	bytes[0] = rgb >> 8;
 	bytes[1] = rgb & 0xff;
 	set_pixel_raw(x, y, bytes);
     }
@@ -172,7 +172,7 @@ void ST7735S::init_scan_direction()
 {
     /* This set up to down, left to right */
     write_reg(0x36);
-    write_byte(0x20);
+    write_byte(0x60);
     ms_sleep(200);
 }
 
@@ -191,20 +191,27 @@ ST7735S::ST7735S(SPI *spi, Output *RST, Output *BL) : spi(spi), RST(RST), BL(BL)
 
 void ST7735S::set_window(unsigned char x, unsigned char y, unsigned char x_end, unsigned char y_end)
 {
+#if 1
 #define X_OFFSET 1
 #define Y_OFFSET 3
 
+    x += X_OFFSET;
+    y += Y_OFFSET;
+    x_end += X_OFFSET;
+    y_end += Y_OFFSET;
+#endif
+
     write_reg(0x2a);
-    write_byte(0);
-    write_byte(x + X_OFFSET);
-    write_byte(0);
-    write_byte(x_end + X_OFFSET);
+    write_byte(x >> 8);
+    write_byte(x & 0xff);
+    write_byte(x_end >> 8);
+    write_byte(x_end & 0xff);
 
     write_reg(0x2b);
-    write_byte(0);
-    write_byte(y + Y_OFFSET);
-    write_byte(0);
-    write_byte(y_end + Y_OFFSET);
+    write_byte(y >> 8);
+    write_byte(y & 0xff);
+    write_byte(y_end >> 8);
+    write_byte(y_end & 0xff);
 
     write_reg(0x2c);
 }
@@ -215,6 +222,6 @@ void ST7735S::set_brightness(double brightness)
 }
 
 void ST7735S::draw(int x0, int y0, int x_max, int y_max, uint8_t *data) {
-    set_window(x0, y0, x_max-1, y_max-1);
+    set_window(x0, y0, x_max, y_max);
     spi->write_data(data, (x_max - x0 + 1) * (y_max - y0 + 1) * BYTES_PER_PIXEL);
 }
