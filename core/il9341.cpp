@@ -103,7 +103,6 @@ public:
 	pixel[0] = rgb >> 8;
 	pixel[1] = rgb & 0xff;
 	set_pixel_raw(x, y, pixel);
-
     }
 };
 
