@@ -55,7 +55,9 @@ main()
 
     seed_random();
 
+    //Display *display = create_display(USE_ST7735S);
     Display *display = create_display(USE_ST7796S);
+    //Display *display = create_display(USE_IL9341);
     Canvas *canvas = display->create_canvas();
 
     w = canvas->get_width();
