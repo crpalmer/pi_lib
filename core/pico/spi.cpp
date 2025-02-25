@@ -28,7 +28,6 @@ void spi_unlock_bus(int bus) {
 
 SPI::SPI(int bus, int cs_pin, Output *dc) : bus(bus), dc(dc) {
     cs = new GPOutput(cs_pin);
-    gpio_set_function(cs_pin, GPIO_FUNC_SPI);
 }
 
 int SPI::write(const uint8_t *bytes, const int n) {
