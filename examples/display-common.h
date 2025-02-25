@@ -7,6 +7,9 @@
 #include "ssd1306.h"
 #include "st7735s.h"
 #include "st7796s.h"
+#if defined(DISPLAY_COMMON_THREADED) && defined(PLATFORM_pic0)
+#include "pico-sd-cards.h"
+#endif
 
 typedef enum { USE_SSD1306, USE_IL9341, USE_ST7735S, USE_ST7796S } which_display_t;
 
@@ -15,7 +18,7 @@ static Display *create_display(which_display_t which_display) {
         i2c_init_bus(1, 2, 3, 400*1000);
         return new SSD1306(1);
     } else {
-        spi_init_bus(1, 10, -1, 11, 10*1024*1024);
+	spi_init_bus(1, 10, 12, 11, 10*1024*1024);
 
         Output *bl = new GPOutput(6);
         Output *reset = new GPOutput(7);
@@ -26,7 +29,12 @@ static Display *create_display(which_display_t which_display) {
 	switch (which_display) {
         case USE_IL9341:  return new IL9341(spi, reset, bl);
         case USE_ST7735S: return new ST7735S(spi, reset, bl);
-        case USE_ST7796S: return new ST7796S(spi, reset, bl);
+        case USE_ST7796S:
+#if defined(DISPLAY_COMMON_THREADED) && defined(PLATFORM_pic0)
+	    pico_add_pico_board_sd_card("/sd0");
+	    pico_add_sd_card("/st7796", 1, 10, 11, 12, 5, 10*1024*1024);
+#endif
+	    return new ST7796S(spi, reset, bl);
 	default: return NULL;
         }
     }

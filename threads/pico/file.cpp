@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include "pi.h"
+#include "pico-sd-cards.h"
 
 #include "ff_headers.h"
 #include "ff_sddisk.h"
@@ -26,27 +27,28 @@ static PiMutex *ff_lock;
 static inline void lock() { if (ff_lock) ff_lock->lock(); }
 static inline void unlock() { if (ff_lock) ff_lock->unlock(); }
 
-static const char *root = "/sd0";
+static const char *cwd;
 
-static const char *filename_to_sd_filename(const char *fname) {
-    if (fname[0] != '/') return fname;
-    if (strncmp(fname, root, strlen(root)) == 0) {
-	if (strlen(fname) == strlen(root)) return fname;
-	if (fname[strlen(root)] == '/') return fname;
+static char *fix_fname(const char *fname, const char *fname2 = NULL) {
+    char *fixed_fname;
+
+    if (fname2) {
+	fixed_fname = (char *) fatal_malloc(strlen(fname) + 1 + strlen(fname2) + 1);
+	sprintf(fixed_fname, "%s/%s", fname, fname2);
+    } else {
+	fixed_fname = fatal_strdup(fname);
     }
-    char *full_fname = (char *) fatal_malloc(strlen(root) + strlen(fname) + 1);
-    sprintf(full_fname, "%s%s", root, fname);
+
+    assert(fixed_fname[0]);
+
     int i = 1, j = 1;
-    while (full_fname[i]) {
-	if (full_fname[i] != '/' || full_fname[j-1] != '/') full_fname[j++] = full_fname[i];
+    while (fixed_fname[i]) {
+	if (fixed_fname[i] != '/' || fixed_fname[j-1] != '/') fixed_fname[j++] = fixed_fname[i];
 	i++;
     }
-    full_fname[j] = '\0';
-    return full_fname;
-}
+    fixed_fname[j] = '\0';
 
-static void full_fname_free(const char *fname, const char *full_fname) {
-    if (fname != full_fname) fatal_free((void *) full_fname);
+    return fixed_fname;
 }
 
 static void init_once() {
@@ -56,19 +58,34 @@ static void init_once() {
     if (! is_init) {
 	is_init = true;
 
-	FF_Disk_t *pxDisk = FF_SDDiskInit("sd0");
-	assert(pxDisk);
-	FF_Error_t xError = FF_SDDiskMount(pxDisk);
-	if (FF_isERR(xError) != pdFALSE) {
-	    consoles_fatal_printf("FF_SDDiskMount: %s\n", (const char *)FF_GetErrMessage(xError));
-	}
-	FF_FS_Add(root, pxDisk);
-	uint64_t mb;
-	unsigned pct;
+	if (pico_get_n_sd_cards() == 0) pico_add_pico_board_sd_card("/sd0");
 
-	getFree(pxDisk, &mb, &pct);
-	consoles_printf("%s: mount - %u free MB (%u %%)\n", root, (unsigned) mb, pct);
-	ff_chdir(root);
+	bool first_mount = true;
+
+	for (int i = 0; i < pico_get_n_sd_cards(); i++) {
+	    const char *root = pico_get_sd_card_root(i);
+	    FF_Disk_t *pxDisk = FF_SDDiskInit(root);
+	    if (! pxDisk) {
+		consoles_printf("Failed to initialize disk: %s\n", root);
+		continue;
+	    }
+	    FF_Error_t xError = FF_SDDiskMount(pxDisk);
+	    if (FF_isERR(xError) != pdFALSE) {
+		consoles_printf("Failed to mount: %s error %s\n", root, (const char *)FF_GetErrMessage(xError));
+		continue;
+	    }
+	    FF_FS_Add(root, pxDisk);
+	    uint64_t mb;
+	    unsigned pct;
+
+	    getFree(pxDisk, &mb, &pct);
+	    consoles_printf("%s: mount - %u free MB (%u %%)\n", root, (unsigned) mb, pct);
+	    if (first_mount) {
+		cwd = root;
+		ff_chdir(cwd);
+		first_mount = false;
+	    }
+	}
     }
     init_lock->unlock();
 }
@@ -80,16 +97,17 @@ C_DECL void file_init(void) {
 off_t file_size(const char *fname) {
     init_once();
 
-    FF_Stat_t stat;
-    off_t size;
-    const char *full_fname = filename_to_sd_filename(fname);
+    char *fixed_fname = fix_fname(fname);
 
     lock();
-    if (ff_stat(full_fname, &stat) >= 0) size = stat.st_size;
+    FF_Stat_t stat;
+    off_t size;
+    if (ff_stat(fname, &stat) >= 0) size = stat.st_size;
     else size = -1;
     unlock();
 
-    full_fname_free(fname, full_fname);
+    fatal_free(fixed_fname);
+
     return size;
 }
 
@@ -98,29 +116,30 @@ file_exists(const char *fname)
 {
     init_once();
 
-    FF_Stat_t stat;
-    const char *full_fname = filename_to_sd_filename(fname);
-
+    char *fixed_fname = fix_fname(fname);
+    
     lock();
-    bool ret = ff_stat(full_fname, &stat) >= 0;
+    FF_Stat_t stat;
+    bool exists = ff_stat(fixed_fname, &stat) >= 0;
     unlock();
 
-    full_fname_free(fname, full_fname);
-    return ret;
+    fatal_free(fixed_fname);
+
+    return exists;
 }
 
 C_DECL file_t *file_open(const char *fname, const char *mode) {
     init_once();
 
-    const char *full_fname = filename_to_sd_filename(fname);
+    char *fixed_fname = fix_fname(fname);
 
     lock();
-    file_t *file = ff_fopen(full_fname, mode);
+    file_t *file = ff_fopen(fixed_fname, mode);
     unlock();
 
-    if (trace_open_close) printf("%s: %s (%s) -> %p\n", __func__, fname, full_fname, file);
+    if (file && trace_open_close) printf("%s: %s -> %p\n", __func__, fixed_fname, file);
 
-    full_fname_free(fname, full_fname);
+    fatal_free(fixed_fname);
 
     return file;
 }
@@ -215,23 +234,33 @@ C_DECL bool file_is_eof(file_t *file) {
 }
 
 bool FileForeach::foreach(const char *dir) {
-    const char *fmt;
-
     init_once();
 
-    if (dir == NULL || dir[0] == 0) dir = root;
-    if (dir[strlen(dir) - 1] == '/') fmt = "%s%s";
-    else fmt = "%s/%s";
+    if (dir == NULL || dir[0] == '\0') dir = cwd;
+
+    if (strcmp(dir, "/") == 0) {
+	for (int i = 0; i < pico_get_n_sd_cards(); i++) {
+	    directory(pico_get_sd_card_root(i));
+	}
+	return true;
+    }
+
+    char *fixed_dir = fix_fname(dir);
 
     FF_FindData_t data;
-    if (ff_findfirst(dir, &data) != 0) return false;
+
+    int ret = ff_findfirst(fixed_dir, &data);
+    fatal_free(fixed_dir);
+    if (ret != 0) return false;
+
     do {
 	if ((data.ucAttributes & (FF_FAT_ATTR_HIDDEN | FF_FAT_ATTR_SYSTEM)) != 0) continue;
 	if (strcmp(data.pcFileName, ".") == 0 || strcmp(data.pcFileName, "..") == 0) continue;
-	char *fullname = maprintf(fmt, dir, data.pcFileName);
-	if ((data.ucAttributes & FF_FAT_ATTR_DIR) != 0) directory(fullname);
-	else file(fullname);
-	free(fullname);
+	char *fixed_fname = fix_fname(dir, data.pcFileName);
+	if ((data.ucAttributes & FF_FAT_ATTR_DIR) != 0) directory(fixed_fname);
+	else file(fixed_fname);
+	fatal_free(fixed_fname);
     } while (ff_findnext(&data) == 0);
+
     return true;
 }

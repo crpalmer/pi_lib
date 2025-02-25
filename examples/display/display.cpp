@@ -17,11 +17,29 @@
 
 static char buf[128];
 
+static class LS : public FileForeach {
+    bool file(const char *file_name) override {
+	off_t size = file_size(file_name);
+	if (size >= 1024*1024*1024) printf("%4dGB", (int) ((size + 512*1024*1024) / (1024*1024*1024)));
+	else if (size >= 1024*1024) printf("%4dMB", (int) ((size + 512*1024) / (1024*1024)));
+	else if (size >= 1024) printf("%4dKB", (int) ((size + 512) / 1024));
+	printf(" %s\n", file_name);
+	return true;
+    }
+
+    bool directory(const char *dir_name) override {
+	printf("<dir>  %s\n", dir_name);
+	return true;
+    }
+} ls;
+
 static void threads_main(int argc, char **argv) {
-    Display *display = create_display(USE_ST7735S);
-    //Display *display = create_display(USE_ST7796S);
+    //Display *display = create_display(USE_ST7735S);
+    Display *display = create_display(USE_ST7796S);
     //Display *display = create_display(USE_IL9341);
+printf("created display\n");
     Canvas *canvas = display->create_canvas(true);
+printf("created canvas\n");
 
     while (pi_readline(buf, sizeof(buf)) != NULL) {
 	double pct;
@@ -50,6 +68,10 @@ static void threads_main(int argc, char **argv) {
 	    } else {
 		printf("9seg r g b digits\n");
 	    }
+	} else if (strcmp(buf, "ls") == 0) {
+	    if (! ls.foreach()) perror(".");
+	} else if (strncmp(buf, "ls ", 3) == 0) {
+	    if (! ls.foreach(&buf[3])) perror(&buf[3]);
 	} else if (strncmp(buf, "png ", 4) == 0) {
 	    Image *png = image_png_load(&buf[4]);
 	    if (png) {
