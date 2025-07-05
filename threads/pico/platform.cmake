@@ -1,7 +1,5 @@
-if ("${PICO_BOARD}" STREQUAL pico OR "${PICO_BOARD}" STREQUAL pico_w)
+if ("${PICO_BOARD}" STREQUAL pico OR "${PICO_BOARD}" STREQUAL pico_w OR "${PICO_BOARD}" STREQUAL pico2 OR "${PICO_BOARD}" STREQUAL pico2_w)
   include(${EXTERNAL_DIR}/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
-elseif ("${PICO_BOARD}" STREQUAL pico2 OR "${PICO_BOARD}" STREQUAL pico2_w)
-  include(${EXTERNAL_DIR}/FreeRTOS-Kernel/portable/ThirdParty/GCC/RP2350_ARM_NTZ/FreeRTOS_Kernel_import.cmake)
 else()
    message(FATAL_ERROR "Failed to identify the FreeRTOS kernel")
 endif()
