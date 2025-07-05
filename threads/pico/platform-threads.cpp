@@ -169,7 +169,7 @@ static const char *task_state_to_str(eTaskState state) {
     case eInvalid: return "invl";
     }
     assert(0);
-    return NULL;
+    return "????";
 }
 
 #include <malloc.h>
