@@ -1,3 +1,7 @@
+/** @defgroup Net Network related tools
+ * @{
+ */
+
 #ifndef __NET_H__
 #define __NET_H__
 
@@ -37,5 +41,7 @@ void net_platform_init();
 #ifdef __cplusplus
 };
 #endif
+
+/** @} */
 
 #endif
