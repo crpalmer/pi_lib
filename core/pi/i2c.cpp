@@ -3,6 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include "pi.h"
+#include "core-lock.h"
 #include "i2c.h"
 
 #include <unistd.h>
@@ -14,7 +15,7 @@ const int MAX_FD = 4096;
 const int MAX_BUS = 10;
 
 static int fd_bus[MAX_FD];
-static core_lock lock[MAX_BUS];
+static core_lock_t lock[MAX_BUS];
 
 static void i2c_lock(int fd) {
     assert(fd < MAX_FD);

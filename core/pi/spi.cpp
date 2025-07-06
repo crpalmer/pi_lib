@@ -5,27 +5,27 @@
 
 #define MAX_BUS 10
 static int bus_speed[2] = { 10*1000*1000, 10*1000*1000 };
-static core_lock_t lock[MAX_BUS];
+static core_lock_t locks[MAX_BUS];
 
 void spi_init_bus(int bus, int sclk, int miso, int mosi, int speed) {
     assert(bus == 0 || bus == 1);
     bus_speed[bus] = speed;
-    lock[bus] = core_lock_create();
+    locks[bus] = core_lock_create();
 }
 
 void spi_lock_bus(int bus) {
-    core_lock_lock(lock[bus]);
+    core_lock_lock(locks[bus]);
 }
 
 void spi_unlock_bus(int bus) {
-    core_lock_unlock(lock[bus]);
+    core_lock_unlock(locks[bus]);
 }
 
 SPI::SPI(int bus, int cs_pin, Output *dc) : dc(dc) {
     assert(bus == 0 || bus == 1);
     bus = spiOpen(bus, bus_speed[bus], 0);
     assert(bus >= 0);
-    core_lock = core_lock_create();
+    locks[bus] = core_lock_create();
 }
 
 // TODO: Add a destructor

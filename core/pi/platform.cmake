@@ -2,7 +2,6 @@ target_sources(lib-pi INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/call-every.c
   ${CMAKE_CURRENT_LIST_DIR}/file.cpp
   ${CMAKE_CURRENT_LIST_DIR}/i2c.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/image-png.cpp
   ${CMAKE_CURRENT_LIST_DIR}/maestro.c
   ${CMAKE_CURRENT_LIST_DIR}/neopixel-pi.cpp
   ${CMAKE_CURRENT_LIST_DIR}/nes.c
