@@ -10,7 +10,9 @@
 #define MG_SOCK_LISTEN_BACKLOG_SIZE 8
 
 #include "net.h"
+#include <lwip/sockets.h>
 #include <fcntl.h>
+#include <stdarg.h>
 
 #else
 

@@ -18,6 +18,7 @@
 
 #define LWIP_DHCP                 1
 #define LWIP_DNS                  1
+#define LWIP_IGMP		  1
 #define TCP_LISTEN_BACKLOG        1
 
 /* API Features */
