@@ -51,7 +51,7 @@ private:
 class MemoryBuffer : public Buffer {
 public:
     MemoryBuffer(const void *buffer, size_t n) : buffer(buffer), n(n), at(0) {}
-    MemoryBuffer(std::string text) : buffer(text.c_str()), n(text.length()), at(0) {}
+    MemoryBuffer(const char *str) : buffer(str), n(strlen(str)), at(0) {}
     ~MemoryBuffer() override;
     bool is_eof() override { return at == n; }
     size_t read(void *buf, size_t buf_size) override;
