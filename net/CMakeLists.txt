@@ -8,6 +8,7 @@ if("${PLATFORM}" STREQUAL "pico")
   include("${CMAKE_CURRENT_LIST_DIR}/bluetooth/bluetooth.cmake")
 
   target_sources(lib-pi-net INTERFACE
+    ${CMAKE_CURRENT_LIST_DIR}/pico-battery.c
     ${CMAKE_CURRENT_LIST_DIR}/wifi.c
   )
 
