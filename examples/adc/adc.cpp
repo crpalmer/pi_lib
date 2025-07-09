@@ -2,7 +2,7 @@
 #include "pi.h"
 #include "time-utils.h"
 
-//#define USE_ADS1115
+#define USE_ADS1115
 #define PERCENT_ONLY 1
 
 #ifdef USE_ADS1115
