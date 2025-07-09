@@ -1,5 +1,7 @@
 add_library(lib-pi-net INTERFACE)
 
+target_compile_options(lib-pi-net INTERFACE -D_GNU_SOURCE)
+
 target_compile_definitions(lib-pi-net INTERFACE "WIFI_SSID=\"$ENV{WIFI_SSID}\"" "WIFI_PASSWORD=\"$ENV{WIFI_PASSWORD}\"")
 target_compile_definitions(lib-pi-net INTERFACE "CYW43_CONFIG_FILE=\"cyw43_config_pico.h\"")
 target_compile_definitions(lib-pi-net INTERFACE "MG_ARCH=MG_ARCH_CUSTOM")
@@ -26,6 +28,7 @@ target_include_directories(lib-pi-net INTERFACE
 target_sources(lib-pi-net INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/httpd-filesystem-handler.cpp
   ${CMAKE_CURRENT_LIST_DIR}/httpd-server.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/mqtt.cpp
   ${CMAKE_CURRENT_LIST_DIR}/net.c
   ${CMAKE_CURRENT_LIST_DIR}/net-console.cpp
   ${CMAKE_CURRENT_LIST_DIR}/net-listener.cpp
