@@ -80,7 +80,7 @@ printf("created canvas\n");
 		delete png;
 	    }
 	} else if (strcmp(buf, "free") == 0) {
-            printf("%d free bytes\n", pi_threads_get_free_ram());
+            printf("%d free bytes\n", (int) pi_threads_get_free_ram());
 	} else if (strcmp(buf, "bootsel") == 0) {
             pi_reboot_bootloader();
 	} else if (buf[0] == '?') {
