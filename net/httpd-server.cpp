@@ -25,7 +25,7 @@ const int buffer_size = 32*1024;
 
 class HttpdConnection {
 public:
-    HttpdConnection(struct mg_connection *c, int size = buffer_size) : c(c), size(size) {
+    HttpdConnection(class HttpdServer *httpd, struct mg_connection *c, int size = buffer_size) : httpd(httpd), c(c), size(size) {
 	buffer = fatal_malloc(size);
 	lock = new PiMutex();
 	cond = new PiCond();
@@ -49,7 +49,7 @@ public:
 	assert(response == NULL);
 	response = new_response;
 	enqueue_is_active = true;
-	if (response) HttpdServer::get()->loader_enqueue(this);
+	if (response) httpd->loader_enqueue(this);
     }
 
     int get_id() { return c->id; }
@@ -66,7 +66,7 @@ public:
 	cond->signal();
 	lock->unlock();
 
-	HttpdServer::get()->wakeup(this);
+	httpd->wakeup(this);
     }
 
     bool is_eof() {
@@ -100,7 +100,7 @@ public:
 	    } else {
 		assert(! enqueue_is_active);
 		enqueue_is_active = true;
-		HttpdServer::get()->loader_enqueue(this);
+		httpd->loader_enqueue(this);
 	    }
 	}
 
@@ -117,6 +117,7 @@ private:
     }
 
 private:
+    class HttpdServer *httpd;
     PiMutex *lock;
     PiCond *cond;
     struct mg_connection *c;
@@ -168,18 +169,18 @@ private:
     std::list<HttpdConnection *> waiting;
 };
 
-HttpdServer::HttpdServer() {
+HttpdServer::HttpdServer(int port, const char *name) : PiThread(name), port(port) {
     state = (state_t *) fatal_malloc(sizeof(*state));
     memset(state, 0, sizeof(*state));
     loader = new HttpdResponseLoader();
 }
 
-void HttpdServer::start(int port) {
+void HttpdServer::main() {
     mg_log_set(MG_LL_INFO);
     mg_mgr_init(&state->mgr);
     mg_wakeup_init(&state->mgr);
     std::string listen_url = "http://0.0.0.0:" + std::to_string(port);
-    if (mg_http_listen(&state->mgr, listen_url.c_str(), (mg_event_handler_t) HttpdServer::mongoose_callback_proxy, &state->mgr) == NULL) {
+    if (mg_http_listen(&state->mgr, listen_url.c_str(), (mg_event_handler_t) HttpdServer::mongoose_callback_proxy, this) == NULL) {
 	consoles_fatal_printf("Couldn't start the web server.\n");
     }
     while (true) mg_mgr_poll(&state->mgr, 10000);
@@ -210,7 +211,7 @@ void HttpdServer::mongoose_callback(struct mg_connection *c, int ev, void *ev_da
 		delete response;
 	    } else {
 		if (connections[c->id] == NULL) {
-		    connections[c->id] = new HttpdConnection(c);
+		    connections[c->id] = new HttpdConnection(this, c);
 		}
 		connections[c->id]->new_response(response);
 	    }
@@ -297,3 +298,9 @@ HttpdResponse *HttpdDebugHandler::open(std::string path) {
     if (path == "free") return new HttpdResponse(std::to_string(pi_threads_get_free_ram()));
     return new HttpdResponse("Invalid request [" + path + "]");
 }
+
+void HttpdServer::mongoose_callback_proxy(struct mg_connection *c, int ev, void *ev_data) {
+    class HttpdServer *httpd = (HttpdServer *) c->fn_data;
+    httpd->mongoose_callback(c, ev, ev_data);
+}
+

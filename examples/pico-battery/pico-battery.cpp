@@ -17,7 +17,7 @@
 class BatteryHandler : public HttpdFilenameHandler {
 public:
     HttpdResponse *open() override {
-	sprintf(str, "Status:  %s\nVoltage: %.2f V\n", pico_is_on_battery() ? "battery" : "powered", pico_get_vsys());
+	sprintf(str, "Status:  %s\nVoltage: %.2f V\nRAM    : %u\n", pico_is_on_battery() ? "battery" : "powered", pico_get_vsys(), pi_threads_get_free_ram());
 	HttpdResponse *response = new HttpdResponse(new MemoryBuffer(str));
 	response->set_content_type("text/plain");
 	return response;
@@ -33,7 +33,10 @@ threads_main(int argc, char **argv)
     wifi_init(CYW43_HOST_NAME);
     wifi_wait_for_connection();
 
-    auto httpd = HttpdServer::get();
+    MQTT *mqtt = new MQTT();
+    mqtt->start();
+
+    HttpdServer *httpd = new HttpdServer();
     httpd->add_file_handler("/", new HttpdRedirectHandler("/index.html"));
     httpd->add_file_handler("/index.html", new BatteryHandler());
     httpd->start();

@@ -1,6 +1,8 @@
 #ifndef __HTTPD_SERVER_H__
 #define __HTTPD_SERVER_H__
 
+#include "pi-threads.h"
+
 /** @defgroup HTTP HTTP Server
  *  @ingroup Net
  *
@@ -8,6 +10,7 @@
  */
 
 #include "buffer.h"
+#include "pi-threads.h"
 
 #include <map>
 #include <string>
@@ -41,6 +44,9 @@ public:
      */
 
     HttpdResponse(std::string string) : HttpdResponse(new StrdupBuffer(string)) { }
+
+    /** Destructor
+     */
 
     ~HttpdResponse() { delete buffer; }
 
@@ -182,15 +188,9 @@ public:
  * handle whole hierarchy prefixes.
  */
 
-class HttpdServer {
+class HttpdServer : public PiThread {
 public:
-    /** Get the \c HttpdServer singleton
-     */
-
-    static HttpdServer *get() {
-	static HttpdServer instance;
-	return &instance;
-    }
+    HttpdServer(int port = 80, const char *name = "httpd");
 
     /** Add a handler for a specific path.
      *
@@ -227,19 +227,12 @@ public:
 	prefix_handlers[prefix] = handler;
     }
 
-    /** Actually start the web server running.
-     *
-     * @param port - The port on which to listen for HTTP connections
+    /** Main code block executed when the thread is started.
      */
 
-    void start(int port = 80);
+    void main(void) override;
 
     /// @cond INTERNAL
-
-    static void mongoose_callback_proxy(struct mg_connection *c, int ev, void *ev_data) {
-	get()->mongoose_callback(c, ev, ev_data);
-    }
-
 protected:
     void loader_enqueue(HttpdConnection *connection);
     void wakeup(HttpdConnection *connection);
@@ -252,11 +245,12 @@ private:
     std::map<int, HttpdConnection *> connections;
     struct httpd_internal_stateS *state;
     class HttpdResponseLoader *loader;
+    int port;
 
 private:
-    HttpdServer();
     void mongoose_callback(struct mg_connection *c, int ev, void *ev_data);
     HttpdResponse *get_uri(std::string uri);
+    static void mongoose_callback_proxy(struct mg_connection *c, int ev, void *ev_data);
 
     /// @endcond
 };

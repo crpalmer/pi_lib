@@ -13,7 +13,9 @@ void wifi_wait_for_connection();
 
 #else
 
-static inline void wifi_init(const char *hostname) { }
+#include "net.h"
+
+static inline void wifi_init(const char *hostname) { net_platform_init(); }
 static inline bool wifi_is_connected() { return true; }
 static inline void wifi_wait_for_connection() {}
 
