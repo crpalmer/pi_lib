@@ -103,7 +103,7 @@ Image *image_png_load(const char *fname) {
 	} else if (n_consumed == 0) {
 	    break;
 	} else {
-	    if (n_block < n_consumed) memmove(block, &block[n_consumed], n_block - n_consumed);
+	    if (n_block > n_consumed) memmove(block, &block[n_consumed], n_block - n_consumed);
 	    n_block -= n_consumed;
 	}
     }
