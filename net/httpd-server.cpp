@@ -37,6 +37,8 @@ public:
     ~HttpdConnection() {
 	wait_for_no_enqueues();
 
+	if (response) delete response;
+	delete cond;
 	delete lock;
 	free(buffer);
     }
@@ -133,6 +135,11 @@ public:
 	start();
     }
 
+    ~HttpdResponseLoader() {
+	delete cond;
+	delete lock;
+    }
+
     void main(void) override {
 	while (true) {
 	    lock->lock();
@@ -200,6 +207,7 @@ void HttpdServer::mongoose_callback(struct mg_connection *c, int ev, void *ev_da
 	    if (raw) {
 		mg_send(c, raw, response->get_n());
 	        c->is_resp = 0;
+		delete response;
 	    } else {
 		if (connections[c->id] == NULL) {
 		    connections[c->id] = new HttpdConnection(c);
