@@ -22,6 +22,8 @@ public:
 	    printf("publish %s | %s failed, not connected\n", topic, msg);
 	} else {
 	    struct mg_mqtt_opts pub_opts = {
+	    .user = (char *) "ween",
+	    .pass = (char *) "ween",
 		.topic = mg_str(topic),
 		.message = mg_str(msg),
 		.qos = 1,
@@ -93,6 +95,8 @@ void MQTT::alert(const char *topic, const char *msg) {
 void MQTT::reconnect() {
     if (! state->connection) {
 	struct mg_mqtt_opts opts = {
+	    .user = mg_str("ween"),
+	    .pass = mg_str("ween"),
 	    .topic = mg_str("topic"),
 	    .message = mg_str("bye"),
 	    .qos = 1,
