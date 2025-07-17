@@ -82,8 +82,12 @@ void MQTT::callback_proxy(struct mg_connection *c, int ev, void *ev_data) {
 }
 
 void MQTT::publish(const char *topic, const char *msg) {
-    MQTTAction *action = new MQTTPublish(topic, msg);
-    mg_wakeup(&state->mgr, state->connection->id, &action, sizeof(action));
+    if (! state->connection) {
+	fprintf(stderr, "mqtt: not publishing %s / %s (not connected).\n", topic, msg);
+    } else {
+	MQTTAction *action = new MQTTPublish(topic, msg);
+	mg_wakeup(&state->mgr, state->connection->id, &action, sizeof(action));
+    }
 }
 
 void MQTT::alert(const char *topic, const char *msg) {
