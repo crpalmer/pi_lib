@@ -2,7 +2,7 @@
 #include "pi.h"
 #include "stepper.h"
 
-Stepper::Stepper(Output *dir, Output *step, double steps_per_mm, const char *name) : PiThread(name), dir(dir), step(step), mm_per_step(1.0 / steps_per_mm) {
+Stepper::Stepper(Output *dir, Output *step, double steps_per_mm, const char *name) : PiThread(name), dir(dir), step(step), steps_per_mm(steps_per_mm), mm_per_step(1.0 / steps_per_mm) {
     lock = new PiMutex();
     cond = new PiCond();
     start(5);
@@ -17,23 +17,20 @@ void Stepper::main() {
     lock->lock();
     while (true) {
 	while (! active) {
-	    printf("waiting\n");
 	    cond->wait(lock);
-	    printf("going\n");
 	}
+	double us_to_sleep = (1000*1000.0) / (last_feed * steps_per_mm) / 2.0; 
 	lock->unlock();
-	printf("dir %d\n", target > pos);
 	dir->set(target > pos);
 	while (fabs(target - pos) > mm_per_step) {
 	    step->on();
-	    ms_sleep(1);
+	    ms_sleep((us_to_sleep+500)/1000);
 	    step->off();
 	    if (pos < target) pos += mm_per_step;
 	    else pos -= mm_per_step;
-	    ms_sleep(1);
+	    ms_sleep(us_to_sleep/1000);
 	}
 	lock->lock();
-	printf("done\n");
 	active = false;
 	cond->signal();
     }
@@ -41,7 +38,8 @@ void Stepper::main() {
 
 void Stepper::go(double dest, double feed, bool async) {
     lock->lock();
-    printf("move to %f\n", dest);
+    if (feed == 0) feed = last_feed;
+    else last_feed = feed;
     while (active) {
 	cond->wait(lock);
     }

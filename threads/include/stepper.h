@@ -22,6 +22,7 @@ private:
     Output *dir, *step;
     Input *end_stop = NULL;
 
+    double steps_per_mm;
     double mm_per_step;
     double low = 0;
     double high = DBL_MAX;
