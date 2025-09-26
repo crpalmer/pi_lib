@@ -19,3 +19,6 @@
 [submodule "external/pngle"]
 	path = external/pngle
 	url = git@github.com:kikuchan/pngle.git
+[submodule "external/PicoStepper"]
+	path = external/PicoStepper
+	url = git@github.com:crpalmer/PicoStepper

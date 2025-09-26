@@ -19,4 +19,5 @@ target_include_directories(lib-pi-threads INTERFACE ${CMAKE_CURRENT_LIST_DIR}/in
 target_link_libraries(lib-pi-threads INTERFACE
     lib-pi
     FreeRTOS+FAT+CLI
+    picostepper
 )

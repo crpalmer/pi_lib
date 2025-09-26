@@ -4,10 +4,11 @@
 #include <cfloat>
 #include "io.h"
 #include "pi-threads.h"
+#include "picostepper.h"
 
-class Stepper : PiThread {
+class Stepper : public PiThread {
 public:
-    Stepper(Output *dir, Output *step, double steps_per_mm, const char *name = "stepper");
+    Stepper(int base_pin, double steps_per_mm, const char *name = "stepper");
     ~Stepper();
 
     void main() override;
@@ -19,7 +20,6 @@ public:
     void go(double pos_mm, double feed = 0, bool async = true);
 
 private:
-    Output *dir, *step;
     Input *end_stop = NULL;
 
     double steps_per_mm;
@@ -35,6 +35,7 @@ private:
     double target = 0;
     bool   active = false;
 
+    PicoStepper device;
     PiMutex *lock;
     PiCond *cond;
 };
