@@ -1,6 +1,7 @@
 #ifndef __STDOUT_WRITER_H__
 #define __STDOUT_WRITER_H__
 
+#include <string.h>
 #include "writer.h"
 
 class StdoutWriter : public Writer {
