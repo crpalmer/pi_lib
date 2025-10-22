@@ -23,6 +23,7 @@ void Physics::set_max_velocity(double new_max_v) {
 }
 
 double Physics::start_motion(double pos0, double pos_n) {
+    clock->start();
     start_pos = pos0;
     target_pos = pos_n;
     update_model();
