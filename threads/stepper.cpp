@@ -31,7 +31,8 @@ void Stepper::main() {
 	lock->unlock();
 	int n_steps = fabs(target - pos) * steps_per_mm;
 	bool direction = target > pos;
-	printf("gen %d steps in direction %d with %f (%u) delay\n", n_steps, direction, us_to_sleep, delay);
+	//printf("go from %lf to %lf @ %lf\n", pos, target, last_feed);
+	//printf("gen %d steps in direction %d with %f (%u) delay\n", n_steps, direction, us_to_sleep, delay);
 	picostepper_set_async_direction(device, direction);
 	picostepper_set_async_delay(device, delay);
 	picostepper_move_async(device, n_steps, move_finished, this);
@@ -66,6 +67,20 @@ async = false;
     lock->unlock();
 }
 
-void set_endstop(Input *end_stop, double low, double high, bool is_low = true) {}
+void Stepper::set_end_stop(Input *end_stop) {
+    this->end_stop = end_stop;
+}
+
+bool Stepper::home(double homed_pos, double feed, double mm_per_check) {
+    if (! end_stop) return false;
+
+    while (! end_stop->get()) {
+	go(pos + mm_per_check, feed, false);
+    }
+    pos = target = homed_pos;
+
+    return true;
+}
+
 void set_acceleration(double mm_per_sec_squared) {}
 void set_jerk(double mm_per_sec) {}

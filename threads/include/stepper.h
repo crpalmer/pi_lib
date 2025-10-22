@@ -13,11 +13,15 @@ public:
 
     void main() override;
 
-    void set_endstop(Input *end_stop, double low, double high, bool is_low = true);
+    void set_end_stop(Input *end_stop);
+    bool home(double homed_pos = 0, double feed = 100, double mm_per_check = 0.1);
+
     void set_acceleration(double mm_per_sec_squared);
     void set_jerk(double mm_per_sec);
 
     void go(double pos_mm, double feed = 0, bool async = true);
+
+    double get_pos() { return pos; }
 
 private:
     Input *end_stop = NULL;
