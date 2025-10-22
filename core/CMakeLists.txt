@@ -24,6 +24,7 @@ target_sources(lib-pi INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/ssd1306.cpp
   ${CMAKE_CURRENT_LIST_DIR}/st7735s.cpp
   ${CMAKE_CURRENT_LIST_DIR}/st7796s.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/stepper.cpp
   ${CMAKE_CURRENT_LIST_DIR}/string-utils.c
   ${CMAKE_CURRENT_LIST_DIR}/random-utils.c
 )
