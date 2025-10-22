@@ -49,6 +49,10 @@ double Physics::get_v() {
     return v < max_v ? v : max_v;
 }
 
+double Physics::get_deceleration_t() {
+    return deccel_t;
+}
+
 bool Physics::is_done() {
     return get_pos() >= target_pos;
 }

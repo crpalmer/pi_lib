@@ -32,6 +32,8 @@ public:
 
     double get_pos();
     double get_v();
+    double get_deceleration_t();
+
     bool is_done();
 
 private:
