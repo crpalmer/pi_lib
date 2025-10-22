@@ -31,3 +31,7 @@ void ms_sleep(unsigned ms) {
 void pico_set_sleep_fn(sleep_fn_t new_sleep_fn) {
     sleep_fn = new_sleep_fn; 
 }
+
+void us_sleep(unsigned us) {
+    busy_wait_us(us);
+}

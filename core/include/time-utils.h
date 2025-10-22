@@ -62,6 +62,15 @@ void nano_sleep_until(struct timespec *t);
 
 void ms_sleep(unsigned ms);
 
+/** Sleep for a specified number of nanoseconds.
+ *
+ * Note: not currently implemented for the raspberry pi.
+ *
+ * \param us - The duration (in us) to sleep
+ */
+
+void us_sleep(unsigned us);
+
 /** Add the specified number of microseconds to a timespec.
  *
  * \param t - The timespec to increase
