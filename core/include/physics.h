@@ -7,7 +7,7 @@
 
 class PhysicsClock {
 public:
-    virtual ~PhysicsClock() = 0;
+    virtual ~PhysicsClock() {};
     virtual void start() = 0;
     virtual double get() = 0;
 };
