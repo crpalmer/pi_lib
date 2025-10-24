@@ -16,3 +16,10 @@ void ms_sleep(unsigned ms) {
 
     nanosleep(&ts, NULL);
 }
+
+void us_sleep(unsigned us) {
+    struct timespec t;
+    nano_gettime(&t);
+    nano_add_usec(&t, us);
+    nano_sleep_until(&t);
+}
