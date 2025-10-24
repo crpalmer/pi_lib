@@ -7,7 +7,9 @@ class Output {
 public:
      virtual ~Output() {}
      virtual void set(bool value) = 0;
+     virtual void pwm_enable(unsigned hz) { }
      virtual void pwm(double pct_on) { set(pct_on >= 0.5); }
+     virtual void pwm_disable() { }
      virtual void on() { set(is_inverted ? 0 : 1); }
      virtual void off() { set(is_inverted ? 1 : 0); }
      virtual void set_is_inverted(bool new_is_inverted = true) {
