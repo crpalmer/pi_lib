@@ -18,6 +18,15 @@ private:
      bool is_inverted = false;
 };
 
+class DummyOutput : public Output {
+public:
+    void set(bool value) override {}
+    void pwm(double pct) override {}
+    void on() override {}
+    void off() override {}
+    void set_is_inverted(bool b) {}
+};
+
 class InputNotifier {
 public:
     virtual void on_change(bool is_rising, bool is_falling) { on_change(); }
