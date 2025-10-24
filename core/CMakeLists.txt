@@ -27,6 +27,7 @@ target_sources(lib-pi INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/stepper.cpp
   ${CMAKE_CURRENT_LIST_DIR}/string-utils.c
   ${CMAKE_CURRENT_LIST_DIR}/random-utils.c
+  ${CMAKE_CURRENT_LIST_DIR}/tb6612.cpp
 )
 
 target_link_libraries(lib-pi INTERFACE
