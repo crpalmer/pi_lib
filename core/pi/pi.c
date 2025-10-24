@@ -13,12 +13,6 @@ pi_init(void)
 }
 
 void
-pi_init_no_reboot(void)
-{
-    pi_init();
-}
-
-void
 pi_abort(void)
 {
     fprintf(stderr, "pi: fatal error, exiting.\n");

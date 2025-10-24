@@ -21,7 +21,7 @@ extern "C" {
 #include <time.h>
 
 void pi_init(void);
-void pi_init_no_reboot();
+static inline void pi_init_no_reboot() { pi_init(); }
 
 char *pi_readline(char *buf, size_t buflen);
 

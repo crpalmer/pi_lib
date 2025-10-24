@@ -84,12 +84,6 @@ pi_abort()
 void
 pi_init(void)
 {
-    pi_init_no_reboot();
-}
-
-void
-pi_init_no_reboot(void)
-{
     stdio_init_all();
     adc_init();
     pi_gpio_init();
