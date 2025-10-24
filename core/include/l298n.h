@@ -4,7 +4,7 @@
 #include "io.h"
 #include "motor.h"
 
-class L298N : public motor_t {
+class L298N : public Motor {
 public:
     L298N(Output *en, Output *dir1, Output *dir2);
     void speed(double) override;

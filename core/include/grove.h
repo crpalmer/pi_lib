@@ -5,14 +5,14 @@
 #include "pi-gpio.h"
 #include "motor.h"
 
-class grove_motor_t;
+class GroveMotor;
 
 class GroveDC {
 public:
     GroveDC(unsigned addr);
     void direction(unsigned id, int dir);
     void speed(unsigned id, unsigned speed);
-    motor_t *get_motor(unsigned id);
+    GroveMotor *get_motor(unsigned id);
 
 protected:
     void set_speed();
@@ -42,9 +42,9 @@ private:
     unsigned phases;
 };
 
-class grove_motor_t : public motor_t {
+class GroveMotor : public Motor {
 public:
-    grove_motor_t(GroveDC *g, unsigned id) : g(g), id(id) { }
+    GroveMotor(GroveDC *g, unsigned id) : g(g), id(id) { }
     void speed(double speed) { g->speed(id, 255*speed); }
     void direction(bool forward) { g->direction(id, forward ? +1 : -1); }
 

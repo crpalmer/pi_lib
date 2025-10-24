@@ -3,9 +3,9 @@
 
 #include "time-utils.h"
 
-class motor_t {
+class Motor {
 public:
-    ~motor_t() { }
+    ~Motor() { }
     virtual void speed(double pct) = 0;
     virtual void direction(bool forward) = 0;
 
