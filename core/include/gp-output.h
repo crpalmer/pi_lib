@@ -14,7 +14,7 @@ public:
         pi_gpio_set_direction(gpio, PI_OUTPUT);
     }
 
-    void set(bool value) override {
+    void set_internal(bool value) override {
         pi_gpio_set(gpio, value);
     }
 

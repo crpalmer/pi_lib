@@ -28,7 +28,7 @@ private:
 class PCA9685_Output : public Output {
 public:
     PCA9685_Output(PCA9685 *parent, unsigned id) : parent(parent), id(id) {}
-    virtual void set(bool value) override { parent->set(id, value ? 1.0 : 0.0); }
+    virtual void set_internal(bool value) override { parent->set(id, value ? 1.0 : 0.0); }
     virtual void pwm(double pct) override { parent->set(id, pct); }
 
 private:

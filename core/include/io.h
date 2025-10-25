@@ -6,15 +6,18 @@
 class Output {
 public:
      virtual ~Output() {}
-     virtual void set(bool value) = 0;
+     void set(bool value) { set_internal(is_inverted ? !value : value); }
      virtual void pwm_enable(unsigned hz) { }
      virtual void pwm(double pct_on) { set(pct_on >= 0.5); }
      virtual void pwm_disable() { }
-     virtual void on() { set(is_inverted ? 0 : 1); }
-     virtual void off() { set(is_inverted ? 1 : 0); }
+     virtual void on() { set(true); }
+     virtual void off() { set(false); }
      virtual void set_is_inverted(bool new_is_inverted = true) {
 	is_inverted = new_is_inverted;
      }
+
+protected:
+    virtual void set_internal(bool value) = 0;
 
 private:
      bool is_inverted = false;
@@ -22,7 +25,7 @@ private:
 
 class DummyOutput : public Output {
 public:
-    void set(bool value) override {}
+    void set_internal(bool value) override {}
     void pwm(double pct) override {}
     void on() override {}
     void off() override {}

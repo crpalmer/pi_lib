@@ -120,7 +120,7 @@ public:
         this->pin = pin;
     }
 
-    void set(bool value) override { parent->set(bank, pin, value); }
+    void set_internal(bool value) override { parent->set(bank, pin, value); }
 
 private:
     MCP23017 *parent;
