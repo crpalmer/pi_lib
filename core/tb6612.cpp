@@ -4,7 +4,7 @@
 TB6612::TB6612(Output *standby, Output *dir1, Output *dir2, Output *pwm) : standby(standby), dir1(dir1), dir2(dir2), pwm(pwm) {
     standby->off();
     direction(true);
-    pwm->pwm_enable(50);
+    pwm->pwm_enable(50*1000);
 }
 
 void TB6612::direction(bool forward) {
