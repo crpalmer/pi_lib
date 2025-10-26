@@ -5,6 +5,7 @@
 #include "motor.h"
 
 class TB6612 : public Motor {
+public:
     TB6612(Output *standby, Output *dir1, Output *dir2, Output *pwm);
     void direction(bool forward) override;
     void speed(double speed) override;
