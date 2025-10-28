@@ -205,3 +205,16 @@ int pi_gpio_set_irq_handler(unsigned gpio, pi_gpio_irq_handler_t irq_handler, vo
 
     return 0;
 }
+
+int pi_gpio_pwm_enable(unsigned pin, unsigned hz) {
+    return false;
+}
+
+int pi_gpio_pwm_disable(unsigned pin) {
+    return false;
+}
+
+int pi_gpio_pwm_set_duty(unsigned pin, double value) {
+    pi_gpio_set(pin, value > 0.5);
+    return 0;
+}
