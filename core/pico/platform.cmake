@@ -31,6 +31,7 @@ pico_generate_pio_header(lib-pi ${CMAKE_CURRENT_LIST_DIR}/neopixel.pio)
 target_link_libraries(lib-pi INTERFACE
   pico_stdio
   pico_stdio_usb
+  pico_stdio_uart
   pico_stdlib
   hardware_adc
   hardware_i2c
