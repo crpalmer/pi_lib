@@ -17,6 +17,7 @@ public:
 
     const char *get_name() { return name; }
 
+    void yield() { }
     void pause();
     void resume();
     void resume_from_isr() { resume(); }

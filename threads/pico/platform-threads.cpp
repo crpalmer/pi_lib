@@ -74,6 +74,10 @@ void PiThread::thread_entry(void *vp) {
     delete t;
 }
 
+void PiThread::yield() {
+    taskYIELD();
+}
+
 void PiThread::pause() {
     ulTaskNotifyTakeIndexed(PI_THREAD_NOTIFY_INDEX, true, portMAX_DELAY);
 }

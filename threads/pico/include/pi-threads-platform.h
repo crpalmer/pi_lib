@@ -30,6 +30,7 @@ public:
     static void thread_entry(void *vp);
     virtual void main() = 0;
 
+    void yield();
     void pause();
     void resume();
     void resume_from_isr();
