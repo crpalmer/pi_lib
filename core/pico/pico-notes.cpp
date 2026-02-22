@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include "pi.h"
 #include "pi-gpio.h"
 #include "time-utils.h"
 

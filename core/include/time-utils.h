@@ -23,47 +23,14 @@ typedef uint64_t us_time_t;
 
 /// \endcond
 
+static inline void us_sleep(us_time_t us);
 static inline int us_elapsed_ms(const us_time_t *newer, const us_time_t *later);
 
-/** Fills the timespec with the current time.
- *
- * The time is as accurate as the system clock allows, down to nanosecond
- * precision.
- *
- * \param t - Location to store the time data
- */
+static inline void ms_sleep(unsigned int ms) {
+    us_sleep(ms*(us_time_t)1000);
+}
 
-void us_gettime(us_time_t *t);
-
-/** Sleep until the specified timespec.
- *
- * Sleeps until the some time at or beyond the specified timespec.
- * There is no guarantee how close it will be to the specified time 
- * when this function returns.
- *
- * If the specified timespec is in the past, the function will immediately
- * return.
- *
- * \param t - The timespec to sleep until
- */
-
-void us_sleep_until(us_time_t *t);
-
-/** Sleep for a specified number of milliseconds.
- *
- * \param ms - The duration (in ms) to sleep
- */
-
-void ms_sleep(unsigned ms);
-
-/** Sleep for a specified number of nanoseconds.
- *
- * Note: not currently implemented for the raspberry pi.
- *
- * \param us - The duration (in us) to sleep
- */
-
-void us_sleep(unsigned us);
+#include "platform-time-utils.h"
 
 /** Add the specified number of microseconds to a timespec.
  *

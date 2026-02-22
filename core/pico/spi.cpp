@@ -1,3 +1,4 @@
+#include "pi.h"
 #include "hardware/gpio.h"
 #include "hardware/spi.h"
 #include "core-lock.h"

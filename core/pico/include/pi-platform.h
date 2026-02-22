@@ -5,9 +5,6 @@
 extern "C" {
 #endif
 
-typedef void (*sleep_fn_t)(unsigned ms);
-
-void pico_set_sleep_fn(sleep_fn_t new_sleep_fn);
 void pico_set_rtc(time_t seconds_since_epoch);
 
 int pico_pre_set_irq();

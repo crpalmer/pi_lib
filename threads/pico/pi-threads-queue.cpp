@@ -1,3 +1,4 @@
+#include "pi.h"
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "consoles.h"

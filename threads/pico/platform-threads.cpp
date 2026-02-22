@@ -9,7 +9,7 @@
 #include "semphr.h"
 #include "task.h"
 
-static void rtos_sleep(unsigned ms) {
+void task_delay(unsigned int ms) {
     vTaskDelay(pdMS_TO_TICKS(ms));
 }
 
@@ -29,7 +29,6 @@ static void post_set_irq_fn(int old_affinity) {
 
 static void init_with_threads(void *main_as_vp) {
     malloc_lock_init();
-    pico_set_sleep_fn(rtos_sleep);
     pico_set_irq_hook_functions(pre_set_irq_fn, post_set_irq_fn);
     mem_set_get_task_name(get_task_name);
     file_init();

@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "pi.h"
 #include "i2c.h"
 #include "grove.h"
 

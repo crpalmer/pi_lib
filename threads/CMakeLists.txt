@@ -1,5 +1,9 @@
 add_library(lib-pi-threads INTERFACE)
 
+target_compile_definitions(lib-pi-threads INTERFACE
+  USING_LIBPI_THREADS
+)
+
 target_sources(lib-pi-threads INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/digital-counter.cpp
   ${CMAKE_CURRENT_LIST_DIR}/lights.cpp
