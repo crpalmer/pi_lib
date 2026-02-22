@@ -58,16 +58,16 @@ public:
      }
 
      unsigned get_with_debounce(unsigned ms = 1) {
-        nano_time_t start;
+        us_time_t start;
 	unsigned v = get_fast();
 
-        nano_gettime(&start);
+        us_gettime(&start);
         while (1) {
 	    double vv = get_fast();
 	    if (v != vv) {
 		v = vv;
-		nano_gettime(&start);
-            } else if (nano_elapsed_ms_now(&start) >= (int) ms) {
+		us_gettime(&start);
+            } else if (us_elapsed_ms_now(&start) >= (int) ms) {
 		return return_value(v);
 	    }
         }

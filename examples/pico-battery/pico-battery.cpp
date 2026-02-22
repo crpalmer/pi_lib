@@ -41,12 +41,12 @@ threads_main(int argc, char **argv)
     httpd->add_file_handler("/index.html", new BatteryHandler());
     httpd->start();
 
-    nano_time_t start;
-    nano_gettime(&start);
+    us_time_t start;
+    us_gettime(&start);
 
     while (1) {
 	char str[128];
-	sprintf(str, "%s,%u,%.2f,%u", pico_is_on_battery() ? "battery" : "powered", nano_elapsed_ms_now(&start), pico_get_vsys(), pi_threads_get_free_ram());
+	sprintf(str, "%s,%u,%.2f,%u", pico_is_on_battery() ? "battery" : "powered", us_elapsed_ms_now(&start), pico_get_vsys(), pi_threads_get_free_ram());
 	mqtt->publish("pico-battery", str);
 	ms_sleep(10*1000);
     }

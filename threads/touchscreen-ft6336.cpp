@@ -115,7 +115,7 @@ int TouchscreenEventHandler::report_touches() {
 	    touches[new_n_touches].id = touch_id++;
 	    touches[new_n_touches].x  = x;
 	    touches[new_n_touches].y  = y;
-	    nano_gettime(&touches[new_n_touches].touch_at);
+	    us_gettime(&touches[new_n_touches].touch_at);
 	    on_touch(touches[new_n_touches]);
 	    new_n_touches++;
 	}

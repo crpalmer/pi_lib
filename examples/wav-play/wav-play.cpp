@@ -25,12 +25,12 @@ static class WavIterator : public FileForeach {
 
 static void play(AudioBuffer *audio_buffer) {
     printf("Playing %s\n", audio_buffer->get_fname());
-    nano_time_t start;
-    nano_gettime(&start);
+    us_time_t start;
+    us_gettime(&start);
     player->play(audio_buffer);
     player->wait_all_done();
     delete audio_buffer;
-    printf("Done: %d ms\n", nano_elapsed_ms_now(&start));
+    printf("Done: %d ms\n", us_elapsed_ms_now(&start));
 }
 
 void threads_main(int argc, char **argv) {

@@ -3,16 +3,16 @@
 #include "pi.h"
 #include "time-utils.h"
 
-void nano_gettime(nano_time_t *t) {
+void us_gettime(us_time_t *t) {
     *t = get_absolute_time();
 }
 
-void nano_sleep_until(nano_time_t *t) {
-    nano_time_t now;
+void us_sleep_until(us_time_t *t) {
+    us_time_t now;
     int ms;
 
-    nano_gettime(&now);
-    ms = nano_elapsed_ms(t, &now);
+    us_gettime(&now);
+    ms = us_elapsed_ms(t, &now);
     if (ms > 0) sleep_ms(ms);
 }
 

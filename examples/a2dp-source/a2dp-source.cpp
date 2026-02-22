@@ -45,11 +45,11 @@ void play_wav_main(int argc, char **argv) {
 	    if (! audio_buffer) continue;
 
 	    printf("Playing %s\n", audio_buffer->get_fname());
-	    nano_time_t start;
-	    nano_gettime(&start);
+	    us_time_t start;
+	    us_gettime(&start);
 	    player->play(audio_buffer);
 	    player->wait_all_done();
-	    printf("Done: %d ms\n", nano_elapsed_ms_now(&start));
+	    printf("Done: %d ms\n", us_elapsed_ms_now(&start));
 
 	    delete audio_buffer;
 	    pi_threads_dump_state();

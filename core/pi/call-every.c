@@ -24,23 +24,23 @@ static void *
 thread_main(void *e_as_vp)
 {
     call_every_t *e = (call_every_t *) e_as_vp;
-    nano_time_t last;
+    us_time_t last;
 
-    nano_gettime(&last);
+    us_gettime(&last);
 
     pthread_mutex_lock(&e->lock);
 
     while (e->state != STOP) {
 	if (e->state == PAUSE) {
 	    pthread_cond_wait(&e->cond, &e->lock);
-	    nano_gettime(&last);
+	    us_gettime(&last);
 	} else {
 	    pthread_mutex_unlock(&e->lock);
-	    nano_add_ms(&last, e->ms);
-	    nano_sleep_until(&last);
+	    us_add_ms(&last, e->ms);
+	    us_sleep_until(&last);
 	    if (TRACE) {
-		nano_time_t now;
-		nano_gettime(&now);
+		us_time_t now;
+		us_gettime(&now);
 		fprintf(stderr, "ce at: %ld want %ld\n", now, last);
 	    }
 	    e->func(e->data);

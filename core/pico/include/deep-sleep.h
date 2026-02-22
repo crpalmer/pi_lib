@@ -26,7 +26,7 @@ private:
 
 protected:
     const int sleep_after_ms;
-    nano_time_t last_press;
+    us_time_t last_press;
 
 private:
     int check_ms;

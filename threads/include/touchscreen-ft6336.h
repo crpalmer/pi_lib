@@ -6,7 +6,7 @@
 typedef struct {
     int id;
     int x, y;
-    nano_time_t touch_at;
+    us_time_t touch_at;
 } touch_event_t;
 
 class TouchscreenEventHandler : public PiThread {

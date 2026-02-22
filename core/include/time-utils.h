@@ -19,11 +19,11 @@
 extern "C" {
 #endif
 
-typedef uint64_t nano_time_t;
+typedef uint64_t us_time_t;
 
 /// \endcond
 
-static inline int nano_elapsed_ms(const nano_time_t *newer, const nano_time_t *later);
+static inline int us_elapsed_ms(const us_time_t *newer, const us_time_t *later);
 
 /** Fills the timespec with the current time.
  *
@@ -33,7 +33,7 @@ static inline int nano_elapsed_ms(const nano_time_t *newer, const nano_time_t *l
  * \param t - Location to store the time data
  */
 
-void nano_gettime(nano_time_t *t);
+void us_gettime(us_time_t *t);
 
 /** Sleep until the specified timespec.
  *
@@ -47,7 +47,7 @@ void nano_gettime(nano_time_t *t);
  * \param t - The timespec to sleep until
  */
 
-void nano_sleep_until(nano_time_t *t);
+void us_sleep_until(us_time_t *t);
 
 /** Sleep for a specified number of milliseconds.
  *
@@ -71,8 +71,7 @@ void us_sleep(unsigned us);
  * \param usec - The number of microseconds to add
  */
 
-static inline void
-nano_add_usec(nano_time_t *t, unsigned usec) {
+static inline void us_add(us_time_t *t, unsigned usec) {
     (*t) += usec;
 }
 
@@ -82,8 +81,7 @@ nano_add_usec(nano_time_t *t, unsigned usec) {
  * \param ms - The number of milliseconds to add
  */
 
-static inline void
-nano_add_ms(nano_time_t *t, unsigned ms) {
+static inline void us_add_ms(us_time_t *t, unsigned ms) {
     (*t) += ms * 1000;
 }
 
@@ -95,8 +93,7 @@ nano_add_ms(nano_time_t *t, unsigned ms) {
  * \returns \c true iff \c now is later then \c then.
  */
 
-static inline int
-nano_later_than(const nano_time_t *now, const nano_time_t *then) {
+static inline int us_later_than(const us_time_t *now, const us_time_t *then) {
     return (*now) > (*then);
 }
 
@@ -107,13 +104,12 @@ nano_later_than(const nano_time_t *now, const nano_time_t *then) {
  * \returns \c true iff \c then is in the past.
  */
 
-static inline int
-nano_now_is_later_than(const nano_time_t *then)
+static inline int us_now_is_later_than(const us_time_t *then)
 {
-    nano_time_t now;
+    us_time_t now;
 
-    nano_gettime(&now);
-    return nano_later_than(&now, then);
+    us_gettime(&now);
+    return us_later_than(&now, then);
 }
 
 /** Subtract one timespec from another.
@@ -126,8 +122,7 @@ nano_now_is_later_than(const nano_time_t *then)
  * \param later - The earlier of the two timespecs
  */
 
-static inline int
-nano_elapsed_ms(const nano_time_t *newer, const nano_time_t *later) {
+static inline int us_elapsed_ms(const us_time_t *newer, const us_time_t *later) {
     return (*newer) - (*later);
 }
 
@@ -140,12 +135,11 @@ nano_elapsed_ms(const nano_time_t *newer, const nano_time_t *later) {
  * \param start - A timespec of a past time
  */
 
-static inline int
-nano_elapsed_ms_now(const nano_time_t *start) {
-    nano_time_t now;
+static inline int us_elapsed_ms_now(const us_time_t *start) {
+    us_time_t now;
 
-    nano_gettime(&now);
-    return nano_elapsed_ms(&now, start);
+    us_gettime(&now);
+    return us_elapsed_ms(&now, start);
 }
 
 #ifdef __cplusplus

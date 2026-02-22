@@ -34,7 +34,7 @@ int net_connect_udp(const char *hostname, uint16_t port);
 
 int net_listen(uint16_t port);
 
-int net_get_sntp_time(const char *host, nano_time_t *now);
+int net_get_sntp_time(const char *host, us_time_t *now);
 
 void net_platform_init();
 

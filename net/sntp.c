@@ -25,7 +25,7 @@ sntp_value(const uint8_t *ptr)
 #define NTP_SCALE_FRAC 4294967295.0
 
 int
-net_sntp_time(const char *host, nano_time_t *now)
+net_sntp_time(const char *host, us_time_t *now)
 {
     int ret = -1;
     int fd;
@@ -62,7 +62,7 @@ int
 net_sntp_set_pico_rtc(const char *host) {
 #ifdef PLATFORM_pico
     wifi_wait_for_connection();
-    nano_time_t now;
+    us_time_t now;
 
     while (net_sntp_time(host, &now) < 0) {
         consoles_printf("net_sntp_time failed, retrying.\n");

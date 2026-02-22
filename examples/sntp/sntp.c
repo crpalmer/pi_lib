@@ -14,7 +14,7 @@ static void
 run(void *arg)
 {
     const char *host = (const char *) arg;
-    nano_time_t now;
+    us_time_t now;
 
     if (net_sntp_time(host, &now) < 0) {
 	perror("net_sntp_time");

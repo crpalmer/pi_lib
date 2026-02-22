@@ -31,11 +31,11 @@ get_rgb(Console *c, const char *usage, const char *line, int *r, int *g, int *b)
 static void
 show(Console *c, NeoPixelPico *neo)
 {
-    nano_time_t start;
+    us_time_t start;
 
-    nano_gettime(&start);
+    us_gettime(&start);
     neo->show();
-    c->printf("show took %d ms\n", nano_elapsed_ms_now(&start));
+    c->printf("show took %d ms\n", us_elapsed_ms_now(&start));
 }
 
 static void

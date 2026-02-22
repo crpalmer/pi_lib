@@ -66,17 +66,17 @@ TalkingSkull::main() {
     while (1) {
 	wait_cond->wait(wait_lock);
 	
-	nano_time_t next;
-	nano_gettime(&next);
+	us_time_t next;
+	us_gettime(&next);
 
 	for (int i = 0; i < n_ops; i++) {
-	    nano_time_t now;
+	    us_time_t now;
 
-	    nano_gettime(&now);
-	    nano_add_usec(&next, usec_per_i);
+	    us_gettime(&now);
+	    us_add(&next, usec_per_i);
 
-	    if (nano_later_than(&next, &now)) {
-		nano_sleep_until(&next);
+	    if (us_later_than(&next, &now)) {
+		us_sleep_until(&next);
 		uint32_t decoded = 0;
 		for (int j = 0; j < bytes_per_op; j++) decoded |= (ops[i*bytes_per_op + j]) << (8 * j);
 		double pos = decoded / (double) op_bits * 100;

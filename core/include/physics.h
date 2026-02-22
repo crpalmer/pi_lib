@@ -14,11 +14,11 @@ public:
 
 class PhysicsTimeClock : public PhysicsClock {
     ~PhysicsTimeClock() override {}
-    void start() override { nano_gettime(&start_time); }
-    double get() override { return nano_elapsed_ms_now(&start_time) / 1000.0; }
+    void start() override { us_gettime(&start_time); }
+    double get() override { return us_elapsed_ms_now(&start_time) / 1000.0; }
 
 private:
-    nano_time_t start_time;
+    us_time_t start_time;
 };
 
 class Physics {

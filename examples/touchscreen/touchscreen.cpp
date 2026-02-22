@@ -41,11 +41,11 @@ public:
 
     void on_released(touch_event_t event) override {
 	transform_position(&event.x, &event.y);
-	if (last_release_in_corner && nano_elapsed_ms_now(&released_at) < 300) {
+	if (last_release_in_corner && us_elapsed_ms_now(&released_at) < 300) {
 	    clear_screen();
 	}
 	last_release_in_corner = event.x < (w/8) && event.y < (h/8);
-	if (last_release_in_corner) nano_gettime(&released_at);
+	if (last_release_in_corner) us_gettime(&released_at);
     }
 
 private:
@@ -56,7 +56,7 @@ private:
     uint8_t *set;
     int n_bits;
 
-    nano_time_t released_at;
+    us_time_t released_at;
     bool last_release_in_corner = false;
 
     void transform_position(int *x, int *y) {
