@@ -26,6 +26,8 @@ target_sources(lib-pi INTERFACE
 )
 
 pico_generate_pio_header(lib-pi ${CMAKE_CURRENT_LIST_DIR}/neopixel.pio)
+pico_generate_pio_header(lib-pi ${CMAKE_CURRENT_LIST_DIR}/uart_rx.pio)
+pico_generate_pio_header(lib-pi ${CMAKE_CURRENT_LIST_DIR}/uart_tx.pio)
 
 target_link_libraries(lib-pi INTERFACE
   pico_stdio

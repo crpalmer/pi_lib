@@ -11,6 +11,8 @@ if(NOT DEFINED PLATFORM_INTIALIZED)
     set(HAVE_NETWORKING ON)
   endif()
 
+  add_compile_options("-Wno-packed-bitfield-compat")
+
   if("${PLATFORM}" STREQUAL "pico")
     pico_sdk_init()
     add_compile_definitions("WIFI_SSID=\"$ENV{WIFI_SSID}\"" "WIFI_PASSWORD=\"$ENV{WIFI_PASSWORD}\"")
