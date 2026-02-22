@@ -18,7 +18,7 @@ class PhysicsTimeClock : public PhysicsClock {
     double get() override { return nano_elapsed_ms_now(&start_time) / 1000.0; }
 
 private:
-    struct timespec start_time;
+    nano_time_t start_time;
 };
 
 class Physics {

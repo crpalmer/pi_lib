@@ -19,6 +19,8 @@
 extern "C" {
 #endif
 
+typedef struct timespec nano_time_t;
+
 /// \cond Internal
 
 #define TIMESPEC_FMT "%d.%09d"
@@ -29,7 +31,7 @@ extern "C" {
 
 /// \endcond
 
-static inline int nano_elapsed_ms(const struct timespec *newer, const struct timespec *later);
+static inline int nano_elapsed_ms(const nano_time_t *newer, const nano_time_t *later);
 
 /** Fills the timespec with the current time.
  *
@@ -39,7 +41,7 @@ static inline int nano_elapsed_ms(const struct timespec *newer, const struct tim
  * \param t - Location to store the time data
  */
 
-void nano_gettime(struct timespec *t);
+void nano_gettime(nano_time_t *t);
 
 /** Sleep until the specified timespec.
  *
@@ -53,7 +55,7 @@ void nano_gettime(struct timespec *t);
  * \param t - The timespec to sleep until
  */
 
-void nano_sleep_until(struct timespec *t);
+void nano_sleep_until(nano_time_t *t);
 
 /** Sleep for a specified number of milliseconds.
  *
@@ -78,7 +80,7 @@ void us_sleep(unsigned us);
  */
 
 static inline void
-nano_add_usec(struct timespec *t, unsigned usec)
+nano_add_usec(nano_time_t *t, unsigned usec)
 {
     t->tv_sec += usec / USEC_PER_SEC;
     t->tv_nsec += (usec % USEC_PER_SEC) * NANOSEC_PER_USEC;
@@ -93,7 +95,7 @@ nano_add_usec(struct timespec *t, unsigned usec)
  */
 
 static inline void
-nano_add_ms(struct timespec *t, unsigned ms)
+nano_add_ms(nano_time_t *t, unsigned ms)
 {
     t->tv_sec += ms / 1000;
     t->tv_nsec += (ms % 1000) * NANOSEC_PER_MS;
@@ -110,7 +112,7 @@ nano_add_ms(struct timespec *t, unsigned ms)
  */
 
 static inline int
-nano_later_than(const struct timespec *now, const struct timespec *then)
+nano_later_than(const nano_time_t *now, const nano_time_t *then)
 {
     return now->tv_sec > then->tv_sec || (now->tv_sec == then->tv_sec && now->tv_nsec >= then->tv_nsec);
 }
@@ -123,9 +125,9 @@ nano_later_than(const struct timespec *now, const struct timespec *then)
  */
 
 static inline int
-nano_now_is_later_than(const struct timespec *then)
+nano_now_is_later_than(const nano_time_t *then)
 {
-    struct timespec now;
+    nano_time_t now;
 
     nano_gettime(&now);
     return nano_later_than(&now, then);
@@ -142,7 +144,7 @@ nano_now_is_later_than(const struct timespec *then)
  */
 
 static inline int
-nano_elapsed_ms(const struct timespec *newer, const struct timespec *later)
+nano_elapsed_ms(const nano_time_t *newer, const nano_time_t *later)
 {
     int ms = (newer->tv_sec - later->tv_sec) * MS_PER_SEC;
     int nsec;
@@ -173,9 +175,9 @@ nano_elapsed_ms(const struct timespec *newer, const struct timespec *later)
  */
 
 static inline int
-nano_elapsed_ms_now(const struct timespec *start)
+nano_elapsed_ms_now(const nano_time_t *start)
 {
-    struct timespec now;
+    nano_time_t now;
 
     nano_gettime(&now);
     return nano_elapsed_ms(&now, start);

@@ -45,7 +45,7 @@ void play_wav_main(int argc, char **argv) {
 	    if (! audio_buffer) continue;
 
 	    printf("Playing %s\n", audio_buffer->get_fname());
-	    struct timespec start;
+	    nano_time_t start;
 	    nano_gettime(&start);
 	    player->play(audio_buffer);
 	    player->wait_all_done();

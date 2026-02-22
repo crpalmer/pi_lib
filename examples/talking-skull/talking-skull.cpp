@@ -65,7 +65,7 @@ void threads_main(int argc, char **argv) {
         while (1) ms_sleep(1000);
     }
 
-    struct timespec start_time;
+    nano_time_t start_time;
     nano_gettime(&start_time);
 
     while (1) {

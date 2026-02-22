@@ -56,7 +56,7 @@ private:
     uint8_t *set;
     int n_bits;
 
-    struct timespec released_at;
+    nano_time_t released_at;
     bool last_release_in_corner = false;
 
     void transform_position(int *x, int *y) {

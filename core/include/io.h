@@ -58,7 +58,7 @@ public:
      }
 
      unsigned get_with_debounce(unsigned ms = 1) {
-        struct timespec start;
+        nano_time_t start;
 	unsigned v = get_fast();
 
         nano_gettime(&start);

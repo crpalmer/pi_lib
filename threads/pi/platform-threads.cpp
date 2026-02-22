@@ -103,7 +103,7 @@ PiCond::PiCond() {
     pthread_cond_init(&c, &attr);
 }
 
-bool PiCond::wait(PiMutex *m, const struct timespec *abstime) {
+bool PiCond::wait(PiMutex *m, const nano_time_t *abstime) {
     if (abstime) return pthread_cond_timedwait(&c, &m->m, abstime) == 0;
     pthread_cond_wait(&c, &m->m);
     return true;

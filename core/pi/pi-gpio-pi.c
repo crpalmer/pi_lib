@@ -160,7 +160,7 @@ static void *irq_handler_main(void *gpio_as_vp)
 	    perror("gpiod_line_event_read");
 	    ms_sleep(1000);
 	} else {
-	    struct timespec ts;
+	    nano_time_t ts;
 
 	    ts.tv_sec = 0;
 	    ts.tv_nsec = 1*1000;

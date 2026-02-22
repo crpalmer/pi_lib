@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <time.h>
+#include "time-utils.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,7 +32,7 @@ void pi_mutex_unlock(pi_mutex_t *);
 void pi_mutex_destroy(pi_mutex_t *);
 
 pi_cond_t *pi_cond_new();
-int pi_cond_timedwait(pi_cond_t *cond, pi_mutex_t *mutex, const struct timespec *abstime);
+int pi_cond_timedwait(pi_cond_t *cond, pi_mutex_t *mutex, const nano_time_t *abstime);
 void pi_cond_wait(pi_cond_t *cond, pi_mutex_t *mutex);
 void pi_cond_signal(pi_cond_t *cond);
 void pi_cond_broadcast(pi_cond_t *cond);

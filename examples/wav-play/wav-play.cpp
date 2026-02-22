@@ -25,7 +25,7 @@ static class WavIterator : public FileForeach {
 
 static void play(AudioBuffer *audio_buffer) {
     printf("Playing %s\n", audio_buffer->get_fname());
-    struct timespec start;
+    nano_time_t start;
     nano_gettime(&start);
     player->play(audio_buffer);
     player->wait_all_done();

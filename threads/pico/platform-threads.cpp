@@ -126,14 +126,14 @@ PiCond::~PiCond() {
     delete lock;
 }
 
-static TickType_t abstime_to_ticks(const struct timespec *abstime) {
-    struct timespec now;
+static TickType_t abstime_to_ticks(const nano_time_t *abstime) {
+    nano_time_t now;
     nano_gettime(&now);
     int ms = nano_elapsed_ms(abstime, &now);
     return pdMS_TO_TICKS(ms);
 }
 
-bool PiCond::wait(PiMutex *m, const struct timespec *abstime) {
+bool PiCond::wait(PiMutex *m, const nano_time_t *abstime) {
     lock->lock();
     wait_list.push_back(xTaskGetCurrentTaskHandle());
     lock->unlock();

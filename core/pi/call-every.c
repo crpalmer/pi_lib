@@ -26,7 +26,7 @@ static void *
 thread_main(void *e_as_vp)
 {
     call_every_t *e = (call_every_t *) e_as_vp;
-    struct timespec last;
+    nano_time_t last;
 
     nano_gettime(&last);
 
@@ -41,7 +41,7 @@ thread_main(void *e_as_vp)
 	    nano_add_ms(&last, e->ms);
 	    nano_sleep_until(&last);
 	    if (TRACE) {
-		struct timespec now;
+		nano_time_t now;
 		nano_gettime(&now);
 		fprintf(stderr, "ce at: " TIMESPEC_FMT " want " TIMESPEC_FMT "\n", (int) now.tv_sec, (int) now.tv_nsec, (int) last.tv_sec, (int) last.tv_nsec);
 	    }

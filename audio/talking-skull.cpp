@@ -66,11 +66,11 @@ TalkingSkull::main() {
     while (1) {
 	wait_cond->wait(wait_lock);
 	
-	struct timespec next;
+	nano_time_t next;
 	nano_gettime(&next);
 
 	for (int i = 0; i < n_ops; i++) {
-	    struct timespec now;
+	    nano_time_t now;
 
 	    nano_gettime(&now);
 	    nano_add_usec(&next, usec_per_i);

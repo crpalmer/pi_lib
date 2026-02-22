@@ -49,7 +49,7 @@ void AudioPlayer::wait_all_done() {
     mutex->unlock();
 }
 
-bool AudioPlayer::wait_current_done(const struct timespec *abstime) {
+bool AudioPlayer::wait_current_done(const nano_time_t *abstime) {
     bool ret = true;
     mutex->lock();
     if (player_is_active) ret = stop_cond->wait(mutex, abstime);

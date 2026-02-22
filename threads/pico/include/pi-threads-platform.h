@@ -58,7 +58,7 @@ class PiCond {
 public:
     PiCond();
     ~PiCond();
-    bool wait(PiMutex *m, const struct timespec *abstime = NULL);
+    bool wait(PiMutex *m, const nano_time_t *abstime = NULL);
     void signal();
     void broadcast();
 

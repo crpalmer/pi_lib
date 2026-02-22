@@ -15,12 +15,12 @@ public:
     bool play(AudioBuffer *audio_buffer);
     void stop();
     void wait_all_done();
-    bool wait_current_done(const struct timespec *abstime = NULL);
+    bool wait_current_done(const nano_time_t *abstime = NULL);
 
     bool is_active() { return player_is_active; }
     bool play_sync(AudioBuffer *audio_buffer) {
 	if (! play(audio_buffer)) return false;
-	struct timespec abstime;
+	nano_time_t abstime;
 	nano_gettime(&abstime);
 	nano_add_ms(&abstime, audio_buffer->get_duration_ms());
 	nano_add_ms(&abstime, 15*1000);

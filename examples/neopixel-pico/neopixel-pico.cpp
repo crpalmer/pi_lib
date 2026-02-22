@@ -31,7 +31,7 @@ get_rgb(Console *c, const char *usage, const char *line, int *r, int *g, int *b)
 static void
 show(Console *c, NeoPixelPico *neo)
 {
-    struct timespec start;
+    nano_time_t start;
 
     nano_gettime(&start);
     neo->show();

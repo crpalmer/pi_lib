@@ -41,7 +41,7 @@ threads_main(int argc, char **argv)
     httpd->add_file_handler("/index.html", new BatteryHandler());
     httpd->start();
 
-    struct timespec start;
+    nano_time_t start;
     nano_gettime(&start);
 
     while (1) {

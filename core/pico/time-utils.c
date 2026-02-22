@@ -3,14 +3,14 @@
 #include "pi.h"
 #include "time-utils.h"
 
-void nano_gettime(struct timespec *t) {
+void nano_gettime(nano_time_t *t) {
     absolute_time_t now = get_absolute_time();
     t->tv_sec = to_us_since_boot(now) / 1000 / 1000;
     t->tv_nsec = (to_us_since_boot(now) % (1000*1000)) * 1000;
 }
 
-void nano_sleep_until(struct timespec *t) {
-    struct timespec now;
+void nano_sleep_until(nano_time_t *t) {
+    nano_time_t now;
     int ms;
 
     nano_gettime(&now);

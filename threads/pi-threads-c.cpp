@@ -70,7 +70,7 @@ C_DECL pi_cond_t *pi_cond_new()
     return new PiCond();
 }
 
-C_DECL int pi_cond_timedwait(pi_cond_t *c_vp, pi_mutex_t *m_vp, const struct timespec *abstime)
+C_DECL int pi_cond_timedwait(pi_cond_t *c_vp, pi_mutex_t *m_vp, const nano_time_t *abstime)
 {
     PiCond *c = (PiCond *) c_vp;
     PiMutex *m = (PiMutex *) m_vp;
