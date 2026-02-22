@@ -19,15 +19,7 @@
 extern "C" {
 #endif
 
-typedef struct timespec nano_time_t;
-
-/// \cond Internal
-
-#define TIMESPEC_FMT "%d.%09d"
-#define NANOSEC_PER_MS   1000000
-#define USEC_PER_SEC	 1000000
-#define NANOSEC_PER_USEC 1000
-#define MS_PER_SEC       1000
+typedef uint64_t nano_time_t;
 
 /// \endcond
 
@@ -80,12 +72,8 @@ void us_sleep(unsigned us);
  */
 
 static inline void
-nano_add_usec(nano_time_t *t, unsigned usec)
-{
-    t->tv_sec += usec / USEC_PER_SEC;
-    t->tv_nsec += (usec % USEC_PER_SEC) * NANOSEC_PER_USEC;
-    t->tv_sec += t->tv_nsec / (MS_PER_SEC*NANOSEC_PER_MS);
-    t->tv_nsec = t->tv_nsec % (MS_PER_SEC*NANOSEC_PER_MS);
+nano_add_usec(nano_time_t *t, unsigned usec) {
+    (*t) += usec;
 }
 
 /** Add the specified number of milliseconds to a timespec.
@@ -95,12 +83,8 @@ nano_add_usec(nano_time_t *t, unsigned usec)
  */
 
 static inline void
-nano_add_ms(nano_time_t *t, unsigned ms)
-{
-    t->tv_sec += ms / 1000;
-    t->tv_nsec += (ms % 1000) * NANOSEC_PER_MS;
-    t->tv_sec += t->tv_nsec / (MS_PER_SEC*NANOSEC_PER_MS);
-    t->tv_nsec = t->tv_nsec % (MS_PER_SEC*NANOSEC_PER_MS);
+nano_add_ms(nano_time_t *t, unsigned ms) {
+    (*t) += ms * 1000;
 }
 
 /** Compares two timespecs for relative ordering.
@@ -112,9 +96,8 @@ nano_add_ms(nano_time_t *t, unsigned ms)
  */
 
 static inline int
-nano_later_than(const nano_time_t *now, const nano_time_t *then)
-{
-    return now->tv_sec > then->tv_sec || (now->tv_sec == then->tv_sec && now->tv_nsec >= then->tv_nsec);
+nano_later_than(const nano_time_t *now, const nano_time_t *then) {
+    return (*now) > (*then);
 }
 
 /** Compares a timespec against the current time.
@@ -144,25 +127,8 @@ nano_now_is_later_than(const nano_time_t *then)
  */
 
 static inline int
-nano_elapsed_ms(const nano_time_t *newer, const nano_time_t *later)
-{
-    int ms = (newer->tv_sec - later->tv_sec) * MS_PER_SEC;
-    int nsec;
-
-    if (newer->tv_nsec < later->tv_nsec) {
-	nsec = newer->tv_nsec + (MS_PER_SEC*NANOSEC_PER_MS);
-	ms -= MS_PER_SEC;
-    } else {
-	nsec = newer->tv_nsec;
-    }
-
-    ms += (nsec - later->tv_nsec) / NANOSEC_PER_MS;
-
-#if 0
-    printf("%ld.%010ld - %ld.%010ld = %d * 1000\n", (long) newer->tv_sec, (long) newer->tv_nsec, (long) later->tv_sec, (long) later->tv_nsec, ms);
-#endif
-
-    return ms;
+nano_elapsed_ms(const nano_time_t *newer, const nano_time_t *later) {
+    return (*newer) - (*later);
 }
 
 /** Subtract a timespec from the current time.
@@ -175,8 +141,7 @@ nano_elapsed_ms(const nano_time_t *newer, const nano_time_t *later)
  */
 
 static inline int
-nano_elapsed_ms_now(const nano_time_t *start)
-{
+nano_elapsed_ms_now(const nano_time_t *start) {
     nano_time_t now;
 
     nano_gettime(&now);

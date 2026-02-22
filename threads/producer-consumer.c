@@ -1,5 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "pi.h"
 #include "mem.h"
 #include "pi-threads.h"
 #include "producer-consumer.h"

@@ -1,15 +1,21 @@
+#include "pi.h"
 #include "time-utils.h"
 
 void nano_gettime(nano_time_t *t) {
-    clock_gettime(CLOCK_MONOTONIC, t);
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    (*t) = (ts.tv_sec * 1000LL) + (ts.tv_nsec / 1000);
 }
 
 void nano_sleep_until(nano_time_t *t) {
-    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, t, NULL);
+    struct timespec ts;
+    ts.tv_sec = (*t) / 1000000;
+    ts.tv_nsec = (*t % 1000000) * 1000;
+    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
 }
 
 void ms_sleep(unsigned ms) {
-    nano_time_t ts;
+    struct timespec ts;
 
     ts.tv_sec = ms / 1000;
     ts.tv_nsec = (ms % 1000) * 1000 * 1000;

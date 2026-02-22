@@ -1,7 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "pi.h"
 #include <pthread.h>
-#include <assert.h>
 #include "time-utils.h"
 #include "mem.h"
 #include "call-every.h"
@@ -43,7 +41,7 @@ thread_main(void *e_as_vp)
 	    if (TRACE) {
 		nano_time_t now;
 		nano_gettime(&now);
-		fprintf(stderr, "ce at: " TIMESPEC_FMT " want " TIMESPEC_FMT "\n", (int) now.tv_sec, (int) now.tv_nsec, (int) last.tv_sec, (int) last.tv_nsec);
+		fprintf(stderr, "ce at: %ld want %ld\n", now, last);
 	    }
 	    e->func(e->data);
 	    pthread_mutex_lock(&e->lock);

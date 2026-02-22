@@ -1,3 +1,4 @@
+#include "pi.h"
 #include "l298n.h"
 
 L298N::L298N(Output *en, Output *dir1, Output *dir2) : en(en), dir1(dir1), dir2(dir2)

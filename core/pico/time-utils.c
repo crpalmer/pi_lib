@@ -4,9 +4,7 @@
 #include "time-utils.h"
 
 void nano_gettime(nano_time_t *t) {
-    absolute_time_t now = get_absolute_time();
-    t->tv_sec = to_us_since_boot(now) / 1000 / 1000;
-    t->tv_nsec = (to_us_since_boot(now) % (1000*1000)) * 1000;
+    *t = get_absolute_time();
 }
 
 void nano_sleep_until(nano_time_t *t) {
@@ -33,5 +31,10 @@ void pico_set_sleep_fn(sleep_fn_t new_sleep_fn) {
 }
 
 void us_sleep(unsigned us) {
+    unsigned ms = us / 1000;
+    if (ms >= 1) {
+	sleep_ms(ms);
+	us -= ms * 1000;
+    }
     busy_wait_us(us);
 }

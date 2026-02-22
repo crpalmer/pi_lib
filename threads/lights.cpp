@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include <list>
-#include <assert.h>
+#include "pi.h"
 #include "mem.h"
 #include "pi-threads.h"
 #include "random-utils.h"
