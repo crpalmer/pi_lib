@@ -32,16 +32,6 @@ static inline void ms_sleep(unsigned int ms) {
 
 #include "platform-time-utils.h"
 
-/** Add the specified number of microseconds to a timespec.
- *
- * \param t - The timespec to increase
- * \param usec - The number of microseconds to add
- */
-
-static inline void us_add(us_time_t *t, unsigned usec) {
-    (*t) += usec;
-}
-
 /** Add the specified number of milliseconds to a timespec.
  *
  * \param t - The timespec to increase
@@ -50,18 +40,6 @@ static inline void us_add(us_time_t *t, unsigned usec) {
 
 static inline void us_add_ms(us_time_t *t, unsigned ms) {
     (*t) += ms * 1000;
-}
-
-/** Compares two timespecs for relative ordering.
- *
- * \param now
- * \param then
- *
- * \returns \c true iff \c now is later then \c then.
- */
-
-static inline int us_later_than(const us_time_t *now, const us_time_t *then) {
-    return (*now) > (*then);
 }
 
 /** Compares a timespec against the current time.
@@ -76,7 +54,7 @@ static inline int us_now_is_later_than(const us_time_t *then)
     us_time_t now;
 
     us_gettime(&now);
-    return us_later_than(&now, then);
+    return now > *then;
 }
 
 /** Subtract one timespec from another.

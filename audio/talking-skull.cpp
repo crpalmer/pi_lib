@@ -70,12 +70,8 @@ TalkingSkull::main() {
 	us_gettime(&next);
 
 	for (int i = 0; i < n_ops; i++) {
-	    us_time_t now;
-
-	    us_gettime(&now);
-	    us_add(&next, usec_per_i);
-
-	    if (us_later_than(&next, &now)) {
+	    next += usec_per_i;
+	    if (! us_now_is_later_than(next)) {
 		us_sleep_until(&next);
 		uint32_t decoded = 0;
 		for (int j = 0; j < bytes_per_op; j++) decoded |= (ops[i*bytes_per_op + j]) << (8 * j);
