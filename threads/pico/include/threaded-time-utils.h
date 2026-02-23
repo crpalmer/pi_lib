@@ -4,12 +4,19 @@
 // TODO: provide a native freeftos implementation of these somehow
 
 static inline void us_sleep(us_time_t us) {
+    extern bool pico_threads_initialized;
     unsigned ms = us / 1000;
+
     if (ms >= 1) {
-	void task_delay(unsigned int ms);
-	task_delay(ms);
+	if (! pico_threads_initialized) {
+	    sleep_ms(ms);
+	} else {
+	    void task_delay(unsigned int ms);
+	    task_delay(ms);
+	}
 	us -= ms * 1000;
     }
+
     busy_wait_us(us);
 }
 

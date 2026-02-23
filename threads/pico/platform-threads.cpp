@@ -9,6 +9,8 @@
 #include "semphr.h"
 #include "task.h"
 
+bool pico_threads_initialized = false;
+
 void task_delay(unsigned int ms) {
     vTaskDelay(pdMS_TO_TICKS(ms));
 }
@@ -32,6 +34,8 @@ static void init_with_threads(void *main_as_vp) {
     pico_set_irq_hook_functions(pre_set_irq_fn, post_set_irq_fn);
     mem_set_get_task_name(get_task_name);
     file_init();
+
+    pico_threads_initialized = true;
 
     char *argv = fatal_strdup("pico");
     pi_threads_main_t main = (pi_threads_main_t) main_as_vp;
