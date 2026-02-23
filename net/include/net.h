@@ -5,6 +5,8 @@
 #ifndef __NET_H__
 #define __NET_H__
 
+#include "time-utils.h"
+
 #ifdef PLATFORM_pico
 #include "lwip/ip4_addr.h"
 #include "lwip/ip_addr.h"

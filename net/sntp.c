@@ -48,8 +48,9 @@ net_sntp_time(const char *host, us_time_t *now)
 	if (secs <= SNTP_SECS_AT_UNIX_EPOCH) {
 	    errno = EINVAL;
 	} else {
-	    now->tv_sec = secs - SNTP_SECS_AT_UNIX_EPOCH;
-	    now->tv_nsec = ((double) fractional) * 1.0e6 / NTP_SCALE_FRAC;
+	    *now = secs - SNTP_SECS_AT_UNIX_EPOCH;
+	    *now *= (us_time_t) 1000*1000;
+	    *now += (us_time_t) ((double) fractional) * 1.0e6 / NTP_SCALE_FRAC * 1000*1000;
 	    ret = 0;
 	}
     }
@@ -69,8 +70,8 @@ net_sntp_set_pico_rtc(const char *host) {
         ms_sleep(5*1000);
     }
 
-    consoles_printf("Setting RTC to %lu seconds.\n", (unsigned long) now.tv_sec);
-    pico_set_rtc((time_t) now.tv_sec);
+    consoles_printf("Setting RTC to %llu.%06llu seconds.\n", now / 1000000, now % 1000000);
+    pico_set_rtc(now/1000000);
 #endif
     return 0;
 }

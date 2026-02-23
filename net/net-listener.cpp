@@ -1,3 +1,4 @@
+#include "pi.h"
 #include "net.h"
 #include "consoles.h"
 #include "time-utils.h"

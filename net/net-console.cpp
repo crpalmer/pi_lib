@@ -1,3 +1,4 @@
+#include "pi.h"
 #include "net-console.h"
 
 NetConsole::~NetConsole() {
