@@ -68,7 +68,7 @@ static inline int us_now_is_later_than(const us_time_t *then)
  */
 
 static inline int us_elapsed_ms(const us_time_t *newer, const us_time_t *later) {
-    return (*newer) - (*later);
+    return ((*newer) - (*later)) / 1000;
 }
 
 /** Subtract a timespec from the current time.
