@@ -5,8 +5,8 @@
 
 class ThreadInterruptNotifier : public PiThread, public InputNotifier {
 public:
-    ThreadInterruptNotifier(const char *name = "interrupt-handler") : PiThread(name) {
-	start();
+    ThreadInterruptNotifier(const char *name = "interrupt-handler", int priority = 1) : PiThread(name) {
+	start(priority);
     }
 	
     void on_change() {
