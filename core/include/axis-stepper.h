@@ -5,16 +5,15 @@
 #include "io.h"
 #include "physics.h"
 
-class Stepper {
+class AxisStepper {
 public:
-    Stepper(Output *dir, Output *step, double steps_per_mm);
-    ~Stepper();
+    AxisStepper(Output *dir, Output *step, double steps_per_mm);
+    ~AxisStepper();
 
     void home(Input *end_stop, bool forward, double homed_pos = 0, double feed = 100);
     void go(double pos_mm, double feed = 0);
     void set_acceleration(double mm_per_sec_squared);
     void set_jerk(double mm_per_sec);
-
 
     double get_pos() { return pos; }
 

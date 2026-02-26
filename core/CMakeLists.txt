@@ -6,6 +6,7 @@ target_include_directories(lib-pi INTERFACE
 )
 
 target_sources(lib-pi INTERFACE
+  ${CMAKE_CURRENT_LIST_DIR}/axis-stepper.cpp
   ${CMAKE_CURRENT_LIST_DIR}/buffer.cpp
   ${CMAKE_CURRENT_LIST_DIR}/canvas.cpp
   ${CMAKE_CURRENT_LIST_DIR}/canvas-impl.cpp
@@ -24,7 +25,6 @@ target_sources(lib-pi INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/ssd1306.cpp
   ${CMAKE_CURRENT_LIST_DIR}/st7735s.cpp
   ${CMAKE_CURRENT_LIST_DIR}/st7796s.cpp
-  ${CMAKE_CURRENT_LIST_DIR}/stepper.cpp
   ${CMAKE_CURRENT_LIST_DIR}/string-utils.c
   ${CMAKE_CURRENT_LIST_DIR}/random-utils.c
   ${CMAKE_CURRENT_LIST_DIR}/tb6612.cpp
