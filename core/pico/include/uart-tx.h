@@ -1,6 +1,7 @@
 #ifndef __UART_TX_H__
 #define __UART_TX_H__
 
+#include <string.h>
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
 #include "uart_tx.pio.h"
