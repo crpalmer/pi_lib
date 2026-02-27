@@ -5,8 +5,12 @@
 #include "pico/time.h"
 #include "pico/types.h"
 
+static inline us_time_t us_now() {
+    return get_absolute_time();
+}
+
 static inline void us_gettime(us_time_t *t) {
-    *t = get_absolute_time();
+    *t = us_now();
 }
 
 #ifdef USING_LIBPI_THREADS

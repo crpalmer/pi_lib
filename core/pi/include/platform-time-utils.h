@@ -1,10 +1,14 @@
 #ifndef __PLATFORM_TIME_UTILS_H__
 #define __PLATFORM_TIME_UTILS_H__
 
-static inline void us_gettime(us_time_t *t) {
+static inline us_time_t us_now() {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    (*t) = (ts.tv_sec * 1000LL) + (ts.tv_nsec / 1000);
+    return (ts.tv_sec * 1000LL) + (ts.tv_nsec / 1000);
+}
+
+static inline void us_gettime(us_time_t *t) {
+    *t = us_now();
 }
 
 static inline void us_sleep_until(us_time_t *t) {
