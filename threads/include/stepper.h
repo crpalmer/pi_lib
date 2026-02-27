@@ -1,0 +1,38 @@
+#ifndef __STEPPER_H__
+#define __STEPPER_H__
+
+#include "io.h"
+#include "pi-threads.h"
+
+class Stepper : public PiThread {
+public:
+    Stepper(Output *enable, Output *dir, Output *step, const char *name = "stepper", int priority = 1) : PiThread(name), enable(enable), dir(dir), step(step) {
+	lock = new PiMutex();
+	cond = new PiCond();
+
+	start(priority);
+    }
+
+    void main(void) override;
+
+    void set_speed(double mm_per_sec);
+    void set_acceleration(double mm_per_sec2);
+    void set_jerk(double mm_per_sec);
+    void set_steps_per_mm(double steps_per_mm);
+
+private:
+    Output *enable, *dir, *step;
+    PiMutex *lock;
+    PiCond *cond;
+
+    double v = 0;
+    double target_v = 0;
+    double acceleration = 100;
+    double jerk = 2.5;
+    double steps_per_mm = 200;
+
+private:
+    void one_step();
+};
+
+#endif
