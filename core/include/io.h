@@ -47,27 +47,27 @@ public:
      virtual void clear_pullup() = 0;
 
      void set_is_inverted(bool set_inverted = true) { is_inverted = set_inverted; }
-     void set_debounce(unsigned ms) { debounce_ms = ms; }
+     void set_debounce(unsigned ms) { debounce_us = ms * 1000; }
+    void set_debounce_us(unsigned us) { debounce_us = us; }
  
      unsigned get() {
-	if (debounce_ms) {
-	    return get_with_debounce(debounce_ms);
+	if (debounce_us) {
+	    return get_with_debounce(debounce_us);
 	} else {
 	    return return_value(get_fast());
 	}
      }
 
-     unsigned get_with_debounce(unsigned ms = 1) {
-        us_time_t start;
+     unsigned get_with_debounce(unsigned us = 50) {
 	unsigned v = get_fast();
+        us_time_t start = us_now();
 
-        us_gettime(&start);
         while (1) {
 	    double vv = get_fast();
 	    if (v != vv) {
 		v = vv;
-		us_gettime(&start);
-            } else if (us_elapsed_ms_now(&start) >= (int) ms) {
+		start = us_now();
+            } else if (us_now() - start >= us) {
 		return return_value(v);
 	    }
         }
@@ -80,7 +80,7 @@ protected:
 	return is_inverted ? ! v : v;
     }
 
-    unsigned debounce_ms = 0;
+    unsigned debounce_us = 0;
     bool is_inverted = false;
 };
 
