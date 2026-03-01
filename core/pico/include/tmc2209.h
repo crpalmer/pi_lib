@@ -10,6 +10,7 @@ public:
      }
 
      bool set_microstepping(int microsteps, bool interpolate = true);
+     bool set_rms_current(int mA);
 
 private:
      UART_Tx *tx;
@@ -20,6 +21,7 @@ private:
 
      uint32_t gconf;
      uint32_t chopconf;
+     uint32_t iholdirun;
 };
 
 #endif

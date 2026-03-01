@@ -13,10 +13,11 @@ typedef struct {
     const bit_mapping_t *m;
 } bit_mappings_t;
 
-static const int REG_GCONF    = 0x00;
-static const int REG_CHOPCONF = 0x6C;
+static const int REG_GCONF      = 0x00;
+static const int REG_IHOLDIRUN  = 0x10;
+static const int REG_CHOPCONF   = 0x6C;
 
-#define DEBUG 1
+#define DEBUG 0
 
 static const bit_mapping_t bit_mapping_gconf[] = {
     { "I_scale_analog", 1 },
@@ -30,6 +31,13 @@ static const bit_mapping_t bit_mapping_gconf[] = {
     { "multistep_filt", 1 },
     { "test_mode", 1},
     { "reserved", 22},
+    { NULL, 0}
+};
+
+static const bit_mapping_t bit_mapping_iholdirun[] = {
+    { "ihold", 5 },
+    { "irun", 5 },
+    { "iholddelay", 4 },
     { NULL, 0}
 };
 
@@ -53,6 +61,7 @@ static const bit_mapping_t bit_mapping_chopconf[] = {
 
 static const bit_mappings_t bit_mappings[] = {
     { "chopconf",	REG_CHOPCONF,	bit_mapping_chopconf},
+    { "iholdirun",	REG_IHOLDIRUN,	bit_mapping_iholdirun},
     { "gconf",		REG_GCONF,	bit_mapping_gconf},
     { NULL, 0 }
 };
@@ -80,6 +89,7 @@ static void bit_mapping_set(const bit_mapping_t *m, uint32_t *reg, const char *n
     }
 }
 
+#if DEBUG
 static void bit_mapping_dump(const bit_mapping_t *m, uint32_t reg) {
     int b0 = 0;
 
@@ -92,7 +102,6 @@ static void bit_mapping_dump(const bit_mapping_t *m, uint32_t reg) {
 }
 
 static void bit_mappings_dump(const char *msg, uint8_t reg, uint32_t value) {
-#if DEBUG
     for (int i = 0; bit_mappings[i].name; i++) {
 	if (bit_mappings[i].reg == reg) {
 	    printf("%s: %s (reg 0x%02x): ", msg, bit_mappings[i].name, reg);
@@ -100,19 +109,22 @@ static void bit_mappings_dump(const char *msg, uint8_t reg, uint32_t value) {
 	    return;
 	}
     }
-#endif
 }
+#endif
 
 void TMC2209::set_defaults() {
     chopconf = 0x10000053;
     set_register(REG_CHOPCONF, chopconf);
+
     gconf = 0;
     bit_mapping_set(bit_mapping_gconf, &gconf, "I_scale_analog", 1);
     bit_mapping_set(bit_mapping_gconf, &gconf, "pdn_disable", 1);
     bit_mapping_set(bit_mapping_gconf, &gconf, "mstep_reg_select", 1);
     bit_mapping_set(bit_mapping_gconf, &gconf, "multistep_filt", 1);
-bit_mapping_set(bit_mapping_gconf, &gconf, "shaft", 1);
     set_register(REG_GCONF, gconf);
+
+    iholdirun = 0x000103F0;
+    set_register(REG_IHOLDIRUN, iholdirun);
 }
 
 bool TMC2209::set_register(uint8_t reg, uint32_t data) {
@@ -142,8 +154,8 @@ bool TMC2209::set_register(uint8_t reg, uint32_t data) {
 
 #if DEBUG
     printf("send to tmc: %02x %02x %02x %02x%02x%02x%02x crc=%02x\n", msg[0], msg[1], msg[2], msg[3], msg[4], msg[5], msg[6], msg[7]);
-#endif
     bit_mappings_dump(" sending", reg, data);
+#endif
 
     tx->write(msg, sizeof(msg));
     return true;
@@ -168,4 +180,25 @@ bool TMC2209::set_microstepping(int steps_per_mm, bool interpolate) {
     bit_mapping_set(bit_mapping_chopconf, &chopconf, "mres", mres);
     bit_mapping_set(bit_mapping_chopconf, &chopconf, "intpol", interpolate);
     return set_register(REG_CHOPCONF, chopconf);
+}
+
+static const double Rsense = 0.11;
+
+bool TMC2209::set_rms_current(int mA) {
+    uint8_t CS = 32.0*1.41421*mA/1000.0*(Rsense+0.02)/0.325 - 1;
+    if (CS < 16) {
+	bit_mapping_set(bit_mapping_chopconf, &chopconf, "vsense", 1);
+	CS = 32.0*1.41421*mA/1000.0*(Rsense+0.02)/0.180 - 1;
+    } else {
+	bit_mapping_set(bit_mapping_chopconf, &chopconf, "vsense", 0);
+    }
+
+    if (CS > 31) CS = 31;
+
+    bit_mapping_set(bit_mapping_iholdirun, &iholdirun, "irun", CS);
+    bit_mapping_set(bit_mapping_iholdirun, &iholdirun, "ihold", CS/3);
+
+    bool c = set_register(REG_CHOPCONF, chopconf);
+    bool i = set_register(REG_IHOLDIRUN, iholdirun);
+    return c || i;
 }
