@@ -5,6 +5,14 @@
 extern "C" {
 #endif
 
+#ifdef USING_LIBPI_THREADS
+extern uint8_t pi_getchar();
+#else
+static inline uint8_t pi_getchar() {
+    return getchar();
+}
+#endif
+
 void pico_set_rtc(time_t seconds_since_epoch);
 
 int pico_pre_set_irq();

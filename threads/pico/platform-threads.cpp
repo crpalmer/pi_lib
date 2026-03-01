@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "pico/stdlib.h"
 #include "pi.h"
 #include "mem.h"
 #include "consoles.h"
@@ -29,11 +30,77 @@ static void post_set_irq_fn(int old_affinity) {
     vTaskCoreAffinitySet(NULL, old_affinity);
 }
 
+class StdinBuffer : public PiThread {
+public:
+    StdinBuffer() : PiThread("stdin-buffer") {
+	lock = new PiMutex();
+	cond = new PiCond();
+	start();
+    }
+
+    void main(void) {
+	while (1) {
+	    pause();
+	    lock->lock();
+	    read_all();
+	    lock->unlock();
+	    cond->broadcast();
+	}
+    }
+
+    unsigned char getchar() {
+	lock->lock();
+	while (n == 0) cond->wait(lock);
+
+	unsigned char c = buffer[low];
+	low = (low+1) % buffer_n;
+	n--;
+
+	lock->unlock();
+
+	return c;
+    }
+
+private:
+    void read_all() {
+	while (1) {
+	    if (n >= buffer_n) return;
+	    int c = getchar_timeout_us(0); // Read char immediately
+	    if (c == PICO_ERROR_TIMEOUT) return;
+	    buffer[high] = c;
+	    high = (high+1) % buffer_n;
+	    n++;
+	}
+    }
+
+private:
+    PiMutex *lock;
+    PiCond *cond;
+
+    static const int buffer_n = 1024;
+    unsigned char buffer[buffer_n];
+    int n = 0;
+    int low = 0, high = 0;
+};
+
+static StdinBuffer *stdin_buffer;
+
+void stdio_irq_handler(void *param) {
+    stdin_buffer->resume_from_isr();
+}
+
+uint8_t pi_getchar() {
+    return stdin_buffer->getchar();
+}
+
 static void init_with_threads(void *main_as_vp) {
     malloc_lock_init();
     pico_set_irq_hook_functions(pre_set_irq_fn, post_set_irq_fn);
     mem_set_get_task_name(get_task_name);
     file_init();
+
+    stdio_set_chars_available_callback(stdio_irq_handler, NULL);
+    stdin_buffer = new StdinBuffer();
 
     pico_threads_initialized = true;
 
@@ -43,11 +110,12 @@ static void init_with_threads(void *main_as_vp) {
 
     vTaskDelete(NULL);
 }
-    
+
 #define STACK_SIZE 1024
 
 void platform_init_with_threads(pi_threads_main_t main, int argc, char **argv) {
     ms_sleep(100);	// 1ms seems to be enough
+
     xTaskCreate(init_with_threads, "main", STACK_SIZE, (void *) main, 1, NULL);
     vTaskStartScheduler();
 }

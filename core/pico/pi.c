@@ -99,7 +99,7 @@ pi_readline(char *buf, size_t buf_len)
     while (1) {
 	char c;
 
-	if ((c = getchar()) > 0) {
+	if ((c = pi_getchar()) > 0) {
 	    putchar(c);
 	    if (c == '\r' || c == '\n') {
 		buf[n_buf] = '\0';
