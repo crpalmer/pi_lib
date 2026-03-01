@@ -7,6 +7,7 @@
 void Stepper::main(void) {
     us_time_t last_step = us_now();
 
+    dir->set(1);
     while (1) {
 	if (! target_v && jerk >= v && v >= -jerk) v = 0;
 
@@ -41,8 +42,7 @@ void Stepper::main(void) {
 	else if (v <= -jerk && new_v >= -jerk && new_v <  jerk) new_v = jerk;
 	else if (v >=  jerk && new_v <=  jerk && new_v > -jerk) new_v = -jerk;
 
-	if (v < 0 && new_v > 0) dir->set(1);
-	else if (v > 0 && new_v < 0) dir->set(0);
+	if (v != new_v) dir->set(new_v >= 0);
 
 	v = new_v;
     }
