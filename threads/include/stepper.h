@@ -15,6 +15,9 @@ public:
 
     void main(void) override;
 
+    int64_t get_n_steps();
+    void reset_n_steps();
+
     void set_speed(double mm_per_sec);
     void set_acceleration(double mm_per_sec2);
     void set_jerk(double mm_per_sec);
@@ -30,6 +33,8 @@ private:
     double acceleration = 100;
     double jerk = 2.5;
     double steps_per_mm = 200;
+
+    int64_t n_steps = 0;
 
 private:
     void one_step();

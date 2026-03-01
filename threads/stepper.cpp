@@ -59,6 +59,9 @@ void Stepper::one_step() {
     us_sleep(3);
     step->set(0);
     if (us > 3) us_sleep(us - 3);
+
+    if (v > 0) n_steps++;
+    else n_steps--;
 }
     
 void Stepper::set_speed(double mm_per_sec) {
@@ -79,3 +82,12 @@ void Stepper::set_jerk(double mm_per_sec) {
 void Stepper::set_steps_per_mm(double steps_per_mm) {
     this->steps_per_mm = steps_per_mm;
 }
+
+int64_t Stepper::get_n_steps() {
+    return n_steps;
+}
+
+void Stepper::reset_n_steps() {
+    n_steps = 0;
+}
+
