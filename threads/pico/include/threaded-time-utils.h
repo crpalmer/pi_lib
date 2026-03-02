@@ -10,7 +10,7 @@ static inline void us_sleep_until(us_time_t t) {
     us_time_t us = t - now;
 
     if (! pico_threads_initialized) {
-	sleep_us(t - now);
+	sleep_us(us);
 	return;
     }
 
@@ -23,7 +23,7 @@ static inline void us_sleep_until(us_time_t t) {
     }
 
     /* Busy wait the remaining time, if any */
-    while (t < us_now()) {
+    while (us_now() < t) {
     }
 }
 
