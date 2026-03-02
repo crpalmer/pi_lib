@@ -5,7 +5,7 @@
 #include <math.h>
 
 void Stepper::main(void) {
-    us_time_t next_step = us_now();
+    us_time_t next_step = us_now() + 5;
 
     dir->set(1);
     while (1) {
@@ -44,14 +44,14 @@ void Stepper::main(void) {
 	next_step = us_now() + next_step_delta;
 
 	// If we aren't at the target spped, apply acceleration
-	if ((cur_target_v > 0 && v < cur_target_v) ||
-	    (cur_target_v < 0 && v > cur_target_v)) {
+	if ((cur_target_v >= 0 && v < cur_target_v) ||
+	    (cur_target_v <= 0 && v > cur_target_v)) {
 	    double delta_v = acceleration * next_step_delta/1000000.0;
 	    double new_v = v + (cur_target_v > 0 ? delta_v : -delta_v);
 
 	    // Clamp jerk <= |new_v| <= |target_v|
-	    if (cur_target_v > 0 && new_v > cur_target_v) new_v = cur_target_v;
-	    else if (cur_target_v < 0 && new_v < cur_target_v) new_v = cur_target_v;
+	    if (cur_target_v >= 0 && new_v > cur_target_v) new_v = cur_target_v;
+	    else if (cur_target_v <= 0 && new_v < cur_target_v) new_v = cur_target_v;
 	    else if (-jerk < new_v && new_v < jerk) new_v = cur_target_v > 0 ? jerk : -jerk;
 
 	    dir->set(new_v >= 0);
@@ -61,12 +61,7 @@ void Stepper::main(void) {
 }
 
 us_time_t Stepper::one_step(us_time_t next_step) {
-static int i = 0;
-static int64_t my_steps;
-
     if (v == 0) return 0;
-if (i++ % 1000 == 0)
-printf("%s: one_step n_steps %lld (%lld) v %.2f now %llu next %llu\n", name, n_steps, my_steps++, v, us_now(), next_step);
 
     us_sleep_until(next_step);
     step->set(1);
