@@ -3,6 +3,7 @@
 
 #include "io.h"
 #include "pi-threads.h"
+#include "time-utils.h"
 
 class Stepper : public PiThread {
 public:
@@ -40,7 +41,7 @@ private:
     int64_t n_steps = 0;
 
 private:
-    void one_step();
+    us_time_t one_step(us_time_t next_step);
 };
 
 #endif

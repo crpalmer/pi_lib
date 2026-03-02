@@ -5,12 +5,14 @@
 #include <math.h>
 
 void Stepper::main(void) {
-    us_time_t last_step = us_now();
+    us_time_t next_step = us_now();
 
     dir->set(1);
     while (1) {
-	if (! target_v && jerk >= v && v >= -jerk) v = 0;
+	// If slowing down to a stop and we're in the jerk range then stop
+	if (! target_v && -jerk <= v && v <= jerk) v = 0;
 
+	// If not moving and not requested to move, go to sleep until we start moving
 	if (! v && ! target_v) {
 	    lock->lock();
 	    enable->set(1);
@@ -19,49 +21,64 @@ void Stepper::main(void) {
 	    }
 	    enable->set(0);
 	    lock->unlock();
-	    last_step = us_now();
+	    next_step = us_now() + 5;	    // +5: don't lose time on the first step
 	}
 
-	if (! v && target_v != 0) v = target_v > 0 ? jerk : -jerk;
+	// To avoid locking but keep all our computations consistent, grab the current
+	// target_v and use it to compute the next step.  If the target velocity changes,
+	// we'll deal with that on the next step.
+	double cur_target_v = target_v;
 
-	one_step();
+	// If speeding up and we're in the jerk range, jump to the jerk speed
+	if (cur_target_v != 0 && -jerk <= v && v <= jerk) v = cur_target_v > 0 ? jerk : -jerk;
 
-	us_time_t now = us_now();
-	us_time_t elapsed_us = now - last_step;
-	last_step = now;
+	// Perform the step and get the delta time until the next step
+	us_time_t next_step_delta = one_step(next_step);
 
-	double delta_v = acceleration * elapsed_us/1000000.0;
-	double new_v;
+	// Use the current time in case we aren't able to keep up with the step frequency.
+	// If we just add to next_step and the requested step rate is faster than what we
+	// can handle then we'll just end up falling further and further behind.
+	//
+	// This ensures we can't fall behind and the only risk is that we will be 1us slow
+	// on the next step.
+	next_step = us_now() + next_step_delta;
 
-	if (v > target_v) new_v = v - delta_v;
-	else if (v < target_v) new_v = v + delta_v;
-	else new_v = v;
+	// If we aren't at the target spped, apply acceleration
+	if ((cur_target_v > 0 && v < cur_target_v) ||
+	    (cur_target_v < 0 && v > cur_target_v)) {
+	    double delta_v = acceleration * next_step_delta/1000000.0;
+	    double new_v = v + (cur_target_v > 0 ? delta_v : -delta_v);
 
-	if (target_v > 0 && new_v > target_v) new_v = target_v;
-	else if (target_v < 0 && new_v < target_v) new_v = target_v;
-	else if (v <= -jerk && new_v >= -jerk && new_v <  jerk) new_v = jerk;
-	else if (v >=  jerk && new_v <=  jerk && new_v > -jerk) new_v = -jerk;
+	    // Clamp jerk <= |new_v| <= |target_v|
+	    if (cur_target_v > 0 && new_v > cur_target_v) new_v = cur_target_v;
+	    else if (cur_target_v < 0 && new_v < cur_target_v) new_v = cur_target_v;
+	    else if (-jerk < new_v && new_v < jerk) new_v = cur_target_v > 0 ? jerk : -jerk;
 
-	if (v != new_v) dir->set(new_v >= 0);
-
-	v = new_v;
+	    dir->set(new_v >= 0);
+	    v = new_v;
+        }
     }
 }
 
-void Stepper::one_step() {
-    if (! v) return;
+us_time_t Stepper::one_step(us_time_t next_step) {
+static int i = 0;
+static int64_t my_steps;
 
-    double distance = 1.0/steps_per_mm;
-    double sec = distance / (v > 0 ? v : -v);
-    us_time_t us = (us_time_t) (sec * 1000000);
+    if (v == 0) return 0;
+if (i++ % 1000 == 0)
+printf("%s: one_step n_steps %lld (%lld) v %.2f now %llu next %llu\n", name, n_steps, my_steps++, v, us_now(), next_step);
 
+    us_sleep_until(next_step);
     step->set(1);
     us_sleep(3);
     step->set(0);
-    if (us > 3) us_sleep(us - 3);
 
     if (v > 0) n_steps++;
     else n_steps--;
+
+    double distance = 1.0/steps_per_mm;
+    double sec = distance / (v > 0 ? v : -v);
+    return (us_time_t) (sec * 1000000);
 }
     
 void Stepper::set_speed(double mm_per_sec) {
