@@ -1,29 +1,34 @@
 #ifndef __THREADED_TIME_UTILS_H__
 #define __THREADED_TIME_UTILS_H__
 
-// TODO: provide a native freeftos implementation of these somehow
-
-static inline void us_sleep(us_time_t us) {
+static inline void us_sleep_until(us_time_t t) {
     extern bool pico_threads_initialized;
-    unsigned ms = us / 1000;
 
-    if (ms >= 1) {
-	if (! pico_threads_initialized) {
-	    sleep_ms(ms);
-	} else {
-	    void task_delay(unsigned int ms);
-	    task_delay(ms);
-	}
-	us -= ms * 1000;
+    us_time_t now = us_now();
+    if (now >= t) return;
+
+    us_time_t us = t - now;
+
+    if (! pico_threads_initialized) {
+	sleep_us(t - now);
+	return;
     }
 
-    busy_wait_us(us);
+    unsigned ms = us / 1000;
+
+    /* Scheduler sleep to the ms increment */
+    if (ms >= 1) {
+	void task_delay(unsigned int ms);
+	task_delay(ms);
+    }
+
+    /* Busy wait the remaining time, if any */
+    while (t < us_now()) {
+    }
 }
 
-static inline void us_sleep_until(us_time_t *t) {
-    us_time_t now;
-    us_gettime(&now);
-    if (*t > now) us_sleep(*t - now);
+static inline void us_sleep(us_time_t us) {
+    us_sleep_until(us_now() + us);
 }
 
 #endif

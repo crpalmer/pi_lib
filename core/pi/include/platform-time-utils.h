@@ -11,18 +11,15 @@ static inline void us_gettime(us_time_t *t) {
     *t = us_now();
 }
 
-static inline void us_sleep_until(us_time_t *t) {
+static inline void us_sleep_until(us_time_t t) {
     struct timespec ts;
-    ts.tv_sec = (*t) / 1000000;
-    ts.tv_nsec = (*t % 1000000) * 1000;
+    ts.tv_sec = t / 1000000;
+    ts.tv_nsec = (t % 1000000) * 1000;
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
 }
 
 static inline void us_sleep(us_time_t us) {
-    us_time_t t;
-    us_gettime(&t);
-    t += us;
-    us_sleep_until(&t);
+    us_sleep_until(us_now() + t);
 }
 
 #endif

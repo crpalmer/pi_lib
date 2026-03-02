@@ -37,7 +37,7 @@ thread_main(void *e_as_vp)
 	} else {
 	    pthread_mutex_unlock(&e->lock);
 	    us_add_ms(&last, e->ms);
-	    us_sleep_until(&last);
+	    us_sleep_until(last);
 	    if (TRACE) {
 		us_time_t now;
 		us_gettime(&now);

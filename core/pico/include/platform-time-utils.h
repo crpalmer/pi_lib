@@ -17,22 +17,13 @@ static inline void us_gettime(us_time_t *t) {
 #include "threaded-time-utils.h"
 #else
 
-static inline void us_sleep_until(us_time_t *t) {
-    us_time_t now;
-    int ms;
-
-    us_gettime(&now);
-    ms = us_elapsed_ms(t, &now);
-    if (ms > 0) sleep_ms(ms);
+static inline void us_sleep(us_time_t us) {
+    sleep_us(us);
 }
 
-static inline void us_sleep(us_time_t us) {
-    unsigned ms = us / 1000;
-    if (ms >= 1) {
-	sleep_ms(ms);
-	us -= ms * 1000;
-    }
-    busy_wait_us(us);
+static inline void us_sleep_until(us_time_t t) {
+    us_time_t now = us_now();
+    if (t > now) us_sleep(t - now);
 }
 
 #endif
