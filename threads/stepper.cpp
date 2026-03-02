@@ -91,3 +91,7 @@ void Stepper::reset_n_steps() {
     n_steps = 0;
 }
 
+void Stepper::dump_state() {
+    printf("%s: %.2f feed rate (target %.2f), %lld total steps", name, v, target_v, n_steps);
+}
+

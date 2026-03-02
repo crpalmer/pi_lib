@@ -6,7 +6,7 @@
 
 class Stepper : public PiThread {
 public:
-    Stepper(Output *enable, Output *dir, Output *step, const char *name = "stepper", int priority = 1) : PiThread(name), enable(enable), dir(dir), step(step) {
+    Stepper(Output *enable, Output *dir, Output *step, const char *name = "stepper", int priority = 1) : PiThread(name), name(name), enable(enable), dir(dir), step(step) {
 	lock = new PiMutex();
 	cond = new PiCond();
 
@@ -23,7 +23,10 @@ public:
     void set_jerk(double mm_per_sec);
     void set_steps_per_mm(double steps_per_mm);
 
+    void dump_state();
+
 private:
+    const char *name;
     Output *enable, *dir, *step;
     PiMutex *lock;
     PiCond *cond;
