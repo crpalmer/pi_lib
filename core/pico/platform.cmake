@@ -20,6 +20,8 @@ target_sources(lib-pi INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/pico-notes.cpp
   ${CMAKE_CURRENT_LIST_DIR}/spi.cpp
   ${CMAKE_CURRENT_LIST_DIR}/tmc2209.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/uart-pio-rx.cpp
+  ${CMAKE_CURRENT_LIST_DIR}/uart-pio-tx.cpp
   ${CMAKE_CURRENT_LIST_DIR}/uart-reader.cpp
   ${CMAKE_CURRENT_LIST_DIR}/uart-writer.cpp
   ${CMAKE_CURRENT_LIST_DIR}/usb-reader.cpp

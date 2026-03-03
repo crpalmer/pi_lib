@@ -1,7 +1,7 @@
 #ifndef __TMC2209_H__
 #define __TMC2209_H__
 
-#include "uart-tx.h"
+#include "uart.h"
 
 class TMC2209 {
 public:
