@@ -36,8 +36,11 @@ static const bit_mapping_t bit_mapping_gconf[] = {
 
 static const bit_mapping_t bit_mapping_iholdirun[] = {
     { "ihold", 5 },
+    { "reserved", 3 },
     { "irun", 5 },
+    { "reserved2", 3 },
     { "iholddelay", 4 },
+    { "reserved3", 4 },
     { NULL, 0}
 };
 
@@ -182,13 +185,22 @@ bool TMC2209::set_microstepping(int steps_per_mm, bool interpolate) {
     return set_register(REG_CHOPCONF, chopconf);
 }
 
-static const double Rsense = 0.11;
+static const double Rsense = 110;
+static const double v_sense[2] = { 325, 180 };
 
 bool TMC2209::set_rms_current(int mA) {
-    uint8_t CS = 32.0*1.41421*mA/1000.0*(Rsense+0.02)/0.325 - 1;
+    // Datasheet says:
+    //        CS + 1   v_sense[x]      1
+    // Irms = ------ * ---------- * -------
+    //          32     Rsense + 20   sqrt(2)
+    //  which some rearranging gives:
+    double max_v = mA * (Rsense + 20) * 32.0 * 1.41421 / 1000;
+    int8_t CS = (int8_t)(max_v / v_sense[0]) - 1;
+
+    // If the current scaling is too low set the vsense bit and recalculate the current setting
     if (CS < 16) {
 	bit_mapping_set(bit_mapping_chopconf, &chopconf, "vsense", 1);
-	CS = 32.0*1.41421*mA/1000.0*(Rsense+0.02)/0.180 - 1;
+        CS = (uint8_t)(max_v / v_sense[1]) - 1;
     } else {
 	bit_mapping_set(bit_mapping_chopconf, &chopconf, "vsense", 0);
     }
