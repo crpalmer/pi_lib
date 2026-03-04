@@ -23,12 +23,11 @@ public:
 	return uart_rx_program_getc(pio, sm);
     }
 
-    bool read(void *buffer, size_t n) {
-	return false;
-    }
-
-    bool gets(char *buffer, size_t n) {
-	return false;
+    void read(void *buffer, size_t n) {
+	uint8_t *bytes = (uint8_t *) buffer;
+	for (size_t i = 0; i < n; i++) {
+	    bytes[i] = getc();
+	}
     }
 
 private:
