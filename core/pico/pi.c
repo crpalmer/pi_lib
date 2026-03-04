@@ -84,7 +84,7 @@ pi_abort()
 void
 pi_init(void)
 {
-    stdio_init_all();
+    stdio_usb_init();
     adc_init();
     pi_gpio_init();
     setenv("TZ", "EST+5EDT,M3.2.0/2,M11.1.0/2", 1);
