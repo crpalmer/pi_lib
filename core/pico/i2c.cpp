@@ -6,8 +6,8 @@
 #define MAX_I2C  32
 
 typedef struct {
-    unsigned char bus;
-    unsigned char addr;
+    uint8_t bus;
+    uint8_t addr;
 } i2c_data_t;
 
 static i2c_data_t i2c_data[MAX_I2C];
@@ -41,7 +41,7 @@ void i2c_close(int fd)
     i2c_data[fd].addr = 0;
 }
 
-int i2c_read(int fd, unsigned char reg, void *data, int n_bytes)
+int i2c_read(int fd, uint8_t reg, void *data, int n_bytes)
 {
     i2c_data_t *i2c = &i2c_data[fd];
 
@@ -49,14 +49,14 @@ int i2c_read(int fd, unsigned char reg, void *data, int n_bytes)
     return i2c_read_blocking(i2c_inst(i2c->bus), i2c->addr, (uint8_t*) data, n_bytes, false);
 }
 
-int i2c_write(int fd, unsigned char reg, const void *data, int n_bytes)
+int i2c_write(int fd, uint8_t reg, const void *data, int n_bytes)
 {
-    unsigned char msg[n_bytes+1];
+    uint8_t msg[n_bytes+1];
     i2c_data_t *i2c = &i2c_data[fd];
 
     msg[0] = reg;
     for (int i = 0; i < n_bytes; i++) {
-	msg[i+1] = ((const unsigned char *) data)[i];
+	msg[i+1] = ((const uint8_t *) data)[i];
     }
     return i2c_write_blocking(i2c_inst(i2c->bus), i2c->addr, msg, n_bytes+1, false);
 }

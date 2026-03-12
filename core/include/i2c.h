@@ -8,26 +8,26 @@ void i2c_init_bus(int bus = 1, int sda = 2, int scl = 3, int bus_speed = 100*100
 
 int i2c_open(int bus, int addr);
 void i2c_close(int fd);
-int i2c_read(int fd, unsigned char reg, void *data, int n_bytes);
-int i2c_write(int fd, unsigned char reg, const void *data, int n_bytes);
+int i2c_read(int fd, uint8_t reg, void *data, int n_bytes);
+int i2c_write(int fd, uint8_t reg, const void *data, int n_bytes);
 bool i2c_exists(int bus, int addr);
 
-static inline int i2c_read_byte(int fd, unsigned char reg, unsigned char *data)
+static inline int i2c_read_byte(int fd, uint8_t reg, uint8_t *data)
 {
     return i2c_read(fd, reg, data, 1);
 }
 
-static inline int i2c_write_byte(int fd, unsigned char reg, unsigned char data)
+static inline int i2c_write_byte(int fd, uint8_t reg, uint8_t data)
 {
     return i2c_write(fd, reg, &data, 1);
 }
 
-static inline int i2c_read_word(int fd, unsigned char reg, unsigned short *data)
+static inline int i2c_read_word(int fd, uint8_t reg, uint16_t *data)
 {
     return i2c_read(fd, reg, data, 2);
 }
 
-static inline int i2c_write_word(int fd, unsigned char reg, unsigned short data)
+static inline int i2c_write_word(int fd, uint8_t reg, uint16_t data)
 {
     return i2c_write(fd, reg, &data, 2);
 }
