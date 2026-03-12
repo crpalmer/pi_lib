@@ -61,6 +61,29 @@ int i2c_write(int fd, uint8_t reg, const void *data, int n_bytes)
     return i2c_write_blocking(i2c_inst(i2c->bus), i2c->addr, msg, n_bytes+1, false);
 }
 
+int i2c_read_16(int fd, uint16_t reg, void *data, int n_bytes)
+{
+    i2c_data_t *i2c = &i2c_data[fd];
+    uint8_t reg_bytes[2] = { (uint8_t) ((reg >> 8) & 0xff), (uint8_t) (reg & 0xff) };
+
+    i2c_write_blocking(i2c_inst(i2c->bus), i2c->addr, reg_bytes, 2, false);
+    return i2c_read_blocking(i2c_inst(i2c->bus), i2c->addr, (uint8_t*) data, n_bytes, false);
+}
+
+int i2c_write_16(int fd, uint16_t reg, const void *data, int n_bytes)
+{
+    uint8_t msg[n_bytes+2];
+    i2c_data_t *i2c = &i2c_data[fd];
+
+    msg[0] = (uint8_t) ((reg >> 8) & 0xff);
+    msg[1] = (uint8_t) (reg & 0xff);
+
+    for (int i = 0; i < n_bytes; i++) {
+	msg[i+2] = ((const uint8_t *) data)[i];
+    }
+    return i2c_write_blocking(i2c_inst(i2c->bus), i2c->addr, msg, n_bytes+2, false);
+}
+
 bool i2c_exists(int bus, int addr) {
     uint8_t dummy;
     return i2c_read_blocking(i2c_inst(bus), addr, &dummy, 1, false) == 1;
