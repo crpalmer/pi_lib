@@ -8,10 +8,10 @@ void i2c_init_bus(int bus = 1, int sda = 2, int scl = 3, int bus_speed = 100*100
 
 int i2c_open(int bus, int addr);
 void i2c_close(int fd);
-int i2c_read(int fd, uint8_t reg, void *data, int n_bytes);
-int i2c_read_16(int fd, uint16_t reg, void *data, int n_bytes);
-int i2c_write(int fd, uint8_t reg, const void *data, int n_bytes);
-int i2c_write_16(int fd, uint16_t reg, const void *data, int n_bytes);
+int i2c_read(int fd, uint8_t reg, void *data, size_t n_bytes);
+int i2c_read_16(int fd, uint16_t reg, void *data, size_t n_bytes);
+int i2c_write(int fd, uint8_t reg, const void *data, size_t n_bytes);
+int i2c_write_16(int fd, uint16_t reg, const void *data, size_t n_bytes);
 bool i2c_exists(int bus, int addr);
 
 static inline int i2c_read_byte(int fd, uint8_t reg, uint8_t *data)

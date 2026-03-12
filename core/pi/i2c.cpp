@@ -69,7 +69,7 @@ void i2c_close(int fd)
     close(fd);
 }
 
-int i2c_read(int fd, uint8_t reg, void *data, int n_bytes)
+int i2c_read(int fd, uint8_t reg, void *data, size_t n_bytes)
 {
     i2c_lock(fd);
     if (write(fd, &reg, 1) != 1) return -1;
@@ -79,7 +79,7 @@ int i2c_read(int fd, uint8_t reg, void *data, int n_bytes)
     return ret;
 }
 
-int i2c_write(int fd, uint8_t reg, const void *data, int n_bytes)
+int i2c_write(int fd, uint8_t reg, const void *data, size_t n_bytes)
 {
     uint8_t buf[n_bytes+1];
     buf[0] = reg;
@@ -92,7 +92,7 @@ int i2c_write(int fd, uint8_t reg, const void *data, int n_bytes)
     return ret;
 }
 
-int i2c_read_16(int fd, uint16_t reg, void *data, int n_bytes)
+int i2c_read_16(int fd, uint16_t reg, void *data, size_t n_bytes)
 {
     i2c_lock(fd);
     if (write(fd, &reg, 2) != 2) return -2;
@@ -102,7 +102,7 @@ int i2c_read_16(int fd, uint16_t reg, void *data, int n_bytes)
     return ret;
 }
 
-int i2c_write_16(int fd, uint16_t reg, const void *data, int n_bytes)
+int i2c_write_16(int fd, uint16_t reg, const void *data, size_t n_bytes)
 {
     uint8_t buf[n_bytes+2];
     buf[0] = (reg >> 8) & 0xff;
