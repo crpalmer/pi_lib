@@ -56,16 +56,28 @@ static inline uart_inst_t *pin_to_uart(int pin) {
 }
 
 UART_Rx *pico_new_uart_rx(int pin, int baud) {
-    uart_inst_t *uart = pin_to_uart(pin);
-    if (! uart_is_enabled(uart)) uart_init(uart, baud);
     gpio_set_function(pin, GPIO_FUNC_UART);
+
+    uart_inst_t *uart = pin_to_uart(pin);
+    if (! uart_is_enabled(uart)) {
+	uart_init(uart, baud);
+	//uart_set_hw_flow(uart, true, true);
+    }
+
+    while (uart_is_readable_within_us(uart, 100)) uart_getc(uart);
+
     return new UART_Hardware_Rx(uart);
 }
 
 UART_Tx *pico_new_uart_tx(int pin, int baud) {
-    uart_inst_t *uart = pin_to_uart(pin);
-    if (! uart_is_enabled(uart)) uart_init(uart, baud);
     gpio_set_function(pin, GPIO_FUNC_UART);
+
+    uart_inst_t *uart = pin_to_uart(pin);
+    if (! uart_is_enabled(uart)) {
+	uart_init(uart, baud);
+	//uart_set_hw_flow(uart, true, true);
+    }
+
     return new UART_Hardware_Tx(uart);
 }
 
