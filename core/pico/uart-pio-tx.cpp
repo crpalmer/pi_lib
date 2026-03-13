@@ -23,11 +23,6 @@ public:
         pio_sm_put_blocking(pio, sm, (uint32_t) c);
     }
 
-    void puts(const char *s) override {
-        this->write((uint8_t *) s, strlen(s));
-        putc('\n');
-    }
-
     void write(const void *datav, size_t n) override {
 	uint8_t *data = (uint8_t *) datav;
         while (n--) putc(*data++);

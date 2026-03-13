@@ -30,12 +30,7 @@ public:
     }
 
     void putc(char c) override {
-	uart_putc(uart, c);
-    }
-
-    void puts(const char *s) override {
-	uart_puts(uart, s);
-	uart_putc(uart, '\n');
+	uart_putc_raw(uart, c);
     }
 
     void write(const void *data, size_t n) {

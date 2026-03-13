@@ -1,6 +1,8 @@
 #ifndef __UART_H__
 #define __UART_H__
 
+#include <string.h>
+
 class UART_Rx {
 public:
     virtual bool is_empty() = 0;
@@ -21,7 +23,9 @@ public:
 class UART_Tx { 
 public:
     virtual void putc(char c) = 0;
-    virtual void puts(const char *s) = 0;
+    virtual void write(const char *s) {
+	write(s, strlen(s));
+    }
     virtual void write(const void *data, size_t n) = 0;
 };
 
