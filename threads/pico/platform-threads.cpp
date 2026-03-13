@@ -197,10 +197,10 @@ PiCond::~PiCond() {
     delete lock;
 }
 
-static TickType_t abstime_to_ticks(const us_time_t *abstime) {
-    us_time_t now;
-    us_gettime(&now);
-    int ms = us_elapsed_ms(abstime, &now);
+static TickType_t abstime_to_ticks(const us_time_t abstime) {
+    us_time_t now = us_now();
+    if (now >= abstime) return 0;
+    int ms = (abstime - now + 500) / 1000;
     return pdMS_TO_TICKS(ms);
 }
 
@@ -210,7 +210,7 @@ bool PiCond::wait(PiMutex *m, const us_time_t *abstime) {
     lock->unlock();
 
     m->unlock();
-    int ret = ulTaskNotifyTakeIndexed(PI_THREAD_NOTIFY_INDEX, true, abstime ? abstime_to_ticks(abstime) : portMAX_DELAY);
+    int ret = ulTaskNotifyTakeIndexed(PI_THREAD_NOTIFY_INDEX, true, abstime ? abstime_to_ticks(*abstime) : portMAX_DELAY);
     m->lock();
 
     return ret > 0;
