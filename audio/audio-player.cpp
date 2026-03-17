@@ -52,7 +52,7 @@ void AudioPlayer::wait_all_done() {
 bool AudioPlayer::wait_current_done(const us_time_t *abstime) {
     bool ret = true;
     mutex->lock();
-    if (player_is_active) ret = stop_cond->wait(mutex, abstime);
+    if (player_is_active) ret = stop_cond->wait_until(mutex, *abstime);
     mutex->unlock();
     return ret;
 }
