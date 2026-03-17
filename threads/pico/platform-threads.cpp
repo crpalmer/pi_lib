@@ -213,6 +213,12 @@ bool PiCond::wait(PiMutex *m, const us_time_t *abstime) {
     int ret = ulTaskNotifyTakeIndexed(PI_THREAD_NOTIFY_INDEX, true, abstime ? abstime_to_ticks(*abstime) : portMAX_DELAY);
     m->lock();
 
+    if (ret <= 0) {
+	lock->lock();
+	wait_list.remove(xTaskGetCurrentTaskHandle());
+	lock->unlock();
+    }
+
     return ret > 0;
 }
 
