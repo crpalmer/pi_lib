@@ -48,9 +48,12 @@ private:
 class PiCond {
 public:
     PiCond();
-    bool wait(PiMutex *m, const us_time_t *abstime = NULL);
+    bool wait(PiMutex *m) { return wait_until(m, 0); }
+    bool wait_until(PiMutex *m, us_time_t abstime);
+    bool wait_for(PiMutex *m, us_time_t us) { return wait_until(m, us_now() + us); }
     void signal();
     void broadcast();
+
 
 private:
     pthread_cond_t c;

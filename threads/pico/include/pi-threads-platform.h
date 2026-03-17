@@ -58,9 +58,11 @@ class PiCond {
 public:
     PiCond();
     ~PiCond();
-    bool wait(PiMutex *m, const us_time_t *abstime = NULL);
     void signal();
     void broadcast();
+    bool wait(PiMutex *m) { return wait_until(m, 0); }
+    bool wait_until(PiMutex *m, us_time_t abstime);
+    bool wait_for(PiMutex *m, us_time_t us) { return wait_until(m, us_now() + us); }
 
 private:
     PiMutex *lock;

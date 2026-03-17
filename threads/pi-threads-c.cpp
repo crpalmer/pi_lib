@@ -75,7 +75,7 @@ C_DECL int pi_cond_timedwait(pi_cond_t *c_vp, pi_mutex_t *m_vp, const us_time_t 
     PiCond *c = (PiCond *) c_vp;
     PiMutex *m = (PiMutex *) m_vp;
 
-    return c->wait(m, abstime);
+    return c->wait_until(m, abstime ? *abstime : 0);
 }
 
 C_DECL void pi_cond_wait(pi_cond_t *c_vp, pi_mutex_t *m_vp)

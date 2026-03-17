@@ -103,8 +103,8 @@ PiCond::PiCond() {
     pthread_cond_init(&c, &attr);
 }
 
-bool PiCond::wait(PiMutex *m, const us_time_t *abstime) {
-    if (abstime) {
+bool PiCond::wait_until(PiMutex *m, const us_time_t abstime) {
+    if (abstime > 0) {
 	struct timespec ts;
 	ts.tv_sec = (*abstime) / 1000000;
 	ts.tv_nsec = (*abstime % 1000000) * 1000;

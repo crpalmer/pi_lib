@@ -204,13 +204,13 @@ static TickType_t abstime_to_ticks(const us_time_t abstime) {
     return pdMS_TO_TICKS(ms);
 }
 
-bool PiCond::wait(PiMutex *m, const us_time_t *abstime) {
+bool PiCond::wait_until(PiMutex *m, const us_time_t abstime) {
     lock->lock();
     wait_list.push_back(xTaskGetCurrentTaskHandle());
     lock->unlock();
 
     m->unlock();
-    int ret = ulTaskNotifyTakeIndexed(PI_THREAD_NOTIFY_INDEX, true, abstime ? abstime_to_ticks(*abstime) : portMAX_DELAY);
+    int ret = ulTaskNotifyTakeIndexed(PI_THREAD_NOTIFY_INDEX, true, abstime ? abstime_to_ticks(abstime) : portMAX_DELAY);
     m->lock();
 
     if (ret <= 0) {
