@@ -16,8 +16,8 @@ public:
 
     void main(void) override;
 
-    int64_t get_n_steps();
-    void reset_n_steps();
+    double get_mm_moved();
+    void reset_mm_moved();
 
     void set_speed(double mm_per_sec);
     void set_acceleration(double mm_per_sec2);

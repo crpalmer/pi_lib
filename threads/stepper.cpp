@@ -95,15 +95,15 @@ void Stepper::set_steps_per_mm(double steps_per_mm) {
     this->steps_per_mm = steps_per_mm;
 }
 
-int64_t Stepper::get_n_steps() {
-    return n_steps;
+double Stepper::get_mm_moved() {
+    return n_steps / ((double) steps_per_mm);
 }
 
-void Stepper::reset_n_steps() {
+void Stepper::reset_mm_moved() {
     n_steps = 0;
 }
 
 void Stepper::dump_state() {
-    printf("%s: %.2f feed rate (target %.2f), %lld total steps", name, v, target_v, n_steps);
+    printf("%s: %.2f mm/sec (target %.2f), %.2f mm", name, v, target_v, get_mm_moved());
 }
 
