@@ -19,7 +19,7 @@ run(void *arg)
     if (net_sntp_time(host, &now) < 0) {
 	perror("net_sntp_time");
     } else {
-        printf("%48s: %06lu.%06lu\n", host ? host : "<default>", (unsigned long) now.tv_sec, (unsigned long) now.tv_nsec);
+        printf("%48s: %06lu.%06lu\n", host ? host : "<default>", (unsigned long) now / 1000000, (unsigned long) now % 1000000);
     }
     pi_mutex_lock(m);
     n_complete++;

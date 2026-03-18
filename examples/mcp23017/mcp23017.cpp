@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "pi.h"
 #include "i2c.h"
 #include "mcp23017.h"
 #include "pi.h"

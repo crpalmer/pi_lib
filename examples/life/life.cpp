@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdint.h>
+#include "pi.h"
 #include "gp-output.h"
 #include "i2c.h"
 #include "il9341.h"

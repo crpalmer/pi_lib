@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "pi.h"
 #include "wb.h"
 #include "digital-counter.h"
 #include "pca9685.h"
