@@ -19,7 +19,7 @@ static inline void us_sleep_until(us_time_t t) {
 }
 
 static inline void us_sleep(us_time_t us) {
-    us_sleep_until(us_now() + t);
+    us_sleep_until(us_now() + us);
 }
 
 #endif
