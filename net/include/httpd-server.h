@@ -50,6 +50,15 @@ public:
 
     ~HttpdResponse() { delete buffer; }
 
+    void set_payload(Buffer *new_buffer) {
+	delete buffer;
+	buffer = new_buffer;
+    }
+
+    void set_payload(std::string string) {
+	set_payload(new StrdupBuffer(string));
+    }
+
     /** Change the HTTP response status
      * 
      * @param status - Set the HTTP protocol response status (number, 200 by default)
@@ -123,6 +132,19 @@ public:
      */
 
     virtual HttpdResponse *open() = 0;
+};
+
+class HttpdSubstitutionHandler : public HttpdFilenameHandler {
+public:
+    HttpdSubstitutionHandler(HttpdFilenameHandler *base) : base(base) {
+    }
+
+    HttpdResponse *open() override;
+
+    virtual const char *get_value_of(const char *key) = 0;
+
+private:
+    HttpdFilenameHandler *base;
 };
 
 /** A \c HttpdFilenameHandler that serves a local file.

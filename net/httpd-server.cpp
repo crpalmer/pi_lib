@@ -304,3 +304,39 @@ void HttpdServer::mongoose_callback_proxy(struct mg_connection *c, int ev, void 
     httpd->mongoose_callback(c, ev, ev_data);
 }
 
+HttpdResponse *HttpdSubstitutionHandler::open() {
+    HttpdResponse *response = base->open();
+    if (! response) return NULL;
+
+    std::string old_payload = (char *) response->get_raw_data();
+    std::string payload = "";
+    size_t cur = 0;
+    size_t next;
+
+    while ((next = old_payload.find("@@", cur)) != std::string::npos) {
+	bool replaced = false;
+
+	payload.append(old_payload.substr(cur, (next - cur)));
+
+	for (size_t x = next+2; old_payload[x] && ! isspace(old_payload[x]); x++) {
+	    if (old_payload[x] == '@' && old_payload[x+1] == '@') {
+		const char *value = get_value_of(old_payload.substr(next+2, (x - (next+2))).c_str());
+		if (value) {
+		    payload.append(value);
+		    replaced = true;
+		    cur = x + 2;
+		    break;
+		}
+	    }
+	}
+
+	if (! replaced) {
+	    payload += "@@";
+	    cur = next+2;
+	}
+    }
+
+    payload.append(old_payload.substr(cur));
+    response->set_payload(payload);
+    return response;
+}
