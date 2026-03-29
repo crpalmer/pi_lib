@@ -15,8 +15,7 @@ bool pico_is_on_battery() {
     return ! cyw43_arch_gpio_get(CYW43_WL_GPIO_VBUS_PIN);
 #elif defined PICO_VBUS_PIN
     gpio_set_function(PICO_VBUS_PIN, GPIO_FUNC_SIO);
-    reutrn ! gpio_get(PICO_VBUS_PIN);
-    return PICO_OK;
+    return ! gpio_get(PICO_VBUS_PIN);
 #else
     return false;
 #endif
