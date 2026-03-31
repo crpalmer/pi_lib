@@ -37,3 +37,8 @@ pi_readline(char *buf, size_t buf_len)
     }
     return ret;
 }
+
+void pi_reboot() {
+    printf("PI doesn't reboot, exiting instead.\n");
+    exit(0);
+}
