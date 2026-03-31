@@ -20,7 +20,12 @@ target_include_directories(lib-pi INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
 target_link_libraries(lib-pi INTERFACE
     tinyalsa
     -lgpiod
-    -lpigpio
     -lpng
     -lusb
 )
+
+if(NOT "${PLATFORM}" STREQUAL "linux")
+    target_link_libraries(lib-pi INTERFACE
+	-lpigpio
+    )
+endif()

@@ -1,7 +1,13 @@
 #include "pi.h"
 #include "core-lock.h"
-#include "pigpio.h"
 #include "spi.h"
+
+#ifdef PLATFORM_linux
+int spiOpen(int bus, int speed, int something) { return 0; }
+int spiWrite(int bus, char *data, int n) { return n; }
+#else
+#include "pigpio.h"
+#endif
 
 #define MAX_BUS 10
 static int bus_speed[2] = { 10*1000*1000, 10*1000*1000 };

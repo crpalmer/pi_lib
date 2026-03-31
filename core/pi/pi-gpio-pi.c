@@ -8,6 +8,8 @@
 
 #define NUM_GPIOS 40
 
+#if 0
+
 static const char *aliases[NUM_GPIOS];
 
 typedef struct {
@@ -218,3 +220,17 @@ int pi_gpio_pwm_set_duty(unsigned pin, double value) {
     pi_gpio_set(pin, value > 0.5);
     return 0;
 }
+
+#else
+
+void pi_gpio_init() {}
+int pi_gpio_get(unsigned gpio) { return 0; }
+int pi_gpio_set(unsigned gpio, uint8_t value) { return 0; }
+int pi_gpio_set_pullup(unsigned gpio, unsigned updown) { return 0; }
+int pi_gpio_set_direction(unsigned gpio, unsigned mode) { return 0; }
+int pi_gpio_set_irq_handler(unsigned gpio, pi_gpio_irq_handler_t irq_handler, void *irq_handler_arg) { return 0; }
+int pi_gpio_pwm_enable(unsigned pin, unsigned hz) { return false; }
+int pi_gpio_pwm_disable(unsigned pin) { return false; }
+int pi_gpio_pwm_set_duty(unsigned pin, double value) { return 0; }
+
+#endif
