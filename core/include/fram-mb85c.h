@@ -21,7 +21,7 @@ public:
 	return i2c_read_16(fd, address, data, n_bytes) == (int) n_bytes;
     }
 
-    bool write(int address, void *data, size_t n_bytes) override {
+    bool write(int address, const void *data, size_t n_bytes) override {
 	return i2c_write_16(fd, address, data, n_bytes) == (int) n_bytes;
     }
 
