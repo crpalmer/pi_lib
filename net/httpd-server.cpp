@@ -23,6 +23,31 @@ const int buffer_size = 2*1024;
 const int buffer_size = 32*1024;
 #endif
 
+static const char *body_ct = "application/x-www-form-urlencoded";
+
+class HttpdRequestInternal : public HttpdRequest {
+public:
+    HttpdRequestInternal(struct mg_http_message *msg) : msg(msg) {
+	mg_str *ct = mg_http_get_header(msg, "Content-Type");
+	use_body = ct && ct->len >= strlen(body_ct) && strncmp(ct->buf, body_ct, strlen(body_ct)) == 0;
+    }
+
+    int get_parameter(const char *_name, const char **str) override {
+	struct mg_str name = mg_str(_name);
+	struct mg_str v = mg_http_var(msg->query, name);
+	if (v.buf == NULL && use_body) v = mg_http_var(msg->body, name);
+	if (v.buf) {
+	    *str = v.buf;
+	    return v.len;
+	}
+	return -1;
+    }
+
+private:
+    struct mg_http_message *msg;
+    bool use_body;
+};
+
 class HttpdConnection {
 public:
     HttpdConnection(class HttpdServer *httpd, struct mg_connection *c, int size = buffer_size) : httpd(httpd), c(c), size(size) {
@@ -192,7 +217,9 @@ void HttpdServer::mongoose_callback(struct mg_connection *c, int ev, void *ev_da
 	MG_DEBUG(("callback: ev-msg"));
 	struct mg_http_message *hm = (struct mg_http_message *) ev_data;
 	std::string uri = std::string(hm->uri.buf, hm->uri.len);
-	HttpdResponse *response = get_uri(uri);
+	HttpdRequest *request = new HttpdRequestInternal(hm);
+	HttpdResponse *response = get_uri(uri, request);
+	delete request;
 
 	if (! response) {
 	    mg_http_reply(c, 404, "", "File not found.\n");
@@ -251,11 +278,11 @@ void HttpdServer::mongoose_callback(struct mg_connection *c, int ev, void *ev_da
     if (connections[c->id]) connections[c->id]->send_if_possible();
 }
 
-HttpdResponse *HttpdServer::get_uri(std::string fname) {
+HttpdResponse *HttpdServer::get_uri(std::string fname, HttpdRequest *request) {
     // Check for any registered full filenmae
 
     if (file_handlers[fname]) {
-	return file_handlers[fname]->open();
+	return file_handlers[fname]->open(request);
     }
 
     // Check for any prefix handlers
@@ -271,7 +298,7 @@ HttpdResponse *HttpdServer::get_uri(std::string fname) {
 
 	if (prefix_handlers[prefix]) {
 	    std::string suffix = fname.substr(prefix.length()+1);
-	    HttpdResponse *response = prefix_handlers[prefix]->open(suffix);
+	    HttpdResponse *response = prefix_handlers[prefix]->open(suffix, request);
 	    if (response) return response;
 	}
     }
@@ -293,7 +320,7 @@ void HttpdServer::wakeup(HttpdConnection *connection) {
     }
 }
 
-HttpdResponse *HttpdDebugHandler::open(std::string path) {
+HttpdResponse *HttpdDebugHandler::open(std::string path, HttpdRequest *request) {
     if (path == "threads") return new HttpdResponse(pi_threads_get_state());
     if (path == "free") return new HttpdResponse(std::to_string(pi_threads_get_free_ram()));
     return new HttpdResponse("Invalid request [" + path + "]");
@@ -304,8 +331,8 @@ void HttpdServer::mongoose_callback_proxy(struct mg_connection *c, int ev, void 
     httpd->mongoose_callback(c, ev, ev_data);
 }
 
-HttpdResponse *HttpdSubstitutionHandler::open() {
-    HttpdResponse *response = base->open();
+HttpdResponse *HttpdSubstitutionHandler::open(HttpdRequest *request) {
+    HttpdResponse *response = base->open(request);
     if (! response) return NULL;
 
     std::string old_payload = (char *) response->get_raw_data();

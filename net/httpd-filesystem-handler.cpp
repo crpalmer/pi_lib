@@ -3,7 +3,7 @@
 #include "file.h"
 #include "httpd-filesystem-handler.h"
 
-HttpdResponse *HttpdFilesystemHandler::open(std::string rel_path) {
+HttpdResponse *HttpdFilesystemHandler::open(std::string rel_path, HttpdRequest *request) {
     std::string full_path = path + "/" + rel_path;
     Buffer *b = file_buffer_open(full_path);
 

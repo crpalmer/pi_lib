@@ -19,6 +19,14 @@ typedef std::map<std::string, std::string> cgi_params_t;
 
 class HttpdConnection;
 
+class HttpdRequest {
+public:
+    virtual ~HttpdRequest() { }
+
+    // Returns the length of value or negative if not found
+    virtual int get_parameter(const char *name, const char **value) = 0;
+};
+
 /** The response to a HTTP request.
  *
  * This class is used to generate a HTTP response.  Normally you would provide
@@ -129,9 +137,12 @@ public:
     /** Create the response object
      *
      * @returns the response to the HTTP request
+     *
+     * @note The request is only valid during the call to open().  You
+     * must copy any data that you want to use later.
      */
 
-    virtual HttpdResponse *open() = 0;
+    virtual HttpdResponse *open(HttpdRequest *request) = 0;
 };
 
 class HttpdSubstitutionHandler : public HttpdFilenameHandler {
@@ -139,7 +150,7 @@ public:
     HttpdSubstitutionHandler(HttpdFilenameHandler *base) : base(base) {
     }
 
-    HttpdResponse *open() override;
+    HttpdResponse *open(HttpdRequest *request) override;
 
     virtual const char *get_value_of(const char *key) = 0;
 
@@ -148,13 +159,16 @@ private:
 };
 
 /** A \c HttpdFilenameHandler that serves a local file.
+ *
+ * @note The request is only valid during the call to open().  You
+ * must copy any data that you want to use later.
  */
 
 class HttpdFileHandler : public HttpdFilenameHandler {
 public:
     HttpdFileHandler(std::string filename) : filename(filename) { }
 
-    virtual HttpdResponse *open() {
+    virtual HttpdResponse *open(HttpdRequest *request) {
 	FileBuffer *buffer = file_buffer_open(filename);
 	if (buffer) return new HttpdResponse(buffer);
 	else return NULL;
@@ -165,6 +179,9 @@ private:
 };
 
 /** A \c HttpdFilenameHandler that generate a redirect.
+ *
+ * @note The request is only valid during the call to open().  You
+ * must copy any data that you want to use later.
  */
 
 class HttpdRedirectHandler : public HttpdFilenameHandler {
@@ -174,7 +191,7 @@ public:
 
     HttpdRedirectHandler(std::string destination) : destination(destination) { }
 
-    virtual HttpdResponse *open() {
+    virtual HttpdResponse *open(HttpdRequest *request) {
 	HttpdResponse *response = new HttpdResponse("");
 	response->set_status(302);
 	response->add_header("Location: " + destination);
@@ -188,15 +205,18 @@ private:
 class HttpdPrefixHandler {
 public:
     virtual ~HttpdPrefixHandler() { }
-    virtual HttpdResponse *open(std::string path) = 0;
+    virtual HttpdResponse *open(std::string path, HttpdRequest *request) = 0;
 };
 
 /** An abstract class that provides a response to a prefix mapping.
+ *
+ * @note The request is only valid during the call to open().  You
+ * must copy any data that you want to use later.
  */
 
 class HttpdDebugHandler : public HttpdPrefixHandler {
 public:
-    HttpdResponse *open(std::string path) override;
+    HttpdResponse *open(std::string path, HttpdRequest *request) override;
 };
 
 /** A singleton that will start and operate a HTTP server.
@@ -271,7 +291,7 @@ private:
 
 private:
     void mongoose_callback(struct mg_connection *c, int ev, void *ev_data);
-    HttpdResponse *get_uri(std::string uri);
+    HttpdResponse *get_uri(std::string uri, HttpdRequest *request);
     static void mongoose_callback_proxy(struct mg_connection *c, int ev, void *ev_data);
 
     /// @endcond

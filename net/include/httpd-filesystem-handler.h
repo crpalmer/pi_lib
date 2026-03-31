@@ -9,7 +9,7 @@ public:
     HttpdFilesystemHandler(std::string path) : path(path) {
     }
 
-    HttpdResponse *open(std::string relative_path) override;
+    HttpdResponse *open(std::string relative_path, HttpdRequest *request) override;
 
 private:
     std::string path;
