@@ -4,7 +4,7 @@
 static inline us_time_t us_now() {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (ts.tv_sec * 1000LL) + (ts.tv_nsec / 1000);
+    return (ts.tv_sec * 1000000LL) + (ts.tv_nsec / 1000);
 }
 
 static inline void us_gettime(us_time_t *t) {
