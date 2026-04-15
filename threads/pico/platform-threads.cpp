@@ -4,6 +4,7 @@
 #include "mem.h"
 #include "consoles.h"
 #include "freertos-heap.h"
+#include "irq-buffered-reader.h"
 #include "pi-threads.h"
 #include "time-utils.h"
 #include "FreeRTOS.h"
@@ -30,57 +31,15 @@ static void post_set_irq_fn(int old_affinity) {
     vTaskCoreAffinitySet(NULL, old_affinity);
 }
 
-class StdinBuffer : public PiThread {
+class StdinBuffer : public IRQBufferedReader {
 public:
-    StdinBuffer() : PiThread("stdin-buffer") {
-	lock = new PiMutex();
-	cond = new PiCond();
-	start();
+    StdinBuffer() : IRQBufferedReader() {
     }
 
-    void main(void) {
-	while (1) {
-	    pause();
-	    lock->lock();
-	    read_all();
-	    lock->unlock();
-	    cond->broadcast();
-	}
+    bool read_char_if_available(int *chr) override {
+	*chr = getchar_timeout_us(0); // Read char immediately
+	return (*chr != PICO_ERROR_TIMEOUT);
     }
-
-    unsigned char getchar() {
-	lock->lock();
-	while (n == 0) cond->wait(lock);
-
-	unsigned char c = buffer[low];
-	low = (low+1) % buffer_n;
-	n--;
-
-	lock->unlock();
-
-	return c;
-    }
-
-private:
-    void read_all() {
-	while (1) {
-	    if (n >= buffer_n) return;
-	    int c = getchar_timeout_us(0); // Read char immediately
-	    if (c == PICO_ERROR_TIMEOUT) return;
-	    buffer[high] = c;
-	    high = (high+1) % buffer_n;
-	    n++;
-	}
-    }
-
-private:
-    PiMutex *lock;
-    PiCond *cond;
-
-    static const int buffer_n = 1024;
-    unsigned char buffer[buffer_n];
-    int n = 0;
-    int low = 0, high = 0;
 };
 
 static StdinBuffer *stdin_buffer;
