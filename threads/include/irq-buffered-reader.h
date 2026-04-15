@@ -5,7 +5,7 @@
 
 class IRQBufferedReader : public PiThread {
 public:
-    IRQBufferedReader() : PiThread("stdin-buffer") {
+    IRQBufferedReader() {
 	lock = new PiMutex();
 	cond = new PiCond();
 	start();
@@ -13,16 +13,23 @@ public:
 
     void main(void) {
 	while (1) {
-	    pause();
 	    lock->lock();
 	    read_all_locked();
 	    lock->unlock();
+	    pause();
 	}
     }
 
-    virtual unsigned char getc() {
+    bool is_empty() {
 	lock->lock();
+	bool result = (n == 0);
+	lock->unlock();
 
+	return result;
+    }
+
+    unsigned char getc() {
+	lock->lock();
 	while (n == 0) cond->wait(lock);
 
 	unsigned char c = buffer[low];
@@ -37,8 +44,11 @@ public:
 	if (n == buffer_n-1) read_all_locked();
 
 	lock->unlock();
-
 	return c;
+    }
+
+    void on_irq() {
+	resume_from_isr();
     }
 
 protected:
@@ -46,19 +56,13 @@ protected:
 
 private:
     void read_all_locked() {
-	bool should_broadcast = false;
-
-	while (1) {
-	    unsigned char c;
-
-	    if (n >= buffer_n) return;
-	    if (! read_char_if_available(&c)) return;
+	unsigned char c;
+	while (n < buffer_n && read_char_if_available(&c)) {
 	    buffer[high] = c;
 	    high = (high+1) % buffer_n;
 	    n++;
-	    should_broadcast = true;
 	}
-	if (should_broadcast) cond->broadcast();
+	if (n > 0) cond->broadcast();
     }
 
     PiMutex *lock;

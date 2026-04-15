@@ -47,7 +47,7 @@ public:
 static StdinBuffer *stdin_buffer;
 
 void stdio_irq_handler(void *param) {
-    stdin_buffer->resume_from_isr();
+    stdin_buffer->on_irq();
 }
 
 uint8_t pi_getchar() {
