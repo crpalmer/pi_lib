@@ -19,7 +19,7 @@ public:
 	return uart_rx_is_empty(pio, sm);
     }
 
-    char getc() override {
+    unsigned char getc() override {
 	return uart_rx_program_getc(pio, sm);
     }
 

@@ -19,7 +19,7 @@ public:
         uart_tx_program_init(pio, sm, offset, tx_pin, baud);
     }
 
-    void putc(char c) override {
+    void putc(unsigned char c) override {
         pio_sm_put_blocking(pio, sm, (uint32_t) c);
     }
 

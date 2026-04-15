@@ -7,7 +7,7 @@ class UART_Rx {
 public:
     virtual bool is_empty() = 0;
     virtual void read(void *buffer, size_t n) = 0;
-    virtual char getc() = 0;
+    virtual unsigned char getc() = 0;
     virtual void gets(char *buffer, size_t n) {
 	for (size_t i = 0; i < n-1; i++) {
 	    buffer[i] = getc();
@@ -22,7 +22,7 @@ public:
 
 class UART_Tx { 
 public:
-    virtual void putc(char c) = 0;
+    virtual void putc(unsigned char c) = 0;
     virtual void write(const char *s) {
 	write(s, strlen(s));
     }

@@ -20,8 +20,9 @@ public:
 	}
     }
 
-    unsigned char getchar() {
+    virtual unsigned char getc() {
 	lock->lock();
+
 	while (n == 0) cond->wait(lock);
 
 	unsigned char c = buffer[low];
@@ -41,14 +42,14 @@ public:
     }
 
 protected:
-    virtual bool read_char_if_available(int *chr) = 0;
+    virtual bool read_char_if_available(unsigned char *chr) = 0;
 
 private:
     void read_all_locked() {
 	bool should_broadcast = false;
 
 	while (1) {
-	    int c;
+	    unsigned char c;
 
 	    if (n >= buffer_n) return;
 	    if (! read_char_if_available(&c)) return;
@@ -60,7 +61,6 @@ private:
 	if (should_broadcast) cond->broadcast();
     }
 
-private:
     PiMutex *lock;
     PiCond *cond;
 

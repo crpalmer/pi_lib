@@ -36,9 +36,11 @@ public:
     StdinBuffer() : IRQBufferedReader() {
     }
 
-    bool read_char_if_available(int *chr) override {
-	*chr = getchar_timeout_us(0); // Read char immediately
-	return (*chr != PICO_ERROR_TIMEOUT);
+    bool read_char_if_available(unsigned char *chr) override {
+	int ichr = getchar_timeout_us(0); // Read char immediately
+	if (ichr == PICO_ERROR_TIMEOUT) return false;
+	*chr = (unsigned char) ichr;
+	return true;
     }
 };
 
@@ -49,7 +51,7 @@ void stdio_irq_handler(void *param) {
 }
 
 uint8_t pi_getchar() {
-    return stdin_buffer->getchar();
+    return stdin_buffer->getc();
 }
 
 static void init_with_threads(void *main_as_vp) {
