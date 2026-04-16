@@ -5,7 +5,7 @@
 
 class IRQBufferedReader : public PiThread {
 public:
-    IRQBufferedReader() {
+    IRQBufferedReader(const char *name = "irq-buffered-reader") : PiThread(name) {
 	lock = new PiMutex();
 	cond = new PiCond();
 	start();

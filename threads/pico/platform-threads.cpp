@@ -33,7 +33,7 @@ static void post_set_irq_fn(int old_affinity) {
 
 class StdinBuffer : public IRQBufferedReader {
 public:
-    StdinBuffer() : IRQBufferedReader() {
+    StdinBuffer() : IRQBufferedReader("stdin-reader") {
     }
 
     bool read_char_if_available(unsigned char *chr) override {
