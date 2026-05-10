@@ -41,7 +41,7 @@ public:
 	 * and ran out of buffer space.  In that case, we'll
 	 * end up with data pending but no irq to let us process it.
 	 */
-	if (n == buffer_n-1) read_all_locked();
+	read_all_locked();
 
 	lock->unlock();
 	return c;
