@@ -7,7 +7,7 @@
 
 class UART_Hardware_Rx : public UART_Rx, public IRQBufferedReader {
 public:
-    UART_Hardware_Rx(uart_inst_t *uart, const char *name) : IRQBufferedReader(name), uart(uart) {
+    UART_Hardware_Rx(uart_inst_t *uart) : IRQBufferedReader(), uart(uart) {
     }
 
     bool is_empty() override {
@@ -62,20 +62,18 @@ private:
     uart_inst_t *uart;
 };
 
-static inline uart_inst_t *pin_to_uart(int pin, int *id = NULL, int *irq = NULL, const char **name = NULL) {
+static inline uart_inst_t *pin_to_uart(int pin, int *id = NULL, int *irq = NULL) {
     switch(pin) {
     case 0: case 1:
     case 12: case 13:
     case 16: case 17:
 	if (id) *id = 0;
 	if (irq) *irq = UART0_IRQ;
-	if (name) *name = "uart0-reader";
 	return uart0;
     case 4: case 5:
     case 8: case 9:
 	if (id) *id = 1;
 	if (irq) *irq = UART1_IRQ;
-	if (name) *name = "uart1-reader";
 	return uart1;
     }
     assert(0);
@@ -85,8 +83,7 @@ static inline uart_inst_t *pin_to_uart(int pin, int *id = NULL, int *irq = NULL,
 UART_Rx *pico_new_uart_rx(int pin, int baud) {
     int uart_id;
     int uart_irq;
-    const char *name;
-    uart_inst_t *uart = pin_to_uart(pin, &uart_id, &uart_irq, &name);
+    uart_inst_t *uart = pin_to_uart(pin, &uart_id, &uart_irq);
 
     if (! uart_is_enabled(uart)) {
 	uart_init(uart, baud);
@@ -102,7 +99,7 @@ UART_Rx *pico_new_uart_rx(int pin, int baud) {
      * get into a race condition with data arriving and notifying
      * the object before it's completely ready.
      */
-    uart_rx[uart_id] = new UART_Hardware_Rx(uart, name);
+    uart_rx[uart_id] = new UART_Hardware_Rx(uart);
 
     /* Setup interrupts for the uart */
     irq_set_exclusive_handler(uart_irq, irq_handler);
