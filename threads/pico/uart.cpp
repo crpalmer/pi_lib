@@ -39,14 +39,10 @@ private:
 static UART_Hardware_Rx *uart_rx[2];
 
 static void irq_handler() {
-    if (uart_rx[0]) {
-	uart_get_hw(uart0)->icr = UART_UARTICR_RXIC_BITS;
-	uart_rx[0]->on_irq();
-    }
-    if (uart_rx[1]) {
-	uart_get_hw(uart1)->icr = UART_UARTICR_RXIC_BITS;
-	uart_rx[1]->on_irq();
-    }
+    uart_get_hw(uart0)->icr = UART_UARTICR_RXIC_BITS;
+    uart_get_hw(uart1)->icr = UART_UARTICR_RXIC_BITS;
+    if (uart_rx[0]) uart_rx[0]->on_irq();
+    if (uart_rx[1]) uart_rx[1]->on_irq();
 }
 
 class UART_Hardware_Tx : public UART_Tx {
@@ -109,7 +105,7 @@ UART_Rx *pico_new_uart_rx(int pin, int baud) {
     uart_rx[uart_id] = new UART_Hardware_Rx(uart, name);
 
     /* Setup interrupts for the uart */
-    irq_add_shared_handler(uart_irq, irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+    irq_set_exclusive_handler(uart_irq, irq_handler);
     irq_set_enabled(uart_irq, true);
     uart_set_irq_enables(uart, true, false);
 
