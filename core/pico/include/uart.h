@@ -29,10 +29,8 @@ public:
     virtual void write(const void *data, size_t n) = 0;
 };
 
-#ifdef USING_LIBPI_THREADS
 UART_Rx *pico_new_uart_rx(int pin, int baud = 115200);
 UART_Tx *pico_new_uart_tx(int pin, int baud = 115200);
-#endif
 
 UART_Rx *pico_new_pio_uart_rx(int pin, int baud = 115200);
 UART_Tx *pico_new_pio_uart_tx(int pin, int baud = 115200);

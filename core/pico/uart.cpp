@@ -12,7 +12,7 @@ public:
 	return ! uart_is_readable(uart);
     }
 
-    char getc() override {
+    unsigned char getc() override {
 	return uart_getc(uart);
     }
 
@@ -29,7 +29,7 @@ public:
     UART_Hardware_Tx(uart_inst_t *uart) : uart(uart) {
     }
 
-    void putc(char c) override {
+    void putc(unsigned char c) override {
 	uart_putc_raw(uart, c);
     }
 
