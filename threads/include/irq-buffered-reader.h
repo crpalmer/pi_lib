@@ -17,6 +17,7 @@ public:
 	    lock->lock();
 	    read_all_locked();
 	    lock->unlock();
+	    cond->signal();
 	}
     }
 
@@ -37,6 +38,7 @@ public:
 	if (n == buffer_n-1) read_all_locked();
 
 	lock->unlock();
+	cond->signal();
 
 	return c;
     }
@@ -46,8 +48,6 @@ protected:
 
 private:
     void read_all_locked() {
-	bool should_broadcast = false;
-
 	while (1) {
 	    unsigned char c;
 
@@ -56,9 +56,7 @@ private:
 	    buffer[high] = c;
 	    high = (high+1) % buffer_n;
 	    n++;
-	    should_broadcast = true;
 	}
-	if (should_broadcast) cond->broadcast();
     }
 
     PiMutex *lock;
