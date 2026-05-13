@@ -60,8 +60,8 @@ static void init_with_threads(void *main_as_vp) {
     mem_set_get_task_name(get_task_name);
     file_init();
 
-    stdio_set_chars_available_callback(stdio_irq_handler, NULL);
     stdin_buffer = new StdinBuffer();
+    stdio_set_chars_available_callback(stdio_irq_handler, NULL);
 
     pico_threads_initialized = true;
 
