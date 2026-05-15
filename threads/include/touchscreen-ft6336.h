@@ -39,6 +39,11 @@ private:
     bool is_same_point(int a, int b);
 };
 
+// TODO: I don't think that this works right.  The interrupt->get() was returning true
+// when the interrupt pin was low and so when you touched the screen it should go to
+// untouched state and when you release the screen it should go to untouched state.
+// I don't have the means to test this right now so I'm leaving it in a probably broken
+// state on the grounds that it was probably always broken.
 class TouchscreenInterruptNotifier : public ThreadInterruptNotifier {
 public:
     TouchscreenInterruptNotifier(Input *interrupt, TouchscreenEventHandler *event_handler) : interrupt(interrupt), event_handler(event_handler) {

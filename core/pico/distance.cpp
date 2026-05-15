@@ -21,13 +21,13 @@ ping_distance_cm(Output *trigger, Input *echo) {
     }
 
     //while (echo->get() && (now = get_absolute_time()) < timeout) {}
-    while (echo->get() && (now = get_absolute_time()) < timeout) {}
+    while (! echo->get() && (now = get_absolute_time()) < timeout) {}
 
     if (now >= timeout) return -1;
 
     start = now;
     timeout = delayed_by_us(start, 23332);
-    while (! echo->get() && (now = get_absolute_time()) < timeout) {}
+    while (echo->get() && (now = get_absolute_time()) < timeout) {}
 
     // potential echo reverbs
     ms_sleep(10);

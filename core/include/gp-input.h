@@ -16,14 +16,16 @@ public:
     ~GPInput() { }
 
     unsigned get_fast() override {
-	return pi_gpio_get(gpio) == 0;
+	return pi_gpio_get(gpio);
     }
 
     void set_pullup_up() override {
+	is_inverted = true;
 	pi_gpio_set_pullup(gpio, PI_PUD_UP);
     }
 
     void set_pullup_down() override {
+	is_inverted = false;
 	pi_gpio_set_pullup(gpio, PI_PUD_DOWN);
     }
 
