@@ -52,13 +52,17 @@ public:
  
      unsigned get() {
 	if (debounce_us) {
-	    return get_with_debounce(debounce_us);
+	    return get_with_debounce_us(debounce_us);
 	} else {
 	    return return_value(get_fast());
 	}
      }
 
-     unsigned get_with_debounce(unsigned us = 50) {
+     unsigned get_with_debounce(unsigned ms = 50) {
+	return get_with_debounce_us(ms * 1000);
+     }
+
+     unsigned get_with_debounce_us(unsigned us = 50) {
 	unsigned v = get_fast();
         us_time_t start = us_now();
 
@@ -77,7 +81,7 @@ public:
 
 protected:
     unsigned return_value(unsigned v) {
-	return is_inverted ? ! v : v;
+	return is_inverted ? (v == 0) : (v != 0);
     }
 
     unsigned debounce_us = 0;
