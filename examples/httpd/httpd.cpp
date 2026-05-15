@@ -13,7 +13,7 @@
 
 class HelloFile : public HttpdFilenameHandler {
 public:
-    HttpdResponse *open() override {
+    HttpdResponse *open(HttpdRequest *request) override {
 	return new HttpdResponse(new MemoryBuffer("hello!\n"));
     }
 };

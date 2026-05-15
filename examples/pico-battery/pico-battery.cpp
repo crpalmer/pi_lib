@@ -16,7 +16,7 @@
 
 class BatteryHandler : public HttpdFilenameHandler {
 public:
-    HttpdResponse *open() override {
+    HttpdResponse *open(HttpdRequest *request) override {
 	sprintf(str, "Status:  %s\nVoltage: %.2f V\nRAM    : %u\n", pico_is_on_battery() ? "battery" : "powered", pico_get_vsys(), pi_threads_get_free_ram());
 	HttpdResponse *response = new HttpdResponse(new MemoryBuffer(str));
 	response->set_content_type("text/plain");
