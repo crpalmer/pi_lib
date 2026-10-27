@@ -8,7 +8,7 @@
 
 #define NUM_GPIOS 40
 
-#if 0
+#if 1
 
 static const char *aliases[NUM_GPIOS];
 
@@ -162,7 +162,7 @@ static void *irq_handler_main(void *gpio_as_vp)
 	    perror("gpiod_line_event_read");
 	    ms_sleep(1000);
 	} else {
-	    us_time_t ts;
+	    struct timespec ts;
 
 	    ts.tv_sec = 0;
 	    ts.tv_nsec = 1*1000;
